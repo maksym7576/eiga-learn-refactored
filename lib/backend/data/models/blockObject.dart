@@ -19,4 +19,14 @@ class BlockObject {
   String? contentSignature;
 
   String? colorHex;
+
+  BlockObject({
+    this.phraseId,
+    this.originalPositionIndex,
+    this.translatedPositionIndex,
+    this.blockTranslation,
+    this.contentSignature,
+    this.colorHex,
+});
+
 }

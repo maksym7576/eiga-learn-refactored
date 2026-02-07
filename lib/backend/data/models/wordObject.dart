@@ -15,7 +15,6 @@ class WordObject {
 
   WordObject({this.blockId});
 
-  String? colorHex;
 }
 
 @embedded

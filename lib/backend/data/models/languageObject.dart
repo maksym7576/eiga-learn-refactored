@@ -1,11 +1,11 @@
-import 'package:isar/isar.dart';
-
-part 'languageObject.g.dart';
-
-@collection
 class LanguageObject {
-  Id id = Isar.autoIncrement;
+  final int id;
+  final String language;
+  final bool isSupported;
 
-  String? language;
-  bool? isSupported;
+  LanguageObject({
+    required this.id,
+    required this.language,
+    required this.isSupported,
+  });
 }

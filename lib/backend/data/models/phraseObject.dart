@@ -20,4 +20,13 @@ class PhraseObject {
   bool isTranslated = false;
 
   bool isActive = false;
+
+
+  PhraseObject ({
+    this.videoId,
+    this.phraseOrder,
+    this.originalPhrase,
+    this.startTime,
+    this.endTime,
+  });
 }

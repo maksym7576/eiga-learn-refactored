@@ -22,18 +22,13 @@ const WordObjectSchema = CollectionSchema(
       name: r'blockId',
       type: IsarType.long,
     ),
-    r'colorHex': PropertySchema(
-      id: 1,
-      name: r'colorHex',
-      type: IsarType.string,
-    ),
     r'mainText': PropertySchema(
-      id: 2,
+      id: 1,
       name: r'mainText',
       type: IsarType.string,
     ),
     r'versions': PropertySchema(
-      id: 3,
+      id: 2,
       name: r'versions',
       type: IsarType.objectList,
       target: r'ReadingItem',
@@ -74,12 +69,6 @@ int _wordObjectEstimateSize(
 ) {
   var bytesCount = offsets.last;
   {
-    final value = object.colorHex;
-    if (value != null) {
-      bytesCount += 3 + value.length * 3;
-    }
-  }
-  {
     final value = object.mainText;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -103,10 +92,9 @@ void _wordObjectSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeLong(offsets[0], object.blockId);
-  writer.writeString(offsets[1], object.colorHex);
-  writer.writeString(offsets[2], object.mainText);
+  writer.writeString(offsets[1], object.mainText);
   writer.writeObjectList<ReadingItem>(
-    offsets[3],
+    offsets[2],
     allOffsets,
     ReadingItemSchema.serialize,
     object.versions,
@@ -122,10 +110,9 @@ WordObject _wordObjectDeserialize(
   final object = WordObject(
     blockId: reader.readLongOrNull(offsets[0]),
   );
-  object.colorHex = reader.readStringOrNull(offsets[1]);
   object.id = id;
   object.versions = reader.readObjectList<ReadingItem>(
-        offsets[3],
+        offsets[2],
         ReadingItemSchema.deserialize,
         allOffsets,
         ReadingItem(),
@@ -146,8 +133,6 @@ P _wordObjectDeserializeProp<P>(
     case 1:
       return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readStringOrNull(offset)) as P;
-    case 3:
       return (reader.readObjectList<ReadingItem>(
             offset,
             ReadingItemSchema.deserialize,
@@ -436,157 +421,6 @@ extension WordObjectQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
-      ));
-    });
-  }
-
-  QueryBuilder<WordObject, WordObject, QAfterFilterCondition> colorHexIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'colorHex',
-      ));
-    });
-  }
-
-  QueryBuilder<WordObject, WordObject, QAfterFilterCondition>
-      colorHexIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'colorHex',
-      ));
-    });
-  }
-
-  QueryBuilder<WordObject, WordObject, QAfterFilterCondition> colorHexEqualTo(
-    String? value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'colorHex',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WordObject, WordObject, QAfterFilterCondition>
-      colorHexGreaterThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'colorHex',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WordObject, WordObject, QAfterFilterCondition> colorHexLessThan(
-    String? value, {
-    bool include = false,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'colorHex',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WordObject, WordObject, QAfterFilterCondition> colorHexBetween(
-    String? lower,
-    String? upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'colorHex',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WordObject, WordObject, QAfterFilterCondition>
-      colorHexStartsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.startsWith(
-        property: r'colorHex',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WordObject, WordObject, QAfterFilterCondition> colorHexEndsWith(
-    String value, {
-    bool caseSensitive = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.endsWith(
-        property: r'colorHex',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WordObject, WordObject, QAfterFilterCondition> colorHexContains(
-      String value,
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.contains(
-        property: r'colorHex',
-        value: value,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WordObject, WordObject, QAfterFilterCondition> colorHexMatches(
-      String pattern,
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.matches(
-        property: r'colorHex',
-        wildcard: pattern,
-        caseSensitive: caseSensitive,
-      ));
-    });
-  }
-
-  QueryBuilder<WordObject, WordObject, QAfterFilterCondition>
-      colorHexIsEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'colorHex',
-        value: '',
-      ));
-    });
-  }
-
-  QueryBuilder<WordObject, WordObject, QAfterFilterCondition>
-      colorHexIsNotEmpty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        property: r'colorHex',
-        value: '',
       ));
     });
   }
@@ -912,18 +746,6 @@ extension WordObjectQuerySortBy
     });
   }
 
-  QueryBuilder<WordObject, WordObject, QAfterSortBy> sortByColorHex() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'colorHex', Sort.asc);
-    });
-  }
-
-  QueryBuilder<WordObject, WordObject, QAfterSortBy> sortByColorHexDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'colorHex', Sort.desc);
-    });
-  }
-
   QueryBuilder<WordObject, WordObject, QAfterSortBy> sortByMainText() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'mainText', Sort.asc);
@@ -948,18 +770,6 @@ extension WordObjectQuerySortThenBy
   QueryBuilder<WordObject, WordObject, QAfterSortBy> thenByBlockIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'blockId', Sort.desc);
-    });
-  }
-
-  QueryBuilder<WordObject, WordObject, QAfterSortBy> thenByColorHex() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'colorHex', Sort.asc);
-    });
-  }
-
-  QueryBuilder<WordObject, WordObject, QAfterSortBy> thenByColorHexDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'colorHex', Sort.desc);
     });
   }
 
@@ -996,13 +806,6 @@ extension WordObjectQueryWhereDistinct
     });
   }
 
-  QueryBuilder<WordObject, WordObject, QDistinct> distinctByColorHex(
-      {bool caseSensitive = true}) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'colorHex', caseSensitive: caseSensitive);
-    });
-  }
-
   QueryBuilder<WordObject, WordObject, QDistinct> distinctByMainText(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1022,12 +825,6 @@ extension WordObjectQueryProperty
   QueryBuilder<WordObject, int?, QQueryOperations> blockIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'blockId');
-    });
-  }
-
-  QueryBuilder<WordObject, String?, QQueryOperations> colorHexProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'colorHex');
     });
   }
 
