@@ -9,6 +9,8 @@ class WordObject {
   @Index(type: IndexType.value)
   int? blockId;
 
+  int? wordPosition;
+
   List<ReadingItem> versions = [];
 
   String? get mainText => versions.isNotEmpty ? versions.first.text : '';

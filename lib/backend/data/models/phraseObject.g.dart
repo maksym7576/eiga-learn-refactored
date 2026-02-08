@@ -117,15 +117,16 @@ PhraseObject _phraseObjectDeserialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  final object = PhraseObject();
-  object.endTime = reader.readDateTimeOrNull(offsets[0]);
+  final object = PhraseObject(
+    endTime: reader.readDateTimeOrNull(offsets[0]),
+    originalPhrase: reader.readStringOrNull(offsets[3]),
+    phraseOrder: reader.readLongOrNull(offsets[4]),
+    startTime: reader.readDateTimeOrNull(offsets[5]),
+    videoId: reader.readLongOrNull(offsets[6]),
+  );
   object.id = id;
   object.isActive = reader.readBool(offsets[1]);
   object.isTranslated = reader.readBool(offsets[2]);
-  object.originalPhrase = reader.readStringOrNull(offsets[3]);
-  object.phraseOrder = reader.readLongOrNull(offsets[4]);
-  object.startTime = reader.readDateTimeOrNull(offsets[5]);
-  object.videoId = reader.readLongOrNull(offsets[6]);
   return object;
 }
 

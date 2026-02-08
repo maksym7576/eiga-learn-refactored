@@ -10,11 +10,10 @@ class WordService extends StateNotifier<List<WordObject>> {
 
   WordService(this.db) : super([]);
 
-  Future<void> createWord({required int blockId, required List<ReadingItem> versions}) async {
-    final newWord = WordObject(blockId: blockId)..versions = versions;
+  Future<void> createWord({required WordObject wordObject}) async {
     await db.writeTxn(() async {
-      await db.wordObjects.put(newWord);
-    });
+      await db.wordObjects.put(wordObject);
+      });
   }
 
   Future<List<WordObject>> getWordsBlocks(List<int> blockIds) async {

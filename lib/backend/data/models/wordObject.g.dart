@@ -32,6 +32,11 @@ const WordObjectSchema = CollectionSchema(
       name: r'versions',
       type: IsarType.objectList,
       target: r'ReadingItem',
+    ),
+    r'wordPosition': PropertySchema(
+      id: 3,
+      name: r'wordPosition',
+      type: IsarType.long,
     )
   },
   estimateSize: _wordObjectEstimateSize,
@@ -99,6 +104,7 @@ void _wordObjectSerialize(
     ReadingItemSchema.serialize,
     object.versions,
   );
+  writer.writeLong(offsets[3], object.wordPosition);
 }
 
 WordObject _wordObjectDeserialize(
@@ -118,6 +124,7 @@ WordObject _wordObjectDeserialize(
         ReadingItem(),
       ) ??
       [];
+  object.wordPosition = reader.readLongOrNull(offsets[3]);
   return object;
 }
 
@@ -140,6 +147,8 @@ P _wordObjectDeserializeProp<P>(
             ReadingItem(),
           ) ??
           []) as P;
+    case 3:
+      return (reader.readLongOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -717,6 +726,80 @@ extension WordObjectQueryFilter
       );
     });
   }
+
+  QueryBuilder<WordObject, WordObject, QAfterFilterCondition>
+      wordPositionIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'wordPosition',
+      ));
+    });
+  }
+
+  QueryBuilder<WordObject, WordObject, QAfterFilterCondition>
+      wordPositionIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'wordPosition',
+      ));
+    });
+  }
+
+  QueryBuilder<WordObject, WordObject, QAfterFilterCondition>
+      wordPositionEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'wordPosition',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<WordObject, WordObject, QAfterFilterCondition>
+      wordPositionGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'wordPosition',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<WordObject, WordObject, QAfterFilterCondition>
+      wordPositionLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'wordPosition',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<WordObject, WordObject, QAfterFilterCondition>
+      wordPositionBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'wordPosition',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension WordObjectQueryObject
@@ -755,6 +838,18 @@ extension WordObjectQuerySortBy
   QueryBuilder<WordObject, WordObject, QAfterSortBy> sortByMainTextDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'mainText', Sort.desc);
+    });
+  }
+
+  QueryBuilder<WordObject, WordObject, QAfterSortBy> sortByWordPosition() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'wordPosition', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WordObject, WordObject, QAfterSortBy> sortByWordPositionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'wordPosition', Sort.desc);
     });
   }
 }
@@ -796,6 +891,18 @@ extension WordObjectQuerySortThenBy
       return query.addSortBy(r'mainText', Sort.desc);
     });
   }
+
+  QueryBuilder<WordObject, WordObject, QAfterSortBy> thenByWordPosition() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'wordPosition', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WordObject, WordObject, QAfterSortBy> thenByWordPositionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'wordPosition', Sort.desc);
+    });
+  }
 }
 
 extension WordObjectQueryWhereDistinct
@@ -810,6 +917,12 @@ extension WordObjectQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'mainText', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<WordObject, WordObject, QDistinct> distinctByWordPosition() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'wordPosition');
     });
   }
 }
@@ -838,6 +951,12 @@ extension WordObjectQueryProperty
       versionsProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'versions');
+    });
+  }
+
+  QueryBuilder<WordObject, int?, QQueryOperations> wordPositionProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'wordPosition');
     });
   }
 }

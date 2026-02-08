@@ -19,6 +19,10 @@ class PhraseService extends StateNotifier<List<PhraseObject>> {
     state = phrases;
   }
 
+  Future<PhraseObject?> getPhraseById(int id) async {
+    return await db.phraseObjects.get(id);
+  }
+
   Future<void> addPhrase(PhraseObject phraseObject) async {
     await db.writeTxn(() async {
       await db.phraseObjects.put(phraseObject);

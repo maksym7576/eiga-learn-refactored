@@ -9,9 +9,9 @@ class BlockObject {
   @Index(type: IndexType.value)
   int? phraseId;
 
-  int? originalPositionIndex;
+  int? blockPositionIndex;
 
-  int? translatedPositionIndex;
+  List<int> translatedPositionIndex = [];
 
   String? blockTranslation;
 
@@ -22,8 +22,8 @@ class BlockObject {
 
   BlockObject({
     this.phraseId,
-    this.originalPositionIndex,
-    this.translatedPositionIndex,
+    this.blockPositionIndex,
+    List<int> translatedPositionIndex = const [],
     this.blockTranslation,
     this.contentSignature,
     this.colorHex,

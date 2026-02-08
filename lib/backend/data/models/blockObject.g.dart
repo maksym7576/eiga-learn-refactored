@@ -17,25 +17,25 @@ const BlockObjectSchema = CollectionSchema(
   name: r'BlockObject',
   id: 5859615813996755603,
   properties: {
-    r'blockTranslation': PropertySchema(
+    r'blockPositionIndex': PropertySchema(
       id: 0,
+      name: r'blockPositionIndex',
+      type: IsarType.long,
+    ),
+    r'blockTranslation': PropertySchema(
+      id: 1,
       name: r'blockTranslation',
       type: IsarType.string,
     ),
     r'colorHex': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'colorHex',
       type: IsarType.string,
     ),
     r'contentSignature': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'contentSignature',
       type: IsarType.string,
-    ),
-    r'originalPositionIndex': PropertySchema(
-      id: 3,
-      name: r'originalPositionIndex',
-      type: IsarType.long,
     ),
     r'phraseId': PropertySchema(
       id: 4,
@@ -45,7 +45,7 @@ const BlockObjectSchema = CollectionSchema(
     r'translatedPositionIndex': PropertySchema(
       id: 5,
       name: r'translatedPositionIndex',
-      type: IsarType.long,
+      type: IsarType.longList,
     )
   },
   estimateSize: _blockObjectEstimateSize,
@@ -113,6 +113,7 @@ int _blockObjectEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  bytesCount += 3 + object.translatedPositionIndex.length * 8;
   return bytesCount;
 }
 
@@ -122,12 +123,12 @@ void _blockObjectSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.blockTranslation);
-  writer.writeString(offsets[1], object.colorHex);
-  writer.writeString(offsets[2], object.contentSignature);
-  writer.writeLong(offsets[3], object.originalPositionIndex);
+  writer.writeLong(offsets[0], object.blockPositionIndex);
+  writer.writeString(offsets[1], object.blockTranslation);
+  writer.writeString(offsets[2], object.colorHex);
+  writer.writeString(offsets[3], object.contentSignature);
   writer.writeLong(offsets[4], object.phraseId);
-  writer.writeLong(offsets[5], object.translatedPositionIndex);
+  writer.writeLongList(offsets[5], object.translatedPositionIndex);
 }
 
 BlockObject _blockObjectDeserialize(
@@ -136,14 +137,15 @@ BlockObject _blockObjectDeserialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  final object = BlockObject();
-  object.blockTranslation = reader.readStringOrNull(offsets[0]);
-  object.colorHex = reader.readStringOrNull(offsets[1]);
-  object.contentSignature = reader.readStringOrNull(offsets[2]);
+  final object = BlockObject(
+    blockPositionIndex: reader.readLongOrNull(offsets[0]),
+    blockTranslation: reader.readStringOrNull(offsets[1]),
+    colorHex: reader.readStringOrNull(offsets[2]),
+    contentSignature: reader.readStringOrNull(offsets[3]),
+    phraseId: reader.readLongOrNull(offsets[4]),
+    translatedPositionIndex: reader.readLongList(offsets[5]) ?? const [],
+  );
   object.id = id;
-  object.originalPositionIndex = reader.readLongOrNull(offsets[3]);
-  object.phraseId = reader.readLongOrNull(offsets[4]);
-  object.translatedPositionIndex = reader.readLongOrNull(offsets[5]);
   return object;
 }
 
@@ -155,17 +157,17 @@ P _blockObjectDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 1:
       return (reader.readStringOrNull(offset)) as P;
     case 2:
       return (reader.readStringOrNull(offset)) as P;
     case 3:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 4:
       return (reader.readLongOrNull(offset)) as P;
     case 5:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readLongList(offset) ?? const []) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -450,6 +452,80 @@ extension BlockObjectQueryWhere
 
 extension BlockObjectQueryFilter
     on QueryBuilder<BlockObject, BlockObject, QFilterCondition> {
+  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
+      blockPositionIndexIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'blockPositionIndex',
+      ));
+    });
+  }
+
+  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
+      blockPositionIndexIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'blockPositionIndex',
+      ));
+    });
+  }
+
+  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
+      blockPositionIndexEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'blockPositionIndex',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
+      blockPositionIndexGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'blockPositionIndex',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
+      blockPositionIndexLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'blockPositionIndex',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
+      blockPositionIndexBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'blockPositionIndex',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
       blockTranslationIsNull() {
     return QueryBuilder.apply(this, (query) {
@@ -965,80 +1041,6 @@ extension BlockObjectQueryFilter
   }
 
   QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
-      originalPositionIndexIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'originalPositionIndex',
-      ));
-    });
-  }
-
-  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
-      originalPositionIndexIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'originalPositionIndex',
-      ));
-    });
-  }
-
-  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
-      originalPositionIndexEqualTo(int? value) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'originalPositionIndex',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
-      originalPositionIndexGreaterThan(
-    int? value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'originalPositionIndex',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
-      originalPositionIndexLessThan(
-    int? value, {
-    bool include = false,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'originalPositionIndex',
-        value: value,
-      ));
-    });
-  }
-
-  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
-      originalPositionIndexBetween(
-    int? lower,
-    int? upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'originalPositionIndex',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-      ));
-    });
-  }
-
-  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
       phraseIdIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1112,25 +1114,7 @@ extension BlockObjectQueryFilter
   }
 
   QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
-      translatedPositionIndexIsNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNull(
-        property: r'translatedPositionIndex',
-      ));
-    });
-  }
-
-  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
-      translatedPositionIndexIsNotNull() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(const FilterCondition.isNotNull(
-        property: r'translatedPositionIndex',
-      ));
-    });
-  }
-
-  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
-      translatedPositionIndexEqualTo(int? value) {
+      translatedPositionIndexElementEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'translatedPositionIndex',
@@ -1140,8 +1124,8 @@ extension BlockObjectQueryFilter
   }
 
   QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
-      translatedPositionIndexGreaterThan(
-    int? value, {
+      translatedPositionIndexElementGreaterThan(
+    int value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -1154,8 +1138,8 @@ extension BlockObjectQueryFilter
   }
 
   QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
-      translatedPositionIndexLessThan(
-    int? value, {
+      translatedPositionIndexElementLessThan(
+    int value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -1168,9 +1152,9 @@ extension BlockObjectQueryFilter
   }
 
   QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
-      translatedPositionIndexBetween(
-    int? lower,
-    int? upper, {
+      translatedPositionIndexElementBetween(
+    int lower,
+    int upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
@@ -1184,6 +1168,95 @@ extension BlockObjectQueryFilter
       ));
     });
   }
+
+  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
+      translatedPositionIndexLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'translatedPositionIndex',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
+      translatedPositionIndexIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'translatedPositionIndex',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
+      translatedPositionIndexIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'translatedPositionIndex',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
+      translatedPositionIndexLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'translatedPositionIndex',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
+      translatedPositionIndexLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'translatedPositionIndex',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<BlockObject, BlockObject, QAfterFilterCondition>
+      translatedPositionIndexLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'translatedPositionIndex',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
 }
 
 extension BlockObjectQueryObject
@@ -1194,6 +1267,20 @@ extension BlockObjectQueryLinks
 
 extension BlockObjectQuerySortBy
     on QueryBuilder<BlockObject, BlockObject, QSortBy> {
+  QueryBuilder<BlockObject, BlockObject, QAfterSortBy>
+      sortByBlockPositionIndex() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'blockPositionIndex', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BlockObject, BlockObject, QAfterSortBy>
+      sortByBlockPositionIndexDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'blockPositionIndex', Sort.desc);
+    });
+  }
+
   QueryBuilder<BlockObject, BlockObject, QAfterSortBy>
       sortByBlockTranslation() {
     return QueryBuilder.apply(this, (query) {
@@ -1234,20 +1321,6 @@ extension BlockObjectQuerySortBy
     });
   }
 
-  QueryBuilder<BlockObject, BlockObject, QAfterSortBy>
-      sortByOriginalPositionIndex() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'originalPositionIndex', Sort.asc);
-    });
-  }
-
-  QueryBuilder<BlockObject, BlockObject, QAfterSortBy>
-      sortByOriginalPositionIndexDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'originalPositionIndex', Sort.desc);
-    });
-  }
-
   QueryBuilder<BlockObject, BlockObject, QAfterSortBy> sortByPhraseId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'phraseId', Sort.asc);
@@ -1259,24 +1332,24 @@ extension BlockObjectQuerySortBy
       return query.addSortBy(r'phraseId', Sort.desc);
     });
   }
-
-  QueryBuilder<BlockObject, BlockObject, QAfterSortBy>
-      sortByTranslatedPositionIndex() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'translatedPositionIndex', Sort.asc);
-    });
-  }
-
-  QueryBuilder<BlockObject, BlockObject, QAfterSortBy>
-      sortByTranslatedPositionIndexDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'translatedPositionIndex', Sort.desc);
-    });
-  }
 }
 
 extension BlockObjectQuerySortThenBy
     on QueryBuilder<BlockObject, BlockObject, QSortThenBy> {
+  QueryBuilder<BlockObject, BlockObject, QAfterSortBy>
+      thenByBlockPositionIndex() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'blockPositionIndex', Sort.asc);
+    });
+  }
+
+  QueryBuilder<BlockObject, BlockObject, QAfterSortBy>
+      thenByBlockPositionIndexDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'blockPositionIndex', Sort.desc);
+    });
+  }
+
   QueryBuilder<BlockObject, BlockObject, QAfterSortBy>
       thenByBlockTranslation() {
     return QueryBuilder.apply(this, (query) {
@@ -1329,20 +1402,6 @@ extension BlockObjectQuerySortThenBy
     });
   }
 
-  QueryBuilder<BlockObject, BlockObject, QAfterSortBy>
-      thenByOriginalPositionIndex() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'originalPositionIndex', Sort.asc);
-    });
-  }
-
-  QueryBuilder<BlockObject, BlockObject, QAfterSortBy>
-      thenByOriginalPositionIndexDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'originalPositionIndex', Sort.desc);
-    });
-  }
-
   QueryBuilder<BlockObject, BlockObject, QAfterSortBy> thenByPhraseId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'phraseId', Sort.asc);
@@ -1354,24 +1413,17 @@ extension BlockObjectQuerySortThenBy
       return query.addSortBy(r'phraseId', Sort.desc);
     });
   }
-
-  QueryBuilder<BlockObject, BlockObject, QAfterSortBy>
-      thenByTranslatedPositionIndex() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'translatedPositionIndex', Sort.asc);
-    });
-  }
-
-  QueryBuilder<BlockObject, BlockObject, QAfterSortBy>
-      thenByTranslatedPositionIndexDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'translatedPositionIndex', Sort.desc);
-    });
-  }
 }
 
 extension BlockObjectQueryWhereDistinct
     on QueryBuilder<BlockObject, BlockObject, QDistinct> {
+  QueryBuilder<BlockObject, BlockObject, QDistinct>
+      distinctByBlockPositionIndex() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'blockPositionIndex');
+    });
+  }
+
   QueryBuilder<BlockObject, BlockObject, QDistinct> distinctByBlockTranslation(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1392,13 +1444,6 @@ extension BlockObjectQueryWhereDistinct
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'contentSignature',
           caseSensitive: caseSensitive);
-    });
-  }
-
-  QueryBuilder<BlockObject, BlockObject, QDistinct>
-      distinctByOriginalPositionIndex() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'originalPositionIndex');
     });
   }
 
@@ -1424,6 +1469,13 @@ extension BlockObjectQueryProperty
     });
   }
 
+  QueryBuilder<BlockObject, int?, QQueryOperations>
+      blockPositionIndexProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'blockPositionIndex');
+    });
+  }
+
   QueryBuilder<BlockObject, String?, QQueryOperations>
       blockTranslationProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -1444,20 +1496,13 @@ extension BlockObjectQueryProperty
     });
   }
 
-  QueryBuilder<BlockObject, int?, QQueryOperations>
-      originalPositionIndexProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'originalPositionIndex');
-    });
-  }
-
   QueryBuilder<BlockObject, int?, QQueryOperations> phraseIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'phraseId');
     });
   }
 
-  QueryBuilder<BlockObject, int?, QQueryOperations>
+  QueryBuilder<BlockObject, List<int>, QQueryOperations>
       translatedPositionIndexProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'translatedPositionIndex');
