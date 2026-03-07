@@ -3,7 +3,7 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:isar/isar.dart';
 
-import '../data/models/wordObject.dart';
+import '../../data/models/wordObject.dart';
 
 class WordService extends StateNotifier<List<WordObject>> {
   final Isar db;

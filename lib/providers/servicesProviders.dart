@@ -1,8 +1,8 @@
-import 'package:eiga/backend/services/blockService.dart';
+import 'package:eiga/backend/services/models_services/blockService.dart';
 import 'package:eiga/backend/services/geminiService.dart';
-import 'package:eiga/backend/services/phraseService.dart';
-import 'package:eiga/backend/services/videoService.dart';
-import 'package:eiga/backend/services/wordService.dart';
+import 'package:eiga/backend/services/models_services/phraseService.dart';
+import 'package:eiga/backend/services/models_services/videoService.dart';
+import 'package:eiga/backend/services/models_services/wordService.dart';
 import 'package:eiga/config/appConfigs.dart';
 import 'package:eiga/providers/modelsProviders.dart';
 import 'package:eiga/providers/packageProviders.dart';

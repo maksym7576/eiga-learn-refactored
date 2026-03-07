@@ -9,7 +9,8 @@ class VideoObject {
   String? originalLanguage;
   String? translatedLanguage;
   String? videoName;
-  String? srtPath;
+  String? textFormat;
+  String? pathSubtitle;
   String? videoPath;
   String? thumbnailPath;
   DateTime? createdAt;

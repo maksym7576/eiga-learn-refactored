@@ -31,7 +31,12 @@ class PhraseService {
     await db.writeTxn(() async {
       await db.phraseObjects.put(phraseObject);
     });
-    await getPhrasesByVideoId(phraseObject.videoId!);
+  }
+
+  Future<void> addPhrasesList(List<PhraseObject> phraseList) async {
+    await db.writeTxn(() async {
+      await db.phraseObjects.putAll(phraseList);
+    });
   }
 
   Future<void> markAsTranslatedAndMarkNotTranslating(int phraseId) async {
