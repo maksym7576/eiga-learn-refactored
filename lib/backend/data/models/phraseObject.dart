@@ -19,6 +19,8 @@ class PhraseObject {
 
   bool isTranslated = false;
 
+  bool isTranslating = false;
+
   bool isActive = false;
 
 

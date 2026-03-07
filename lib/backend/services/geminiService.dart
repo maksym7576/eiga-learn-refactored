@@ -66,7 +66,9 @@ class GeminiService {
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(requestBody),
-    );
+    ).timeout(Duration(seconds: 160), onTimeout: () {
+      throw Exception("Gemini request time out");
+    });
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       if (data['candidates'] != null &&
@@ -168,7 +170,7 @@ class GeminiService {
         await wordService.createWord(wordObject: newWord);
        }
      }
-     await phraseService.markAsTranslated(phraseIdFromGemini);
+     await phraseService.markAsTranslatedAndMarkNotTranslating(phraseIdFromGemini);
      }
   }
 }

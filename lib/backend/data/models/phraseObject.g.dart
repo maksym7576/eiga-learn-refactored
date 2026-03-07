@@ -32,23 +32,28 @@ const PhraseObjectSchema = CollectionSchema(
       name: r'isTranslated',
       type: IsarType.bool,
     ),
-    r'originalPhrase': PropertySchema(
+    r'isTranslating': PropertySchema(
       id: 3,
+      name: r'isTranslating',
+      type: IsarType.bool,
+    ),
+    r'originalPhrase': PropertySchema(
+      id: 4,
       name: r'originalPhrase',
       type: IsarType.string,
     ),
     r'phraseOrder': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'phraseOrder',
       type: IsarType.long,
     ),
     r'startTime': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'startTime',
       type: IsarType.dateTime,
     ),
     r'videoId': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'videoId',
       type: IsarType.long,
     )
@@ -105,10 +110,11 @@ void _phraseObjectSerialize(
   writer.writeDateTime(offsets[0], object.endTime);
   writer.writeBool(offsets[1], object.isActive);
   writer.writeBool(offsets[2], object.isTranslated);
-  writer.writeString(offsets[3], object.originalPhrase);
-  writer.writeLong(offsets[4], object.phraseOrder);
-  writer.writeDateTime(offsets[5], object.startTime);
-  writer.writeLong(offsets[6], object.videoId);
+  writer.writeBool(offsets[3], object.isTranslating);
+  writer.writeString(offsets[4], object.originalPhrase);
+  writer.writeLong(offsets[5], object.phraseOrder);
+  writer.writeDateTime(offsets[6], object.startTime);
+  writer.writeLong(offsets[7], object.videoId);
 }
 
 PhraseObject _phraseObjectDeserialize(
@@ -119,14 +125,15 @@ PhraseObject _phraseObjectDeserialize(
 ) {
   final object = PhraseObject(
     endTime: reader.readDateTimeOrNull(offsets[0]),
-    originalPhrase: reader.readStringOrNull(offsets[3]),
-    phraseOrder: reader.readLongOrNull(offsets[4]),
-    startTime: reader.readDateTimeOrNull(offsets[5]),
-    videoId: reader.readLongOrNull(offsets[6]),
+    originalPhrase: reader.readStringOrNull(offsets[4]),
+    phraseOrder: reader.readLongOrNull(offsets[5]),
+    startTime: reader.readDateTimeOrNull(offsets[6]),
+    videoId: reader.readLongOrNull(offsets[7]),
   );
   object.id = id;
   object.isActive = reader.readBool(offsets[1]);
   object.isTranslated = reader.readBool(offsets[2]);
+  object.isTranslating = reader.readBool(offsets[3]);
   return object;
 }
 
@@ -144,12 +151,14 @@ P _phraseObjectDeserializeProp<P>(
     case 2:
       return (reader.readBool(offset)) as P;
     case 3:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 4:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 5:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 6:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 7:
       return (reader.readLongOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -512,6 +521,16 @@ extension PhraseObjectQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'isTranslated',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<PhraseObject, PhraseObject, QAfterFilterCondition>
+      isTranslatingEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'isTranslating',
         value: value,
       ));
     });
@@ -939,6 +958,19 @@ extension PhraseObjectQuerySortBy
     });
   }
 
+  QueryBuilder<PhraseObject, PhraseObject, QAfterSortBy> sortByIsTranslating() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isTranslating', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PhraseObject, PhraseObject, QAfterSortBy>
+      sortByIsTranslatingDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isTranslating', Sort.desc);
+    });
+  }
+
   QueryBuilder<PhraseObject, PhraseObject, QAfterSortBy>
       sortByOriginalPhrase() {
     return QueryBuilder.apply(this, (query) {
@@ -1042,6 +1074,19 @@ extension PhraseObjectQuerySortThenBy
     });
   }
 
+  QueryBuilder<PhraseObject, PhraseObject, QAfterSortBy> thenByIsTranslating() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isTranslating', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PhraseObject, PhraseObject, QAfterSortBy>
+      thenByIsTranslatingDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'isTranslating', Sort.desc);
+    });
+  }
+
   QueryBuilder<PhraseObject, PhraseObject, QAfterSortBy>
       thenByOriginalPhrase() {
     return QueryBuilder.apply(this, (query) {
@@ -1114,6 +1159,13 @@ extension PhraseObjectQueryWhereDistinct
     });
   }
 
+  QueryBuilder<PhraseObject, PhraseObject, QDistinct>
+      distinctByIsTranslating() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'isTranslating');
+    });
+  }
+
   QueryBuilder<PhraseObject, PhraseObject, QDistinct> distinctByOriginalPhrase(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1164,6 +1216,12 @@ extension PhraseObjectQueryProperty
   QueryBuilder<PhraseObject, bool, QQueryOperations> isTranslatedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isTranslated');
+    });
+  }
+
+  QueryBuilder<PhraseObject, bool, QQueryOperations> isTranslatingProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'isTranslating');
     });
   }
 
