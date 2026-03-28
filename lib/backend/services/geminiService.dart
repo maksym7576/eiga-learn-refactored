@@ -8,7 +8,7 @@ import 'package:eiga/backend/services/models_services/phraseService.dart';
 import 'package:eiga/backend/services/models_services/wordService.dart';
 import 'package:http/http.dart' as http;
 import 'package:eiga/backend/data/models/phraseObject.dart';
-import 'package:eiga/config/modelsUrl/geminiApiUrls.dart';
+import 'package:eiga/config/modelsUrl/aiModelManager.dart';
 import 'package:eiga/config/prompts/promptManager.dart';
 import 'package:eiga/config/secureStorage.dart';
 
@@ -24,7 +24,9 @@ class GeminiService {
 });
 
   Future<String> _formToken() async {
-    final baseUrl = await GeminiApiUrls.getUrl();
+    final aiModelManager = AiModelManager();
+    final model = await aiModelManager.getCurrentModel();
+    final baseUrl = model.url;
     final token = await SecureTokenStorage.getToken();
 
     return '$baseUrl?key=$token';

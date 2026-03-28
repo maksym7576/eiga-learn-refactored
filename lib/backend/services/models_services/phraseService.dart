@@ -1,5 +1,5 @@
 import 'package:eiga/backend/data/models/phraseObject.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 class PhraseService {
   final Isar db;

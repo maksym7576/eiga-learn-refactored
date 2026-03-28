@@ -4,6 +4,7 @@ import 'package:eiga/backend/services/models_services/phraseService.dart';
 import 'package:eiga/backend/services/models_services/videoService.dart';
 import 'package:eiga/backend/services/models_services/wordService.dart';
 import 'package:eiga/config/appConfigs.dart';
+import 'package:eiga/config/modelsUrl/aiModelManager.dart';
 import 'package:eiga/providers/modelsProviders.dart';
 import 'package:eiga/providers/packageProviders.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';

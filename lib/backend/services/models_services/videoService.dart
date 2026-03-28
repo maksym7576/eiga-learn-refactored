@@ -2,7 +2,7 @@
 
 import 'package:eiga/backend/data/models/videoObject.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 class VideoService extends StateNotifier<List<VideoObject>> {
   final Isar db;

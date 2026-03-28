@@ -1,7 +1,7 @@
 import 'package:eiga/backend/data/models/languageObject.dart';
 import 'package:eiga/backend/data/seeds/langeageSeeds.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 class LanguageService extends StateNotifier<List<LanguageObject>> {
   final Isar db;
