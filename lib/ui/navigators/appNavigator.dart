@@ -7,8 +7,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class AppNavigator extends HookConsumerWidget {
   final Widget child;
-
-  const AppNavigator({super.key, required this.child});
+  final bool showBottomBar;
+  const AppNavigator({super.key, required this.child, this.showBottomBar = true});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -22,7 +22,7 @@ class AppNavigator extends HookConsumerWidget {
 
     return Scaffold(
       body: child,
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: showBottomBar ? BottomNavigationBar(
         currentIndex: selectedIndex,
         onTap: (index) {
           switch (index) {
@@ -43,7 +43,7 @@ class AppNavigator extends HookConsumerWidget {
               label: 'Settings',
           ),
         ]
-      ),
+      ) : null,
     );
   }
 }

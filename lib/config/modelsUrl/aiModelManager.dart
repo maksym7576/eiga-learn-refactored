@@ -58,10 +58,20 @@ class AiModelManager {
     }
 
     Future<List<AiModelDataDTO>> getAllModelsData() async {
+      final currentName = await getCurrentModelName();
+
       List<AiModelDataDTO> result = [];
+
       for (final m in aiModels) {
         result.add(await getModelData(m.name));
       }
+
+      result.sort((a, b) {
+        if (a.name == currentName) return -1;
+        if (b.name == currentName) return 1;
+        return 0;
+      });
+
       return result;
     }
 
