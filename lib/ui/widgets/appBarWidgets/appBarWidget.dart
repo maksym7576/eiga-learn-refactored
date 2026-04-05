@@ -52,7 +52,8 @@ class _AppBarWidget extends State<AppBarWidget> {
                         .of(context)
                         .size
                         .height * 0.6,
-                    maxWidth: 400,
+                    maxWidth: MediaQuery.of(context).size.width * 0.9,
+                    minWidth: MediaQuery.of(context).size.width * 0.9,
                   ),
                   decoration: BoxDecoration(
                     color: Colors.white,

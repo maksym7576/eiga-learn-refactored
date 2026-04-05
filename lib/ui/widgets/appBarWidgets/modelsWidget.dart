@@ -107,7 +107,7 @@ class _ModelsWidget extends State<ModelsWidget> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Select The model',
+                          'Select the model',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                               fontSize: 14,

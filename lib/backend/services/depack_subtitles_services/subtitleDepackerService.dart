@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 
+import 'package:eiga/backend/data/models/phraseObject.dart';
 import 'package:eiga/backend/data/models/videoObject.dart';
 import 'package:eiga/backend/services/depack_subtitles_services/srtParserService.dart';
 import 'package:eiga/backend/services/models_services/phraseService.dart';
@@ -17,6 +18,16 @@ class SubtitleDepackerService {
     required this.videoService,
     required this.phraseService,
   });
+
+  Future<List<PhraseObject>> parseSrtPreview({required String filePath, required String language,int videoId = 0}) async {
+
+    String fileContent = await _readFile(filePath);
+
+    if (fileContent.isEmpty) return [];
+
+    final config = DepackerLanguageConfigRegistry.getConfig(language);
+    return SrtParser(config).parse(fileContent, videoId);
+  }
 
   Future<void> depack(VideoObject videoObject) async {
     if (videoObject.videoPath == null) return;
