@@ -6,14 +6,14 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 enum LanguageType { original, translation }
 
-class LanguagesWidget extends ConsumerStatefulWidget {
-  const LanguagesWidget({super.key});
+class LanguagePreviewWidget extends ConsumerStatefulWidget {
+  const LanguagePreviewWidget({super.key});
 
   @override
-  ConsumerState<LanguagesWidget> createState() => _LanguagesWidgetState();
+  ConsumerState<LanguagePreviewWidget> createState() => _LanguagesWidgetState();
 }
 
-class _LanguagesWidgetState extends ConsumerState<LanguagesWidget> {
+class _LanguagesWidgetState extends ConsumerState<LanguagePreviewWidget> {
   LanguageType _activeTypeNow = LanguageType.original;
 
   Widget _buildToggleButton(String title, LanguageType type) {
@@ -117,12 +117,14 @@ class _LanguagesWidgetState extends ConsumerState<LanguagesWidget> {
             ],
           ),
           const SizedBox(height: 8),
+          Padding(padding: EdgeInsetsGeometry.symmetric(horizontal: 12), child:
           Row(
             children: [
               _buildToggleButton('Original', LanguageType.original),
               const SizedBox(width: 10),
               _buildToggleButton('Translation', LanguageType.translation),
             ],
+          ),
           ),
           Expanded(
             child: ListView(

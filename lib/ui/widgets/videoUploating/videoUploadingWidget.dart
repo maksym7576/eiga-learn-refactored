@@ -1,22 +1,22 @@
 
 
-import 'package:eiga/ui/widgets/videoUploating/languagesWidget.dart';
+import 'package:eiga/providers/videoComponentsProvider.dart';
+import 'package:eiga/ui/widgets/phrasesDepacked/phraseDepPreviewWidget.dart';
+import 'package:eiga/ui/widgets/videoUploating/languagePreviewWidget.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class VideoUploadingWidget extends StatefulWidget {
+class VideoUploadingWidget extends ConsumerStatefulWidget {
   const VideoUploadingWidget({super.key});
 
   @override
-  State<VideoUploadingWidget> createState() => _VideoUploadingWidget();
+  ConsumerState<VideoUploadingWidget> createState() => _VideoUploadingWidgetState();
 }
 
-class _VideoUploadingWidget extends State<VideoUploadingWidget> {
+class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
   final TextEditingController _titleController = TextEditingController();
-
-  String? videoPatch;
-  String? srtPatch;
 
 
   Future<void> _pickVideo() async {
@@ -29,9 +29,7 @@ class _VideoUploadingWidget extends State<VideoUploadingWidget> {
 
       String? path = file.path;
 
-      setState(() {
-        videoPatch = path;
-      });
+      ref.read(videoPathProvider.notifier).state = path;
     }
   }
 
@@ -45,14 +43,102 @@ class _VideoUploadingWidget extends State<VideoUploadingWidget> {
       final file = result.files.first;
       String? path = file.path;
 
-      setState(() {
-        srtPatch = path;
-      });
+      ref.read(srtPathProvider.notifier).state = path;
     }
   }
 
+  Widget _buildFileBox({required String label, required String? path, required IconData icon, required VoidCallback onTap,}) {
+    final isPicked = path != null;
+    final fileName = isPicked ? path.split('/').last : null;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCirc,
+          height: 120,
+          decoration: BoxDecoration(
+            color: isPicked
+                ? Colors.deepPurpleAccent.withOpacity(0.08)
+                : Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isPicked
+                  ? Colors.deepPurpleAccent
+                  : Colors.deepPurple.withOpacity(0.25),
+              width: isPicked ? 2.0 : 1.5,
+            ),
+            boxShadow: isPicked
+            ? [
+              BoxShadow (
+                color: Colors.deepPurpleAccent.withOpacity(0.12),
+                blurRadius: 12,
+                spreadRadius: 2,
+              ),
+              ]
+              : [],
+          ),
+        child: Center (
+          child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+            transitionBuilder: (child, anim) => ScaleTransition(
+                scale: CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
+                child: FadeTransition(opacity: anim, child: child),
+            ),
+            child: isPicked ? Column(
+              key: const ValueKey('picked'),
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.check_circle_rounded,
+                  color: Colors.deepPurpleAccent,
+                  size: 36,
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                    ),
+                  child: Text(
+                    fileName ?? '',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Colors.deepPurpleAccent,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ) : Column(
+              key: const ValueKey('empty'),
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  color: Colors.deepPurpleAccent.withOpacity(0.35),
+                  size: 36,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.deepPurpleAccent.withOpacity(0.45),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showAllLanguages() async {
-    try {
       await showGeneralDialog(
         context: context,
         barrierDismissible: true,
@@ -87,7 +173,7 @@ class _VideoUploadingWidget extends State<VideoUploadingWidget> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
-                    child: LanguagesWidget(),
+                    child: LanguagePreviewWidget(),
                   ),
                 ),
               ),
@@ -105,16 +191,77 @@ class _VideoUploadingWidget extends State<VideoUploadingWidget> {
           );
         },
       );
-    } finally {
-      setState(() {
-        // _isModelDialogOpen = false;
-      });
-    }
-    // await _initModels();
+  }
+
+  Widget _buildLanguageButton(String original, String translation) {
+    final hasLanguages = original.isNotEmpty && translation.isNotEmpty;
+    final hasOriginal = original.isNotEmpty;
+    final hasTranslation = translation.isNotEmpty;
+
+    return GestureDetector(
+      onTap: _showAllLanguages,
+      child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+          decoration: BoxDecoration(
+            color: hasLanguages
+                ? Colors.deepPurpleAccent.withOpacity(0.3)
+                : Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: hasLanguages
+                  ? Colors.deepPurpleAccent.shade100
+                  : Colors.deepPurple.withOpacity(0.25),
+              width: hasLanguages ? 2 : 1.5,
+            ),
+          ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text (
+              hasOriginal ? original : 'original',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: hasOriginal
+                  ? Colors.deepPurpleAccent
+                  : Colors.deepPurple.withOpacity(0.4),
+              ),
+            ),
+            const SizedBox(width: 1),
+            Icon(
+              Icons.arrow_right_alt,
+              size: 20,
+              color: hasLanguages
+                ? Colors.deepPurpleAccent
+                : Colors.deepPurple.withOpacity(0.4),
+            ),
+            const SizedBox(width: 1),
+            Text (
+              hasTranslation ? translation : 'translation',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: hasTranslation
+                    ? Colors.deepPurpleAccent
+                    : Colors.deepPurple.withOpacity(0.4),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final lanProv = ref.watch(languageProvider);
+    final originalLan = lanProv.original;
+    final translationLan = lanProv.target;
+
+    String? videoPatch = ref.watch(videoPathProvider);
+    String? srtPatch = ref.watch(srtPathProvider);
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Column(
@@ -141,30 +288,64 @@ class _VideoUploadingWidget extends State<VideoUploadingWidget> {
           Row(
             children: [
               Expanded(
-                child: CupertinoButton(
-                  onPressed: _pickVideo,
-                  child: const Text('Attach video'),
+                child: _buildFileBox(
+                    label: 'Attach video',
+                    path: videoPatch,
+                    icon: Icons.video_file_rounded,
+                    onTap: _pickVideo
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: CupertinoButton(
-                  onPressed: _pickSrt,
-                  child: Text('Attach subtitle'),
+                child: _buildFileBox(
+                    label: 'Attach subtitle',
+                    path: srtPatch,
+                    icon: Icons.subtitles_sharp,
+                    onTap: _pickSrt
                 ),
               ),
             ],
           ),
+          SizedBox(height: 7),
           Row(
             children: [
               Expanded(
-                  child: CupertinoButton(
-                      child: const  Text('Language'),
-                      onPressed: () => _showAllLanguages(),
-                  ),
+                  child: _buildLanguageButton(originalLan, translationLan),
               ),
             ],
-          )
+          ),
+          SizedBox(height: 7),
+          if (srtPatch != null && originalLan.isNotEmpty)
+            Container(
+              child: PhrasesDepPreviewWidget(),
+            ),
+          const SizedBox(height: 16),
+          Padding(padding: EdgeInsetsGeometry.symmetric(horizontal: 30),
+            child:    SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurpleAccent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: Text(
+                  'Submit',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 100),
         ],
       ),
     );

@@ -1,6 +1,6 @@
 import 'package:eiga/backend/data/dto/AIModelDataDTO.dart';
 import 'package:eiga/config/modelsUrl/aiModelManager.dart';
-import 'package:eiga/ui/widgets/appBarWidgets/modelsWidget.dart';
+import 'package:eiga/ui/widgets/appBarWidgets/modelsPreviewWidget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -68,7 +68,7 @@ class _AppBarWidget extends State<AppBarWidget> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(20),
-                    child: ModelsWidget(
+                    child: ModelPreviewWidget(
                       selectedModel: _selectedItem!,
                       otherModels: _models,
                     ),

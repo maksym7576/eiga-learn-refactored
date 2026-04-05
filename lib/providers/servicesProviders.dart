@@ -1,3 +1,4 @@
+import 'package:eiga/backend/services/depack_subtitles_services/subtitleDepackerService.dart';
 import 'package:eiga/backend/services/models_services/blockService.dart';
 import 'package:eiga/backend/services/geminiService.dart';
 import 'package:eiga/backend/services/models_services/phraseService.dart';
@@ -43,3 +44,9 @@ final geminiServiceProvider = Provider<GeminiService>((ref) {
   return GeminiService(phraseService: phraseService, blockService: blockService, wordService: wordService);
 });
 
+final subtitleDepackerServiceProvider = Provider<SubtitleDepackerService>((ref) {
+  final videoService = ref.watch(videoServiceProvider);
+  final phraseService = ref.watch(phraseServiceProvider);
+
+  return SubtitleDepackerService(videoService: videoService, phraseService: phraseService);
+});

@@ -1,5 +1,3 @@
-
-
 import 'package:eiga/ui/widgets/appBarWidgets/appBarWidget.dart';
 import 'package:eiga/ui/widgets/videoUploating/videoUploadingWidget.dart';
 import 'package:flutter/cupertino.dart';
@@ -13,8 +11,8 @@ class MainScreen extends ConsumerStatefulWidget {
   ConsumerState<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends ConsumerState<MainScreen> with TickerProviderStateMixin {
-
+class _MainScreenState extends ConsumerState<MainScreen>
+    with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
@@ -24,13 +22,11 @@ class _MainScreenState extends ConsumerState<MainScreen> with TickerProviderStat
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-          preferredSize: Size.fromHeight(60),
-          child: AppBarWidget(),
+        preferredSize: Size.fromHeight(60),
+        child: AppBarWidget(),
       ),
-      body: Column(
-        children: [
-          VideoUploadingWidget(),
-        ],
+      body: SingleChildScrollView(
+        child: Column(children: [VideoUploadingWidget()]),
       ),
     );
   }

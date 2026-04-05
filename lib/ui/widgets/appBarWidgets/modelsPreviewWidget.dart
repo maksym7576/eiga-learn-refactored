@@ -5,21 +5,21 @@ import 'package:eiga/ui/widgets/appBarWidgets/modelWidget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class ModelsWidget extends StatefulWidget {
+class ModelPreviewWidget extends StatefulWidget {
   final AiModelDataDTO selectedModel;
   final List<AiModelDataDTO> otherModels;
 
-  const ModelsWidget({
+  const ModelPreviewWidget({
     Key? key,
     required this.selectedModel,
     required this.otherModels,
   }) : super(key: key);
 
   @override
-  _ModelsWidget createState() => _ModelsWidget();
+  _ModelPreviewWidget createState() => _ModelPreviewWidget();
 }
 
-class _ModelsWidget extends State<ModelsWidget> {
+class _ModelPreviewWidget extends State<ModelPreviewWidget> {
   late Timer _timer;
   String _remainingTime = '00:00:00';
   final int resetHourUTC = 0;

@@ -30,3 +30,7 @@ class LanguageNotifier extends Notifier<LanguageState> {
 }
 
 final languageProvider = NotifierProvider<LanguageNotifier, LanguageState>(LanguageNotifier.new);
+
+final videoPathProvider = StateProvider<String?>((ref) => null);
+
+final srtPathProvider = StateProvider<String?>((ref) => null);
