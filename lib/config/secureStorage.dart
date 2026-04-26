@@ -18,4 +18,8 @@ class SecureTokenStorage {
   static Future<void> setToken(String apiKey) async {
     await _storage.write(key: _geminiApiKeyStorageKey, value: apiKey);
   }
+
+  static Future<void> deleteToken() async {
+    await _storage.delete(key: _geminiApiKeyStorageKey);
+  }
 }
