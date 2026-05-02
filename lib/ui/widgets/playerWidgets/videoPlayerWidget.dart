@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
 import 'package:flick_video_player/flick_video_player.dart';
 import 'package:flutter/cupertino.dart';
@@ -7,9 +8,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoPlayerWidget extends ConsumerStatefulWidget {
-  final String url;
 
-  const VideoPlayerWidget({super.key, required this.url});
+  const VideoPlayerWidget({super.key});
 
   @override
   ConsumerState<VideoPlayerWidget> createState() => _VideoPlayerWidgetState();
@@ -21,9 +21,16 @@ class _VideoPlayerWidgetState extends ConsumerState<VideoPlayerWidget> {
   @override
   void initState() {
     super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
+    final id = ref.read(playerIdProvider.notifier).state;
+    final videoObject = await ref.read(videoServiceProvider.notifier).getVideoById(id!);
     flickManager = FlickManager(
-      videoPlayerController: VideoPlayerController.asset('assets/pri.mp4'),
+      videoPlayerController: VideoPlayerController.file(File(videoObject!.videoPath!)),
     );
+    setState(() {});
   }
 
   @override

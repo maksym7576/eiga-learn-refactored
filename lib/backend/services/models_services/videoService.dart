@@ -8,7 +8,13 @@ class VideoService extends StateNotifier<List<VideoObject>> {
   final Isar db;
 
   VideoService(this.db) : super([]) {
-    getAllVideos();
+    _watchVideos();
+  }
+
+  void _watchVideos() {
+    db.videoObjects.where().watch(fireImmediately: true).listen((videos) {
+      state = videos;
+    });
   }
 
   Future<void> getAllVideos() async {
@@ -16,13 +22,11 @@ class VideoService extends StateNotifier<List<VideoObject>> {
     state = videos;
   }
 
-  Future<VideoObject> addVideo(VideoObject videoObject) async {
+  Future<void> addVideo(VideoObject videoObject) async {
     videoObject.createdAt = DateTime.now();
-    final createdVideoObject = await db.writeTxn(() async {
+    await db.writeTxn(() async {
       await db.videoObjects.put(videoObject);
     });
-    await getAllVideos();
-    return createdVideoObject;
   }
 
   Future<void> updateVideo(VideoObject newVideoObject) async {
@@ -34,6 +38,12 @@ class VideoService extends StateNotifier<List<VideoObject>> {
 
   Future<VideoObject?> getVideoById(int id) async {
     return await db.videoObjects.get(id);
+  }
+
+  Future<void> deleteVideoById(int id) async {
+    await db.writeTxn(() async {
+      await db.videoObjects.delete(id);
+    });
   }
 
 }

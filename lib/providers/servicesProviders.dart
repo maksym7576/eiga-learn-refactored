@@ -1,3 +1,4 @@
+import 'package:eiga/backend/data/models/videoObject.dart';
 import 'package:eiga/backend/services/depack_subtitles_services/subtitleDepackerService.dart';
 import 'package:eiga/backend/services/models_services/blockService.dart';
 import 'package:eiga/backend/services/geminiService.dart';
@@ -21,7 +22,7 @@ final phraseServiceProvider = Provider<PhraseService>((ref) {
   return PhraseService(db);
 });
 
-final videoServiceProvider = Provider<VideoService>((ref) {
+final videoServiceProvider = StateNotifierProvider<VideoService, List<VideoObject>>((ref) {
   final db = ref.watch(isarProvider);
   return VideoService(db);
 });
@@ -45,7 +46,7 @@ final geminiServiceProvider = Provider<GeminiService>((ref) {
 });
 
 final subtitleDepackerServiceProvider = Provider<SubtitleDepackerService>((ref) {
-  final videoService = ref.watch(videoServiceProvider);
+  final videoService = ref.watch(videoServiceProvider.notifier);
   final phraseService = ref.watch(phraseServiceProvider);
 
   return SubtitleDepackerService(videoService: videoService, phraseService: phraseService);

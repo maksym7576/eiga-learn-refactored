@@ -1,5 +1,7 @@
 
 
+import 'package:eiga/backend/data/models/videoObject.dart';
+import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoComponentsProvider.dart';
 import 'package:eiga/ui/widgets/phrasesDepacked/phraseDepPreviewWidget.dart';
 import 'package:eiga/ui/widgets/videoUploating/languagePreviewWidget.dart';
@@ -138,6 +140,37 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
     );
   }
 
+  Future<void> _submitVideo() async {
+    final videoService = ref.read(videoServiceProvider.notifier);
+    final videoPath = ref.read(videoPathProvider);
+    final srtPath = ref.read(srtPathProvider);
+    final originalLanguage = ref.read(languageProvider).original;
+    final targetLanguage = ref.read(languageProvider).target;
+    final name = _titleController.text.trim();
+
+    if (videoPath == null || srtPath == null || originalLanguage.isEmpty || targetLanguage.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('You need to fill all')),
+      );
+      return;
+    }
+
+    final videoObj = VideoObject()
+    ..videoName = name.isEmpty ? videoPath.toString().trim() : name
+    ..videoPath = videoPath
+    ..pathSubtitle = srtPath
+    ..originalLanguage = originalLanguage
+    ..translatedLanguage = targetLanguage
+    ..createdAt = DateTime.now();
+
+    await videoService.addVideo(videoObj);
+
+    _titleController.clear();
+    ref.read(videoPathProvider.notifier).state = null;
+    ref.read(srtPathProvider.notifier).state = null;
+    ref.read(languageProvider.notifier).clear();
+  }
+
   void _showAllLanguages() async {
       await showGeneralDialog(
         context: context,
@@ -262,6 +295,8 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
     String? videoPatch = ref.watch(videoPathProvider);
     String? srtPatch = ref.watch(srtPathProvider);
 
+    final isButtonEnabled = (videoPatch?.isNotEmpty ?? false) && (srtPatch?.isNotEmpty ?? false) && lanProv.original.isNotEmpty && lanProv.target.isNotEmpty;
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Column(
@@ -324,7 +359,9 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
             child:    SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: isButtonEnabled ? () {
+                  _submitVideo();
+                } : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurpleAccent,
                   foregroundColor: Colors.white,

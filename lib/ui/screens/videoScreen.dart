@@ -35,7 +35,7 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
       ),
       body: Column(
         children: [
-          VideoPlayerWidget(url: ''),
+          VideoPlayerWidget(),
         ],
       ),
     );

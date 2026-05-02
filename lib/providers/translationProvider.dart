@@ -111,7 +111,7 @@ class TranslationProvider {
     _isProcessing = true;
     
     try {
-      final video = await ref.read(videoServiceProvider).getVideoById(phrases.first.videoId!);
+      final video = await ref.read(videoServiceProvider.notifier).getVideoById(phrases.first.videoId!);
       if (video == null) return;
       await ref.read(phraseServiceProvider).markPhrasesAsTranslatingByPhraseList(phrases);
       await ref.read(geminiServiceProvider).translatePhraseList(phraseObjectsList: phrases, originalLanguage: video.originalLanguage, translationLanguage: video.translatedLanguage!);

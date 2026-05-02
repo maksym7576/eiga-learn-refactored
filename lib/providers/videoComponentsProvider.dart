@@ -27,6 +27,10 @@ class LanguageNotifier extends Notifier<LanguageState> {
 
   void setTarget(String language) =>
       state = state.copyWith(target: language);
+
+  void clear() {
+    state = const LanguageState();
+  }
 }
 
 final languageProvider = NotifierProvider<LanguageNotifier, LanguageState>(LanguageNotifier.new);
