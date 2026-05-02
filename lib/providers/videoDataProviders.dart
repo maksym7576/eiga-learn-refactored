@@ -9,3 +9,15 @@ final playerTimeProvider = StateProvider<Duration>((ref) {
 final playerIdProvider = StateProvider<int?>((ref) {
   return null;
 });
+
+final isLockedVideoProvider = StateProvider<bool>((ref) {
+  return false;
+});
+
+final isFullScreenProvider = StateProvider<bool>((ref) {
+  return false;
+});
+
+final videoDurationProvider = StateProvider<Duration>((ref) {
+  return Duration.zero;
+});

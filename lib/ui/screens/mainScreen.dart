@@ -2,6 +2,7 @@ import 'package:eiga/ui/widgets/appBarWidgets/appBarWidget.dart';
 import 'package:eiga/ui/widgets/videoUploating/videoUploadingWidget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class MainScreen extends ConsumerStatefulWidget {
@@ -27,6 +28,14 @@ class _MainScreenState extends ConsumerState<MainScreen>
       ),
       body: SingleChildScrollView(
         child: Column(children: [VideoUploadingWidget()]),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          context.go('/player');
+        },
+        backgroundColor: Colors.deepPurpleAccent,
+        icon: const Icon(Icons.play_arrow_rounded),
+        label: const Text('Player'),
       ),
     );
   }
