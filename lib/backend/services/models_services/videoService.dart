@@ -22,11 +22,17 @@ class VideoService extends StateNotifier<List<VideoObject>> {
     state = videos;
   }
 
-  Future<void> addVideo(VideoObject videoObject) async {
+  Future<int> addVideo(VideoObject videoObject) async {
     videoObject.createdAt = DateTime.now();
-    await db.writeTxn(() async {
-      await db.videoObjects.put(videoObject);
+    return await db.writeTxn(() async {
+     return await db.videoObjects.put(videoObject);
     });
+  }
+
+  Future<VideoObject> addVideoAndGet(VideoObject videoObject) async {
+    final videoId = await addVideo(videoObject);
+    final video = await getVideoById(videoId);
+    return video!;
   }
 
   Future<void> updateVideo(VideoObject newVideoObject) async {

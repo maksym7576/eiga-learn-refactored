@@ -21,3 +21,17 @@ final isFullScreenProvider = StateProvider<bool>((ref) {
 final videoDurationProvider = StateProvider<Duration>((ref) {
   return Duration.zero;
 });
+
+final autoScrollProvider = StateNotifierProvider<AutoScrollNotifier, bool>(
+    (ref) => AutoScrollNotifier(),
+);
+
+class AutoScrollNotifier extends StateNotifier<bool> {
+  AutoScrollNotifier() : super(true);
+
+  void enable() => state = true;
+  void disable() => state = false;
+  void toggle() => state = !state;
+}
+
+final playerSeekProvider = StateProvider<Duration?>((ref) => null);

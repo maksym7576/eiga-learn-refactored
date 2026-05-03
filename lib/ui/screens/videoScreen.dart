@@ -1,7 +1,9 @@
 
 
 
+import 'package:eiga/ui/widgets/phrasesCardsWidgest/phrasesListNotFullScreenWidget.dart';
 import 'package:eiga/ui/widgets/playerWidgets/videoPlayerWidget.dart';
+import 'package:eiga/ui/widgets/playerWidgets/videoSettingsNotFullScreenWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -36,6 +38,10 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
       body: Column(
         children: [
           VideoPlayerWidget(),
+          VideoSettingsNotFullScreenWidget(),
+          Expanded(
+              child: PhraseListNotFullScreenWidget(),
+          ),
         ],
       ),
     );

@@ -32,7 +32,7 @@ class SubtitleDepackerService {
   Future<void> depack(VideoObject videoObject) async {
     if (videoObject.videoPath == null) return;
 
-    final content = await _readFile(videoObject.videoPath!);
+    final content = await _readFile(videoObject.pathSubtitle!);
 
     final config = DepackerLanguageConfigRegistry.getConfig(
         videoObject.originalLanguage);

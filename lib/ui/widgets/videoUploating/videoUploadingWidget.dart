@@ -163,7 +163,9 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
     ..translatedLanguage = targetLanguage
     ..createdAt = DateTime.now();
 
-    await videoService.addVideo(videoObj);
+    final newVideo = await videoService.addVideoAndGet(videoObj);
+    print('video id ${newVideo.id}');
+    await ref.read(subtitleDepackerServiceProvider).depack(newVideo);
 
     _titleController.clear();
     ref.read(videoPathProvider.notifier).state = null;
