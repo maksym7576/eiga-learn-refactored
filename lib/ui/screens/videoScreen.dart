@@ -1,6 +1,7 @@
 
 
 
+import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/ui/widgets/phrasesCardsWidgest/phrasesListNotFullScreenWidget.dart';
 import 'package:eiga/ui/widgets/playerWidgets/videoPlayerWidget.dart';
 import 'package:eiga/ui/widgets/playerWidgets/videoSettingsNotFullScreenWidget.dart';
@@ -19,6 +20,7 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(translationProvider);
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(

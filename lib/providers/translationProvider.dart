@@ -22,6 +22,7 @@ class TranslationProvider {
       if (nextVideoId != _currentVideoId) {
         _resetState(nextVideoId);
       }
+      print('listener initialized');
     });
 
     ref.listen<Duration?>(playerTimeProvider, (prevTime, currentTime) {
@@ -68,10 +69,10 @@ class TranslationProvider {
 
     final pastPhrase = <PhraseObject>[];
     final futurePhrases = <PhraseObject>[];
-    
+
     for (var phrase in allPhrases) {
       if (phrase.isTranslating == true || phrase.isTranslated == true) continue;
-      
+
       final phraseTime = _toDuration(phrase.startTime!);
       if (phraseTime < currentTime) {
         pastPhrase.add(phrase);
@@ -104,24 +105,24 @@ class TranslationProvider {
       }
       return result;
   }
-  
+
   Future<void> _sendToApi(List<PhraseObject> phrases) async {
     if (phrases.isEmpty || _isProcessing) return;
-    
+
     _isProcessing = true;
-    
+
     try {
       final video = await ref.read(videoServiceProvider.notifier).getVideoById(phrases.first.videoId!);
       if (video == null) return;
       await ref.read(phraseServiceProvider).markPhrasesAsTranslatingByPhraseList(phrases);
-      await ref.read(geminiServiceProvider).translatePhraseList(phraseObjectsList: phrases, originalLanguage: video.originalLanguage, translationLanguage: video.translatedLanguage!);
+      await ref.read(geminiServiceProvider).translatePhraseList(phraseObjectsList: phrases, originalLanguage: video.originalLanguage!, translationLanguage: video.translatedLanguage!);
     } catch (e) {
       print('Translation APi Error: $e');
     } finally {
       _isProcessing = false;
     }
   }
-  
+
   Duration _toDuration(DateTime time) {
     return Duration(
       hours: time.hour,

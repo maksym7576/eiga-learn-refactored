@@ -20,7 +20,7 @@ class AppConfigs {
 
   int get getSecondsAhead => _prefs.getInt(_keySecondsAhead) ?? 100;
 
-  int get getNumberOfPhrases => _prefs.getInt(_keyNumberOfPhrases) ?? 60;
+  int get getNumberOfPhrases => _prefs.getInt(_keyNumberOfPhrases) ?? 40;
 
 
 }

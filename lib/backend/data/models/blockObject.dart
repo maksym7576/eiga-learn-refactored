@@ -27,6 +27,6 @@ class BlockObject {
     this.blockTranslation,
     this.contentSignature,
     this.colorHex,
-});
+}) : translatedPositionIndex = translatedPositionIndex;
 
 }

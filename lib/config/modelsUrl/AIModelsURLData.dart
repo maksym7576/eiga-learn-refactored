@@ -28,4 +28,9 @@ final List<AiModelEntry> aiModels = [
       url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
       defaultLimit: 50,
   ),
+  AiModelEntry(
+    name: 'gemma-4-31b-it',
+    url: 'https://generativelanguage.googleapis.com/v1beta/models/gemma-4-31b-it:generateContent',
+    defaultLimit: 50,
+  ),
 ];

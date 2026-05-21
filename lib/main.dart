@@ -1,7 +1,10 @@
+import 'package:eiga/backend/data/models/blockObject.dart';
 import 'package:eiga/backend/data/models/phraseObject.dart';
 import 'package:eiga/backend/data/models/videoObject.dart';
+import 'package:eiga/backend/data/models/wordObject.dart';
 import 'package:eiga/providers/modelsProviders.dart';
 import 'package:eiga/providers/packageProviders.dart';
+import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/ui/navigators/appRouter.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -19,9 +22,20 @@ void main() async {
     [
       PhraseObjectSchema,
       VideoObjectSchema,
+      BlockObjectSchema,
+      WordObjectSchema,
     ],
     directory: dir.path,
   );
+
+  final container = ProviderContainer(
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(prefs),
+      isarProvider.overrideWithValue(isar),
+    ]
+  );
+
+  await container.read(phraseServiceProvider).resetAllTranslatingStatuses();
 
   runApp(
       ProviderScope(

@@ -15,7 +15,7 @@ class VideoPlayerWidget extends ConsumerStatefulWidget {
 }
 
 class _VideoPlayerWidgetState extends ConsumerState<VideoPlayerWidget> {
-  late FlickManager flickManager;
+   FlickManager? flickManager;
 
   @override
   void initState() {
@@ -46,7 +46,7 @@ class _VideoPlayerWidgetState extends ConsumerState<VideoPlayerWidget> {
 
   @override
   void dispose() {
-    flickManager.dispose();
+    flickManager?.dispose();
     super.dispose();
   }
 
@@ -56,12 +56,18 @@ class _VideoPlayerWidgetState extends ConsumerState<VideoPlayerWidget> {
 
     ref.listen<Duration?>(playerSeekProvider, (previous, next) {
       if (next != null) {
-        flickManager.flickControlManager?.seekTo(next);
+        flickManager?.flickControlManager?.seekTo(next);
         Future.microtask(
           () => ref.read(playerSeekProvider.notifier).state = null,
         );
       }
     });
+
+    if (flickManager == null) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
 
     return Center(
       child: SizedBox(
@@ -70,7 +76,7 @@ class _VideoPlayerWidgetState extends ConsumerState<VideoPlayerWidget> {
         child: Stack(
           children: [
             FlickVideoPlayer(
-              flickManager: flickManager,
+              flickManager: flickManager!,
               flickVideoWithControls: FlickVideoWithControls(
                 controls: Stack(
                   children: [

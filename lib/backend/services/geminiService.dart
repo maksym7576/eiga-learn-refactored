@@ -21,7 +21,7 @@ class GeminiService {
     required this.phraseService,
     required this.blockService,
     required this.wordService,
-});
+  });
 
   Future<String> _formToken() async {
     final aiModelManager = AiModelManager();
@@ -32,17 +32,22 @@ class GeminiService {
     return '$baseUrl?key=$token';
   }
 
-  Future<String> _formPrompt(List<PhraseObject> phraseObjectsList,
-      String originalLanguage, String translationLanguage) async {
+  Future<String> _formPrompt(
+    List<PhraseObject> phraseObjectsList,
+    String originalLanguage,
+    String translationLanguage,
+  ) async {
     final String prompt = PromptManager.getPromptByLanguage(
-        originalLanguage, translationLanguage);
+      originalLanguage,
+      translationLanguage,
+    );
+    print('languange $originalLanguage');
+    print('prompt $prompt');
     final sortPhraseList = List<PhraseObject>.from(phraseObjectsList)
       ..sort((a, b) => (a.phraseOrder ?? 0).compareTo(b.phraseOrder ?? 0));
-    final simplifiedPhrasesList = sortPhraseList.map((phrase) =>
-    {
-      'id': phrase.id,
-      'text': phrase.originalPhrase ?? '',
-    }).toList();
+    final simplifiedPhrasesList = sortPhraseList
+        .map((phrase) => {'id': phrase.id, 'text': phrase.originalPhrase ?? ''})
+        .toList();
 
     final String jsonData = jsonEncode(simplifiedPhrasesList);
 
@@ -58,24 +63,36 @@ class GeminiService {
       "contents": [
         {
           "parts": [
-            {"text": prompt}
-          ]
-        }
+            {"text": prompt},
+          ],
+        },
       ],
     };
 
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(requestBody),
-    ).timeout(Duration(seconds: 160), onTimeout: () {
-      throw Exception("Gemini request time out");
-    });
+    final response = await http
+        .post(
+          Uri.parse(url),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(requestBody),
+        )
+        .timeout(
+          Duration(seconds: 160),
+          onTimeout: () {
+            throw Exception("Gemini request time out");
+          },
+        );
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       if (data['candidates'] != null &&
           data['candidates'][0]['content'] != null) {
-        return data['candidates'][0]['content']['parts'][0]['text'];
+        String cleanedResponse =
+            data['candidates'][0]['content']['parts'][0]['text']
+                .toString()
+                .replaceAll('```json', '')
+                .replaceAll('```', '')
+                .trim();
+
+        return cleanedResponse;
       } else {
         throw GeminiGeneralException("Empty response from Gemini");
       }
@@ -100,7 +117,11 @@ class GeminiService {
     }
   }
 
-  Future<void> translatePhraseList({required List<PhraseObject> phraseObjectsList, required originalLanguage, required String translationLanguage}) async {
+  Future<void> translatePhraseList({
+    required List<PhraseObject> phraseObjectsList,
+    required originalLanguage,
+    required String translationLanguage,
+  }) async {
     int attempts = 0;
     const int maxRetries = 1;
 
@@ -109,7 +130,10 @@ class GeminiService {
         attempts++;
         final String fullUrl = await _formToken();
         final String promptWithPhrases = await _formPrompt(
-            phraseObjectsList, originalLanguage, translationLanguage);
+          phraseObjectsList,
+          originalLanguage,
+          translationLanguage,
+        );
         final result = await _sendGeminiRequest(fullUrl, promptWithPhrases);
         await geminiResponseParse(result);
       } catch (error) {
@@ -119,8 +143,8 @@ class GeminiService {
           rethrow;
         }
 
-        bool isRetryable = error is GeminiServerException ||
-            error is http.ClientException;
+        bool isRetryable =
+            error is GeminiServerException || error is http.ClientException;
 
         if (isRetryable && attempts <= maxRetries) {
           await Future.delayed(Duration(seconds: 2));
@@ -131,48 +155,71 @@ class GeminiService {
     }
   }
 
+  List<BlockObject> deduplicateBlocks(List<dynamic> rawBlocks) {
+    final Map<int, BlockObject> unique = {};
+
+    for (var block in rawBlocks) {
+      final phraseId = block['phraseId'] as int;
+      final bPos = block['blockPositionIndex'] as int;
+      final signature = block['contentSignature'] as String;
+
+      final key = phraseId * 1000 + bPos;
+
+      if (!unique.containsKey(key)) {
+        unique[key] = BlockObject(
+          phraseId: phraseId,
+          blockPositionIndex: bPos,
+          blockTranslation: block['blockTranslation'],
+          translatedPositionIndex: List<int>.from(
+            block['translatedPositionIndex'],
+          ),
+          contentSignature: signature,
+          colorHex: block['colorHex'],
+        );
+      }
+    }
+
+    return unique.values.toList()..sort(
+      (a, b) => a.phraseId!.compareTo(b.phraseId!) != 0
+          ? a.phraseId!.compareTo(b.phraseId!)
+          : a.blockPositionIndex!.compareTo(b.blockPositionIndex!),
+    );
+  }
+
   Future<void> geminiResponseParse(String jsonResponse) async {
-     final List<dynamic> phrasesJsonData = jsonDecode(jsonResponse);
+    print('response $jsonResponse');
+    final List<dynamic> phrasesJsonData = jsonDecode(jsonResponse);
 
-     for (var phrasesData in phrasesJsonData) {
-       final int phraseIdFromGemini = phrasesData['phraseId'];
-       final phrase = await phraseService.getPhraseById(phraseIdFromGemini);
+    final allRawBlocks = <dynamic>[];
+    for (var phrasesData in phrasesJsonData) {
+      allRawBlocks.addAll(phrasesData['blocks'] as List<dynamic>);
+    }
 
-       if (phrase == null) continue;
+    final cleanedBlocks = deduplicateBlocks(allRawBlocks);
 
-       final List<dynamic> blocksDataJson = phrasesData['blocks'];
+    final Map<int, List<BlockObject>> blocksByPhrase = {};
+    for (var block in cleanedBlocks) {
+      blocksByPhrase.putIfAbsent(block.phraseId!, () => []).add(block);
+    }
+    for (var phraseId in blocksByPhrase.keys) {
+      final phrase = await phraseService.getPhraseById(phraseId);
+      if (phrase == null) continue;
 
-     for (var blockData in blocksDataJson) {
-       final newBlock = BlockObject(
-         phraseId: phraseIdFromGemini,
-         blockTranslation: blockData['tr'],
-         translatedPositionIndex: List<int>.from(blockData['tr_pos']),
-         blockPositionIndex: blockData['b_pos'],
-         contentSignature: blockData['tr'].hashCode.toString(),
-         colorHex: "#FFFFFF",
-       );
-       final blockId = await blockService.createBlock(blockObject: newBlock);
+      final blocksDataJson = blocksByPhrase[phraseId]!;
 
-       final List<dynamic> wordDataJson = blockData['word'];
+      for (var blockData in blocksDataJson) {
+        final newBlock = BlockObject(
+          phraseId: phraseId,
+          blockTranslation: blockData.blockTranslation,
+          translatedPositionIndex: blockData.translatedPositionIndex!,
+          blockPositionIndex: blockData.blockPositionIndex,
+          contentSignature: blockData.contentSignature,
+          colorHex: "#FFFFFF",
+        );
+        final blockId = await blockService.createBlock(blockObject: newBlock);
+      }
 
-       for (var wordData in wordDataJson) {
-        final Map<String, dynamic> map = Map<String, dynamic>.from(wordData);
-        
-        final newWord = WordObject(blockId: blockId)
-        ..wordPosition = map['w_pos'] as int?
-        ..versions = map.entries
-        .where((entries) => entries.key != 'w_pos')
-        .where((entries) => entries.value != null && entries.value.toString().isNotEmpty)
-        .map((entries) => ReadingItem(
-            key: entries.key,
-            text: entries.value.toString(),
-        ))
-        .toList();
-        
-        await wordService.createWord(wordObject: newWord);
-       }
-     }
-     await phraseService.markAsTranslatedAndMarkNotTranslating(phraseIdFromGemini);
-     }
+      await phraseService.markAsTranslatedAndMarkNotTranslating(phraseId);
+    }
   }
 }

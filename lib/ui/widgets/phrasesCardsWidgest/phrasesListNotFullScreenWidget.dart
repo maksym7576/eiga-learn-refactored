@@ -141,7 +141,7 @@ class _PhraseListNotFullScreenWidgetState
                   color: isFinished
                       ? Colors.deepPurpleAccent.withOpacity(0.3)
                       : isActive
-                      ? Colors.deepPurpleAccent.withOpacity(0.6)
+                      ? Colors.deepPurpleAccent.withOpacity(0.5)
                       : Colors.deepPurpleAccent.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -186,7 +186,7 @@ class _PhraseListNotFullScreenWidgetState
                         ),
                         Row(
                           children: [
-                            if (!phrase.isTranslated)
+                            if (!phrase.isTranslated && !phrase.isTranslating)
                               Container(
                                 padding: EdgeInsets.symmetric(
                                   horizontal: 6,

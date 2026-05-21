@@ -9,6 +9,7 @@ import 'package:eiga/config/appConfigs.dart';
 import 'package:eiga/config/modelsUrl/aiModelManager.dart';
 import 'package:eiga/providers/modelsProviders.dart';
 import 'package:eiga/providers/packageProviders.dart';
+import 'package:eiga/providers/translationProvider.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 
@@ -50,4 +51,9 @@ final subtitleDepackerServiceProvider = Provider<SubtitleDepackerService>((ref) 
   final phraseService = ref.watch(phraseServiceProvider);
 
   return SubtitleDepackerService(videoService: videoService, phraseService: phraseService);
+});
+
+final translationProvider = Provider<TranslationProvider>((ref) {
+  final service = TranslationProvider(ref);
+  return service;
 });

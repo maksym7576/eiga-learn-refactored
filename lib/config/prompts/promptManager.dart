@@ -8,12 +8,14 @@ class PromptManager {
   static String getPromptByLanguage(String sourceLanguage, String targetLanguage) {
     String template;
 
-    switch (targetLanguage.toLowerCase()) {
+    switch (sourceLanguage.toLowerCase()) {
       case 'japanese':
         template = japanesePrompt;
+        print('prompt japanese');
         break;
       default:
         template = defaultPrompt;
+        print('prompt default');
         break;
     }
 
