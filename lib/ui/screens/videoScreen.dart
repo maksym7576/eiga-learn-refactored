@@ -1,6 +1,3 @@
-
-
-
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/ui/widgets/phrasesCardsWidgest/phrasesListNotFullScreenWidget.dart';
 import 'package:eiga/ui/widgets/playerWidgets/videoPlayerWidget.dart';
@@ -17,34 +14,36 @@ class VideoScreen extends ConsumerStatefulWidget {
 }
 
 class _VideoScreenState extends ConsumerState<VideoScreen> {
-
   @override
   Widget build(BuildContext context) {
     ref.watch(translationProvider);
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => context.go('/main'),
-          icon: const Icon(Icons.arrow_back),
-        ),
-        title: const Text(
-          'Player',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w900,
-            color: Colors.deepPurpleAccent,
-            letterSpacing: 1.2,
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.only(top: 7.0),
+          child: Column(
+            children: [
+              Flexible(
+                child: Stack(
+                  children: [
+                    VideoPlayerWidget(),
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      child: IconButton(
+                        onPressed: () => context.go('/main'),
+                        icon: const Icon(Icons.arrow_back),
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              VideoSettingsNotFullScreenWidget(),
+              Expanded(child: PhraseListNotFullScreenWidget()),
+            ],
           ),
         ),
-      ),
-      body: Column(
-        children: [
-          VideoPlayerWidget(),
-          VideoSettingsNotFullScreenWidget(),
-          Expanded(
-              child: PhraseListNotFullScreenWidget(),
-          ),
-        ],
       ),
     );
   }

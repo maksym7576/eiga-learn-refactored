@@ -69,12 +69,12 @@ class _VideoPlayerWidgetState extends ConsumerState<VideoPlayerWidget> {
       );
     }
 
-    return Center(
-      child: SizedBox(
-        width: MediaQuery.of(context).size.width,
-        height: 220,
-        child: Stack(
-          children: [
+
+    final double videoRatio = flickManager!.flickVideoManager!.videoPlayerController!.value.aspectRatio;
+    final double aspectRatio = videoRatio > 0 ? videoRatio : 16 / 9;
+    return AspectRatio(
+        aspectRatio: aspectRatio,
+            child:
             FlickVideoPlayer(
               flickManager: flickManager!,
               flickVideoWithControls: FlickVideoWithControls(
@@ -112,10 +112,7 @@ class _VideoPlayerWidgetState extends ConsumerState<VideoPlayerWidget> {
                 ),
               ),
             ),
-          ],
-        ),
-      ),
-    );
+      );
   }
 
   Widget _buildLockButton(

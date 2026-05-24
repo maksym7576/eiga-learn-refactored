@@ -36,4 +36,12 @@ class BlockService extends StateNotifier<List<BlockObject>> {
     );
     });
   }
+
+  Future<BlockObject?> getBlockByContentSignature(String contentSignature) async {
+    return await db.blockObjects
+        .filter()
+        .contentSignatureEqualTo(contentSignature)
+        .findFirst();
+  }
+
 }

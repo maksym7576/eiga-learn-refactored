@@ -71,4 +71,40 @@ class PhraseService {
       await db.phraseObjects.putAll(phrases);
     });
   }
+
+  Future<void> shiftPhrasesTimeByVideoId(int videoId, Duration millisecondsOffset) async {
+    await db.writeTxn(() async {
+      final phrases = await db.phraseObjects
+          .filter()
+          .videoIdEqualTo(videoId)
+          .findAll();
+
+      if (phrases.isNotEmpty) {
+        for (var phrase in phrases) {
+          if (phrase.startTime != null) {
+            phrase.startTime = phrase.startTime!.add(millisecondsOffset);
+          }
+          if (phrase.endTime != null) {
+            phrase.endTime = phrase.endTime!.add(millisecondsOffset);
+          }
+        }
+        await db.phraseObjects.putAll(phrases);
+      }
+    });
+  }
+
+  Future<void> shiftPhraseTimeById(int phraseId, Duration millisecondsOffset) async {
+    await db.writeTxn(() async {
+      final phrase = await db.phraseObjects.get(phraseId);
+      if (phrase != null) {
+        if (phrase.startTime != null) {
+          phrase.startTime = phrase.startTime!.add(millisecondsOffset);
+        }
+        if (phrase.endTime != null) {
+          phrase.endTime = phrase.endTime!.add(millisecondsOffset);
+        }
+        await db.phraseObjects.put(phrase);
+      }
+    });
+  }
 }

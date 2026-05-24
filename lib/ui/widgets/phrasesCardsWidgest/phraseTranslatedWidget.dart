@@ -2,6 +2,7 @@ import 'package:eiga/backend/data/dto/PhraseDataDTO.dart';
 import 'package:eiga/backend/data/models/blockObject.dart';
 import 'package:eiga/backend/data/models/phraseObject.dart';
 import 'package:eiga/backend/data/models/wordObject.dart';
+import 'package:eiga/config/depacker/readingTypeLanguageConfig.dart';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoComponentsProvider.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
@@ -63,16 +64,19 @@ class _PhraseTranslatedWidgetState
     });
   }
 
-  String _getOriginalText(WordObject word) {
+  String _getVersionText(WordObject word, String key) {
     try {
-      return word.versions.firstWhere((v) => v.key == 'original').text ?? '';
+      return word.versions.firstWhere((v) => v.key == key).text ?? '';
     } catch (e) {
-      return word.mainText ?? '';
+      return '';
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final readingSettings = ref.watch(readingTypeNotifierProvider).value;
+    final mainOption = readingSettings?.mainOption ?? 'original';
+    final additionalOption = readingSettings?.additionalOptions ?? '';
     return FutureBuilder(
       future: _praseDataDTOFuture,
       builder: (context, snapshot) {
@@ -88,6 +92,8 @@ class _PhraseTranslatedWidgetState
 
         final data = snapshot.data!;
         final blocks = data.blocks;
+        final blocksList = List.from(blocks)
+          ..sort((a, b) => a.translatedPositionIndex.first.compareTo(b.translatedPositionIndex.first));
         final allWords = data.allOriginalWords;
         return Align(
           alignment: Alignment.centerLeft,
@@ -106,7 +112,9 @@ class _PhraseTranslatedWidgetState
                     final isSelected =
                         _selectedBlockId != null &&
                         _selectedBlockId == word.blockId;
-                    final cleanedOriginalWord = _getOriginalText(word).trim();
+                    final cleanedMainWord = _getVersionText(word, mainOption).trim();
+                    final cleanedAdditionalWord = _getVersionText(word, additionalOption).trim();
+
                     return GestureDetector(
                       onTap: () => toggleSelection(word.blockId),
                       child: AnimatedContainer(
@@ -119,7 +127,7 @@ class _PhraseTranslatedWidgetState
                         child: Column(
                           children: [
                             Text(
-                              cleanedOriginalWord,
+                              cleanedAdditionalWord,
                               style: TextStyle(
                                 fontSize: 8.0,
                                 color: isSelected
@@ -129,7 +137,7 @@ class _PhraseTranslatedWidgetState
                               ),
                             ),
                             Text(
-                              cleanedOriginalWord,
+                              cleanedMainWord,
                               style: TextStyle(
                                 color: isSelected
                                     ? Colors.deepPurple
@@ -149,7 +157,7 @@ class _PhraseTranslatedWidgetState
 
               RichText(
                 text: TextSpan(
-                  children: blocks.map((block) {
+                  children: blocksList.map((block) {
                     final cleanedText = block.blockTranslation?.trim() ?? '';
                     final isSelected = _selectedBlockId == block.id;
 

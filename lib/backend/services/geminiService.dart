@@ -160,7 +160,7 @@ class GeminiService {
 
     for (var block in rawBlocks) {
       final phraseId = block['phraseId'] as int;
-      final bPos = block['blockPositionIndex'] as int;
+      final bPos = block['b_pos'] as int;
       final signature = block['contentSignature'] as String;
 
       final key = phraseId * 1000 + bPos;
@@ -169,9 +169,9 @@ class GeminiService {
         unique[key] = BlockObject(
           phraseId: phraseId,
           blockPositionIndex: bPos,
-          blockTranslation: block['blockTranslation'],
+          blockTranslation: block['tr'],
           translatedPositionIndex: List<int>.from(
-            block['translatedPositionIndex'],
+            block['tr_pos'],
           ),
           contentSignature: signature,
           colorHex: block['colorHex'],
@@ -190,33 +190,51 @@ class GeminiService {
     print('response $jsonResponse');
     final List<dynamic> phrasesJsonData = jsonDecode(jsonResponse);
 
-    final allRawBlocks = <dynamic>[];
     for (var phrasesData in phrasesJsonData) {
-      allRawBlocks.addAll(phrasesData['blocks'] as List<dynamic>);
-    }
+      final int phraseId = phrasesData['phraseId'];
+      final List<dynamic> blocks = phrasesData['blocks'];
 
-    final cleanedBlocks = deduplicateBlocks(allRawBlocks);
-
-    final Map<int, List<BlockObject>> blocksByPhrase = {};
-    for (var block in cleanedBlocks) {
-      blocksByPhrase.putIfAbsent(block.phraseId!, () => []).add(block);
-    }
-    for (var phraseId in blocksByPhrase.keys) {
       final phrase = await phraseService.getPhraseById(phraseId);
       if (phrase == null) continue;
 
-      final blocksDataJson = blocksByPhrase[phraseId]!;
-
-      for (var blockData in blocksDataJson) {
+      for (var block in blocks) {
+        final contentSignature = "${phraseId}_${block['b_pos']}";
+        final existingBlock = await blockService.getBlockByContentSignature(contentSignature);
+        if (existingBlock != null) {
+          print('Block exists: $contentSignature, continue');
+          continue;
+        }
         final newBlock = BlockObject(
           phraseId: phraseId,
-          blockTranslation: blockData.blockTranslation,
-          translatedPositionIndex: blockData.translatedPositionIndex!,
-          blockPositionIndex: blockData.blockPositionIndex,
-          contentSignature: blockData.contentSignature,
+          blockTranslation: block['tr'] as String,
+          translatedPositionIndex: List<int>.from(block['tr_pos']).toSet().toList(),
+          blockPositionIndex: block['b_pos'] as int,
+          contentSignature: "${phraseId}_${block['b_pos']}",
           colorHex: "#FFFFFF",
         );
+
         final blockId = await blockService.createBlock(blockObject: newBlock);
+        print('Block created ID: $blockId');
+
+        final List<dynamic> wordDataJson = block['word'] ?? [];
+
+        for (var wordData in wordDataJson) {
+          final Map<String, dynamic> map = Map<String, dynamic>.from(wordData);
+
+          final newWord = WordObject(blockId: blockId)
+            ..wordPosition = map['w_pos'] as int?
+            ..versions = map.entries
+                .where((entries) => entries.key != 'w_pos')
+                .where((entries) => entries.value != null && entries.value.toString().isNotEmpty)
+                .map((entries) => ReadingItem(
+              key: entries.key,
+              text: entries.value.toString(),
+            ))
+                .toList();
+
+          await wordService.createWord(wordObject: newWord);
+          print('Word created ${map['original']}');
+        }
       }
 
       await phraseService.markAsTranslatedAndMarkNotTranslating(phraseId);
