@@ -1,4 +1,4 @@
-// Серверний (повна відповідь) обробник запиту до Gemini
+// Серверний (повна відповідь) обробник запиту до Gemini (покращений)
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -52,39 +52,76 @@ class GeminiHTTPService {
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['candidates'] != null &&
-            data['candidates'][0]['content'] != null) {
-          String cleanedResponse =
-          data['candidates'][0]['content']['parts'][0]['text']
-              .toString()
-              .replaceAll('```json', '')
-              .replaceAll('```', '')
-              .trim();
-
-          await _responseParse(cleanedResponse);
-        } else {
-          throw GeminiGeneralException("Empty response from Gemini");
+        final bodyText = response.body ?? '';
+        if (bodyText.trim().isEmpty) {
+          throw GeminiGeneralException("Empty response body from Gemini");
         }
+
+        final data = jsonDecode(bodyText);
+        if (data is Map && data['candidates'] != null && data['candidates'].isNotEmpty) {
+          final candidate = data['candidates'][0];
+          if (candidate['content'] != null && candidate['content']['parts'] != null && candidate['content']['parts'].isNotEmpty) {
+            String rawText = candidate['content']['parts'][0]['text'].toString();
+
+            // Очищення, якщо модель поклала ```json ... ```
+            String cleanedResponse = rawText.replaceAll('```json', '').replaceAll('```', '').trim();
+
+            await _responseParse(cleanedResponse);
+            return;
+          }
+        }
+
+        throw GeminiGeneralException("Unexpected response shape from Gemini: ${response.body}");
       } else {
-        final errorBody = response.body.isNotEmpty ? jsonDecode(response.body) : {};
-        final errorMessage = (errorBody is Map && errorBody['error'] != null)
+        Map<String, dynamic> errorBody = {};
+        try {
+          if (response.body.isNotEmpty) {
+            final decoded = jsonDecode(response.body);
+            if (decoded is Map<String, dynamic>) errorBody = decoded;
+          }
+        } catch (_) {}
+
+        final errorMessage = (errorBody.isNotEmpty && errorBody['error'] != null)
             ? (errorBody['error']['message'] ?? 'Unknown error')
             : 'Unknown error';
         final int code = response.statusCode;
 
         if (code == 403 || code == 400) {
+          aiRequestNotifier.setErrorWithDetails(
+            Exception('Token or auth error'),
+            message: 'Token is incorrect or request malformed',
+            httpCode: code,
+            type: AiErrorType.auth,
+          );
           throw GeminiIncorrectTokenException("Token is incorrect");
         } else if (code == 429) {
+          aiRequestNotifier.setErrorWithDetails(
+            Exception('Rate limit / quota exceeded'),
+            message: 'Rate limit / model expired',
+            httpCode: code,
+            type: AiErrorType.rateLimit,
+          );
           throw GeminiModelExpiredException('Please change a model');
         } else if (code == 500 || code == 503 || code == 504) {
+          aiRequestNotifier.setErrorWithDetails(
+            Exception('Server error'),
+            message: 'Server error from Gemini',
+            httpCode: code,
+            type: AiErrorType.server,
+          );
           throw GeminiServerException('Server error');
         } else {
+          aiRequestNotifier.setErrorWithDetails(
+            Exception('Unknown error code $code'),
+            message: 'Request failed: $errorMessage',
+            httpCode: code,
+            type: AiErrorType.unknown,
+          );
           throw GeminiGeneralException('Request failed: $errorMessage');
         }
       }
     } catch (error, stackTrace) {
-      bool isTerminal = !(error is GeminiServerException || error is http.ClientException);
+      final bool isTerminal = !(error is GeminiServerException || error is http.ClientException);
       aiRequestNotifier.reportError(
         error,
         message: error is Exception ? error.toString() : 'Unknown error occurred',
@@ -96,40 +133,64 @@ class GeminiHTTPService {
   }
 
   Future<void> _responseParse(String jsonResponse) async {
-    // Парсимо весь JSON як список об'єктів
-    final List<dynamic> phrasesJsonData = jsonDecode(jsonResponse);
+    try {
+      // Парсимо весь JSON як список об'єктів або як один об'єкт
+      final parsed = jsonDecode(jsonResponse);
 
-    for (var phrasesData in phrasesJsonData) {
-      final int phraseId = phrasesData['phraseId'];
-      final List<dynamic> blocks = phrasesData['blocks'] ?? [];
-
-      final phrase = await phraseService.getPhraseById(phraseId);
-      if (phrase == null) continue;
-
-      for (var block in blocks) {
-        final contentSignature = "${phraseId}_${block['b_pos']}";
-        final existingBlock = await blockService.getBlockByContentSignature(contentSignature);
-
-        if (existingBlock != null) {
-          continue;
+      if (parsed is List) {
+        for (var phrasesData in parsed) {
+          await _processPhraseEntry(phrasesData);
         }
+      } else if (parsed is Map) {
+        await _processPhraseEntry(parsed);
+      } else {
+        throw FormatException('Unexpected JSON root type');
+      }
+    } catch (e, st) {
+      aiRequestNotifier.appendLog('[ParseError] ${e.toString()}');
+      aiRequestNotifier.reportError(e, message: 'Failed to parse Gemini response', stackTrace: st, terminal: true);
+      rethrow;
+    }
+  }
 
-        final newBlock = BlockObject(
-          phraseId: phraseId,
-          blockTranslation: block['tr'] as String,
-          translatedPositionIndex: List<int>.from(block['tr_pos'] ?? []).toSet().toList(),
-          blockPositionIndex: block['b_pos'] as int,
-          contentSignature: contentSignature,
-          colorHex: block['colorHex'] ?? "#FFFFFF",
-        );
+  Future<void> _processPhraseEntry(dynamic phrasesData) async {
+    if (phrasesData == null) return;
+    final int phraseId = (phrasesData['phraseId'] is int) ? phrasesData['phraseId'] as int : int.tryParse(phrasesData['phraseId'].toString()) ?? -1;
+    if (phraseId <= 0) return;
 
-        final blockId = await blockService.createBlock(blockObject: newBlock);
-        aiRequestNotifier.appendLog('Block created ID: $blockId');
-        aiRequestNotifier.incrementProgress();
+    final List<dynamic> blocks = phrasesData['blocks'] ?? [];
 
-        final List<dynamic> wordDataJson = block['word'] ?? [];
+    final phrase = await phraseService.getPhraseById(phraseId);
+    if (phrase == null) return;
 
-        for (var wordData in wordDataJson) {
+    for (var block in blocks) {
+      if (!block.containsKey('b_pos') || !block.containsKey('tr')) continue;
+
+      final contentSignature = "${phraseId}_${block['b_pos']}";
+      final existingBlock = await blockService.getBlockByContentSignature(contentSignature);
+
+      if (existingBlock != null) {
+        aiRequestNotifier.appendLog('HTTP -> block already exists: $contentSignature');
+        continue;
+      }
+
+      final newBlock = BlockObject(
+        phraseId: phraseId,
+        blockTranslation: block['tr'] as String,
+        translatedPositionIndex: List<int>.from(block['tr_pos'] ?? []).toSet().toList(),
+        blockPositionIndex: block['b_pos'] as int,
+        contentSignature: contentSignature,
+        colorHex: block['colorHex'] ?? "#FFFFFF",
+      );
+
+      final blockId = await blockService.createBlock(blockObject: newBlock);
+      aiRequestNotifier.appendLog('HTTP -> Block created ID: $blockId for Phrase: $phraseId');
+      aiRequestNotifier.incrementProgress();
+
+      final List<dynamic> wordDataJson = block['word'] ?? [];
+
+      for (var wordData in wordDataJson) {
+        try {
           final Map<String, dynamic> map = Map<String, dynamic>.from(wordData);
 
           final newWord = WordObject(blockId: blockId)
@@ -144,10 +205,12 @@ class GeminiHTTPService {
                 .toList();
 
           await wordService.createWord(wordObject: newWord);
+        } catch (e) {
+          aiRequestNotifier.appendLog('HTTP -> word parse/create error: $e');
         }
       }
-
-      await phraseService.markAsTranslatedAndMarkNotTranslating(phraseId);
     }
+
+    await phraseService.markAsTranslatedAndMarkNotTranslating(phraseId);
   }
 }

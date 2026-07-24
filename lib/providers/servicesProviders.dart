@@ -62,3 +62,35 @@ final translationProvider = Provider<TranslationProvider>((ref) {
   final service = TranslationProvider(ref);
   return service;
 });
+
+// Провайдер для AiService — робить інстанцію та підключає залежності
+final aiServiceProvider = Provider<AiService>((ref) {
+  // Отримуємо notifier провайдера статусу
+  final aiRequestNotifier = ref.read(aiRequestStatusProvider.notifier);
+
+  // Сервіси з проекту (переконайся, що вони визначені в servicesProviders.dart)
+  final phraseService = ref.read(phraseServiceProvider);
+  final blockService = ref.read(blockServiceProvider);
+  final wordService = ref.read(wordServiceProvider);
+
+  // Створюємо сервіси Gemini, передаючи провайдер статусу та інші сервіси
+  final geminiHttp = GeminiHTTPService(
+    aiRequestNotifier: aiRequestNotifier,
+    phraseService: phraseService,
+    blockService: blockService,
+    wordService: wordService,
+  );
+
+  final geminiStream = GeminiStreamingService(
+    aiRequestNotifier: aiRequestNotifier,
+    phraseService: phraseService,
+    blockService: blockService,
+    wordService: wordService,
+  );
+
+  return AiService(
+    geminiHTTPService: geminiHttp,
+    geminiStreamingService: geminiStream,
+    aiRequestNotifier: aiRequestNotifier,
+  );
+});

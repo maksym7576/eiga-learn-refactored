@@ -1,3 +1,4 @@
+// Streaming service для Gemini (покращений, оновлює БД в реальному часі)
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -62,7 +63,6 @@ class GeminiStreamingService {
 
       final StringBuffer fullTextBuffer = StringBuffer();
 
-      // Використовуємо LineSplitter для коректної склейки розірваних рядків SSE
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
           .transform(const LineSplitter());
@@ -77,14 +77,14 @@ class GeminiStreamingService {
             if (jsonData['candidates'] != null &&
                 jsonData['candidates'].isNotEmpty &&
                 jsonData['candidates'][0]['content'] != null) {
-
               final String newTextChunk = jsonData['candidates'][0]['content']['parts'][0]['text'];
               fullTextBuffer.write(newTextChunk);
 
               await _extractAndSaveReadyObjects(fullTextBuffer);
             }
-          } catch (e) {
-            aiRequestNotifier.appendLog('[PartialParseErr] $e');
+          } catch (e, st) {
+            aiRequestNotifier.appendLog('[PartialParseErr] ${e.toString()}');
+            aiRequestNotifier.recordEvent('Partial parse error: ${e.toString()}', kind: 'parse');
           }
         }
       }
@@ -92,7 +92,7 @@ class GeminiStreamingService {
       await _extractAndSaveReadyObjects(fullTextBuffer);
       aiRequestNotifier.success();
     } catch (error, stackTrace) {
-      bool isTerminal = !(error is GeminiServerException || error is http.ClientException);
+      final bool isTerminal = !(error is GeminiServerException || error is http.ClientException);
       aiRequestNotifier.reportError(
         error,
         message: error is Exception ? error.toString() : 'Streaming error occurred',
@@ -153,9 +153,16 @@ class GeminiStreamingService {
         final parsed = jsonDecode(p.text);
         if (parsed is Map && parsed.containsKey('phraseId') && parsed.containsKey('blocks')) {
           await _saveParsedData(parsed);
+        } else if (parsed is List) {
+          for (var single in parsed) {
+            if (single is Map && single.containsKey('phraseId') && single.containsKey('blocks')) {
+              await _saveParsedData(single);
+            }
+          }
         }
-      } catch (_) {
-        // ігноруємо невалідні секції
+      } catch (e) {
+        // ігноруємо невалідні секції, але логнемо
+        aiRequestNotifier.appendLog('[StreamParseIgnored] ${e.toString()}');
       }
       removedUntil = p.end;
     }
@@ -166,56 +173,68 @@ class GeminiStreamingService {
   }
 
   Future<void> _saveParsedData(dynamic phrasesData) async {
-    final int phraseId = phrasesData['phraseId'];
+    final int phraseId = (phrasesData['phraseId'] is int) ? phrasesData['phraseId'] as int : int.tryParse(phrasesData['phraseId'].toString()) ?? -1;
+    if (phraseId <= 0) return;
+
     final List<dynamic> blocks = phrasesData['blocks'] ?? [];
 
     final phrase = await phraseService.getPhraseById(phraseId);
     if (phrase == null) return;
 
     for (var block in blocks) {
-      if (!block.containsKey('b_pos') || !block.containsKey('tr')) continue;
+      try {
+        if (!block.containsKey('b_pos') || !block.containsKey('tr')) continue;
 
-      final contentSignature = "${phraseId}_${block['b_pos']}";
-      if (_processedBlockSignatures.contains(contentSignature)) continue;
+        final contentSignature = "${phraseId}_${block['b_pos']}";
+        if (_processedBlockSignatures.contains(contentSignature)) continue;
 
-      // Додаємо сигнатуру до перевірки в БД, щоб інші чанки стріму не почали її обробляти
-      _processedBlockSignatures.add(contentSignature);
+        // Щоб уникнути race condition у межах одного стріму
+        _processedBlockSignatures.add(contentSignature);
 
-      final existingBlock = await blockService.getBlockByContentSignature(contentSignature);
-      if (existingBlock != null) {
-        continue;
-      }
+        final existingBlock = await blockService.getBlockByContentSignature(contentSignature);
+        if (existingBlock != null) {
+          aiRequestNotifier.appendLog('Stream -> block already exists: $contentSignature');
+          continue;
+        }
 
-      final newBlock = BlockObject(
-        phraseId: phraseId,
-        blockTranslation: block['tr'] as String,
-        translatedPositionIndex: List<int>.from(block['tr_pos'] ?? []).toSet().toList(),
-        blockPositionIndex: block['b_pos'] as int,
-        contentSignature: contentSignature,
-        colorHex: block['colorHex'] ?? "#FFFFFF",
-      );
+        final newBlock = BlockObject(
+          phraseId: phraseId,
+          blockTranslation: block['tr'] as String,
+          translatedPositionIndex: List<int>.from(block['tr_pos'] ?? []).toSet().toList(),
+          blockPositionIndex: block['b_pos'] as int,
+          contentSignature: contentSignature,
+          colorHex: block['colorHex'] ?? "#FFFFFF",
+        );
 
-      final blockId = await blockService.createBlock(blockObject: newBlock);
-      aiRequestNotifier.appendLog('Stream -> Block created ID: $blockId for Phrase: $phraseId');
-      aiRequestNotifier.incrementProgress();
+        final blockId = await blockService.createBlock(blockObject: newBlock);
+        aiRequestNotifier.appendLog('Stream -> Block created ID: $blockId for Phrase: $phraseId');
+        aiRequestNotifier.incrementProgress();
 
-      final List<dynamic> wordDataJson = block['word'] ?? [];
+        final List<dynamic> wordDataJson = block['word'] ?? [];
 
-      for (var wordData in wordDataJson) {
-        final Map<String, dynamic> map = Map<String, dynamic>.from(wordData);
+        for (var wordData in wordDataJson) {
+          try {
+            final Map<String, dynamic> map = Map<String, dynamic>.from(wordData);
 
-        final newWord = WordObject(blockId: blockId)
-          ..wordPosition = map['w_pos'] as int?
-          ..versions = map.entries
-              .where((entries) => entries.key != 'w_pos')
-              .where((entries) => entries.value != null && entries.value.toString().isNotEmpty)
-              .map((entries) => ReadingItem(
-            key: entries.key,
-            text: entries.value.toString(),
-          ))
-              .toList();
+            final newWord = WordObject(blockId: blockId)
+              ..wordPosition = map['w_pos'] as int?
+              ..versions = map.entries
+                  .where((entries) => entries.key != 'w_pos')
+                  .where((entries) => entries.value != null && entries.value.toString().isNotEmpty)
+                  .map((entries) => ReadingItem(
+                key: entries.key,
+                text: entries.value.toString(),
+              ))
+                  .toList();
 
-        await wordService.createWord(wordObject: newWord);
+            await wordService.createWord(wordObject: newWord);
+          } catch (e) {
+            aiRequestNotifier.appendLog('Stream -> word parse/create error: $e');
+          }
+        }
+      } catch (e, st) {
+        aiRequestNotifier.appendLog('Stream -> block processing error: $e');
+        aiRequestNotifier.recordEvent('Stream block error: ${e.toString()}', kind: 'error');
       }
     }
 
@@ -223,7 +242,14 @@ class GeminiStreamingService {
   }
 
   void _handleErrorStatusCode(int code, String body) {
-    final Map<String, dynamic> errorBody = body.isNotEmpty ? jsonDecode(body) : {};
+    Map<String, dynamic> errorBody = {};
+    try {
+      if (body.isNotEmpty) {
+        final decoded = jsonDecode(body);
+        if (decoded is Map<String, dynamic>) errorBody = decoded;
+      }
+    } catch (_) {}
+
     final errorMessage = (errorBody['error'] != null) ? (errorBody['error']['message'] ?? 'Unknown error') : 'Unknown error';
 
     if (code == 403 || code == 400) {

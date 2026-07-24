@@ -1,49 +1,20 @@
-// lib/services/ai_service.dart
 import 'dart:convert';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:eiga/backend/data/models/phraseObject.dart';
-import 'package:eiga/backend/exeption/geminiException.dart';
-import 'package:eiga/backend/services/petition_ai/gemini/GeminiHTTPService.dart';
-import 'package:eiga/backend/services/petition_ai/gemini/geminiStreamingService.dart';
 import 'package:eiga/config/modelsUrl/aiModelManager.dart';
 import 'package:eiga/config/prompts/promptManager.dart';
 import 'package:eiga/config/secureStorage.dart';
 import 'package:eiga/providers/AIRequestStatusProvider.dart';
 
-import '../../providers/servicesProviders.dart';
+import '../exeption/geminiException.dart';
+import 'petition_ai/gemini/GeminiHTTPService.dart';
+import 'petition_ai/gemini/geminiStreamingService.dart';
 
 const String TRANSPORT_STREAM = 'stream';
 const String TRANSPORT_HTTP = 'http';
 
 final defaultAiTransportProvider = StateProvider<String>((ref) => TRANSPORT_STREAM);
-
-final aiServiceProvider = Provider<AiService>((ref) {
-  final aiRequestNotifier = ref.read(aiRequestStatusProvider.notifier);
-  final phraseService = ref.read(phraseServiceProvider);
-  final blockService = ref.read(blockServiceProvider);
-  final wordService = ref.read(wordServiceProvider);
-
-  final geminiHttp = GeminiHTTPService(
-    aiRequestNotifier: aiRequestNotifier,
-    phraseService: phraseService,
-    blockService: blockService,
-    wordService: wordService,
-  );
-
-  final geminiStream = GeminiStreamingService(
-    aiRequestNotifier: aiRequestNotifier,
-    phraseService: phraseService,
-    blockService: blockService,
-    wordService: wordService,
-  );
-
-  return AiService(
-    geminiHTTPService: geminiHttp,
-    geminiStreamingService: geminiStream,
-    aiRequestNotifier: aiRequestNotifier,
-  );
-});
 
 class AiService {
   final GeminiHTTPService geminiHTTPService;
@@ -56,6 +27,7 @@ class AiService {
     required this.aiRequestNotifier,
   });
 
+  // Формує URL + токен. isStreaming визначає endpoint (:streamGenerateContent / :generateContent)
   Future<String> _formToken({required bool isStreaming}) async {
     final aiModelManager = AiModelManager();
     final model = await aiModelManager.getCurrentModel();
@@ -64,9 +36,14 @@ class AiService {
     final String fullUrl = '${model.url}$endpoint';
     final token = await SecureTokenStorage.getToken();
 
+    if (token == null || token.isEmpty) {
+      throw Exception('AI token is not set');
+    }
+
     return '$fullUrl?key=$token';
   }
 
+  // Формує prompt на основі шаблону + JSON з даними фраз
   Future<String> _formPrompt(
       List<PhraseObject> phraseObjectsList,
       String originalLanguage,
@@ -93,7 +70,7 @@ $jsonData
 ''';
   }
 
-  /// transportName: 'stream' | 'http' (можна додати інші реалізації пізніше)
+  /// transportName: 'stream' | 'http'
   /// Якщо transportName == null, TranslationProvider має передати значення із defaultAiTransportProvider.
   Future<void> translatePhraseList({
     required List<PhraseObject> phraseObjectsList,
@@ -129,7 +106,7 @@ $jsonData
           translationLanguage,
         );
 
-        if (model.name.contains('gemini') || model.name.contains('gemma')) {
+        if (model.name.toLowerCase().contains('gemini') || model.name.toLowerCase().contains('gemma')) {
           if (isStreamingMode) {
             aiRequestNotifier.setStreamingResponse();
             await geminiStreamingService.sendStreamAndParseRequest(fullUrl, promptWithPhrases);

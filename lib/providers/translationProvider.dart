@@ -1,12 +1,11 @@
-// lib/providers/translation_provider.dart
 import 'dart:async';
 
-import 'package:eiga/providers/servicesProviders.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:eiga/backend/data/models/phraseObject.dart';
 import 'package:eiga/providers/phraseListProvider.dart';
+import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
 import 'package:eiga/providers/AIRequestStatusProvider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../backend/services/AiService.dart';
 
@@ -26,6 +25,7 @@ class TranslationProvider {
       if (nextVideoId != _currentVideoId) {
         _resetState(nextVideoId);
       }
+      print('TranslationProvider: listener initialized for video $_currentVideoId -> $nextVideoId');
     });
 
     ref.listen<Duration?>(playerTimeProvider, (prevTime, currentTime) {
@@ -74,6 +74,7 @@ class TranslationProvider {
     final futurePhrases = <PhraseObject>[];
 
     for (var phrase in allPhrases) {
+      // Пропускаємо ті, що вже в процесі або вже перекладені
       if (phrase.isTranslating == true || phrase.isTranslated == true) continue;
 
       final phraseTime = _toDuration(phrase.startTime!);
@@ -86,6 +87,7 @@ class TranslationProvider {
 
     if (futurePhrases.isNotEmpty) {
       final config = ref.read(appConfigsProvider);
+      // Очікуємо, що config має геттери getSecondsAhead та getNumberOfPhrases
       final lookAhead = Duration(seconds: (config as dynamic).getSecondsAhead as int? ?? 5);
       final nextPhraseTime = _toDuration(futurePhrases.first.startTime!);
 
@@ -114,17 +116,25 @@ class TranslationProvider {
 
     _isProcessing = true;
 
+    final aiStatus = ref.read(aiRequestStatusProvider.notifier);
     try {
       final video = await ref.read(videoServiceProvider.notifier).getVideoById(phrases.first.videoId!);
-      if (video == null) return;
-      await ref.read(phraseServiceProvider).markPhrasesAsTranslatingByPhraseList(phrases);
+      if (video == null) {
+        aiStatus.appendLog('TranslationProvider: video not found for phrase ${phrases.first.id}');
+        return;
+      }
+
+      // Помітити фрази як "translating"
+      try {
+        await ref.read(phraseServiceProvider).markPhrasesAsTranslatingByPhraseList(phrases);
+      } catch (e) {
+        aiStatus.appendLog('TranslationProvider: failed to mark phrases as translating: $e');
+      }
 
       final aiService = ref.read(aiServiceProvider);
-
-      // Беремо дефолтний транспорт із провайдера-затички
       final defaultTransport = ref.read(defaultAiTransportProvider);
 
-      // Передаємо transportName — AiService обробить його (stream/http)
+      // Виклик основного сервісу з вибором транспорту
       await aiService.translatePhraseList(
         phraseObjectsList: phrases,
         originalLanguage: video.originalLanguage!,
@@ -132,7 +142,18 @@ class TranslationProvider {
         transportName: defaultTransport,
       );
     } catch (e, st) {
+      // Лог та репорт у провайдер статусу
       ref.read(aiRequestStatusProvider.notifier).appendLog('TranslationProvider error: $e');
+      ref.read(aiRequestStatusProvider.notifier).reportError(e, message: e.toString(), stackTrace: st, terminal: false);
+
+      // Спроба зняти мітку "translating" якщо було помилково встановлено
+      try {
+        await ref.read(phraseServiceProvider).markPhrasesAsTranslatingByPhraseList(phrases);
+      } catch (_) {
+        // якщо метода немає або він падає — просто логнемо
+        ref.read(aiRequestStatusProvider.notifier).appendLog('TranslationProvider: failed to unmark phrases after error');
+      }
+
       print('Translation API Error: $e\n$st');
     } finally {
       _isProcessing = false;
