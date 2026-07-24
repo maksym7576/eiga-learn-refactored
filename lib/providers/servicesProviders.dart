@@ -12,6 +12,11 @@ import 'package:eiga/providers/packageProviders.dart';
 import 'package:eiga/providers/translationProvider.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../backend/services/AiService.dart';
+import '../backend/services/petition_ai/gemini/GeminiHTTPService.dart';
+import '../backend/services/petition_ai/gemini/geminiStreamingService.dart';
+import 'AIRequestStatusProvider.dart';
+
 
 final appConfigsProvider = Provider<AppConfigs>((ref) {
   final prefs = ref.read(sharedPreferencesProvider);

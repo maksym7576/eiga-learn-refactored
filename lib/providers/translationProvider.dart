@@ -1,10 +1,14 @@
+// lib/providers/translation_provider.dart
 import 'dart:async';
 
+import 'package:eiga/providers/servicesProviders.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:eiga/backend/data/models/phraseObject.dart';
 import 'package:eiga/providers/phraseListProvider.dart';
-import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:eiga/providers/AIRequestStatusProvider.dart';
+
+import '../backend/services/AiService.dart';
 
 class TranslationProvider {
   final Ref ref;
@@ -22,7 +26,6 @@ class TranslationProvider {
       if (nextVideoId != _currentVideoId) {
         _resetState(nextVideoId);
       }
-      print('listener initialized');
     });
 
     ref.listen<Duration?>(playerTimeProvider, (prevTime, currentTime) {
@@ -83,27 +86,27 @@ class TranslationProvider {
 
     if (futurePhrases.isNotEmpty) {
       final config = ref.read(appConfigsProvider);
-      final lookAhead = Duration(seconds: config.getSecondsAhead);
+      final lookAhead = Duration(seconds: (config as dynamic).getSecondsAhead as int? ?? 5);
       final nextPhraseTime = _toDuration(futurePhrases.first.startTime!);
 
       if (nextPhraseTime <= currentTime + lookAhead) {
-        final playLoad = _buildPlayLoad(pastPhrase, futurePhrases, config.getNumberOfPhrases);
+        final playLoad = _buildPlayLoad(pastPhrase, futurePhrases, (config as dynamic).getNumberOfPhrases as int? ?? 8);
         await _sendToApi(playLoad);
       }
     }
   }
 
   List<PhraseObject> _buildPlayLoad(List<PhraseObject> past, List<PhraseObject> future, int maxLimit) {
-      final result = <PhraseObject>[];
+    final result = <PhraseObject>[];
 
-      final recentPast = past.length > 5 ? past.sublist(past.length - 5) : past;
-      result.addAll(recentPast);
+    final recentPast = past.length > 5 ? past.sublist(past.length - 5) : past;
+    result.addAll(recentPast);
 
-      final remainingSpace = maxLimit - result.length;
-      if (remainingSpace > 0) {
-        result.addAll(future.take(remainingSpace));
-      }
-      return result;
+    final remainingSpace = maxLimit - result.length;
+    if (remainingSpace > 0) {
+      result.addAll(future.take(remainingSpace));
+    }
+    return result;
   }
 
   Future<void> _sendToApi(List<PhraseObject> phrases) async {
@@ -115,9 +118,22 @@ class TranslationProvider {
       final video = await ref.read(videoServiceProvider.notifier).getVideoById(phrases.first.videoId!);
       if (video == null) return;
       await ref.read(phraseServiceProvider).markPhrasesAsTranslatingByPhraseList(phrases);
-      await ref.read(geminiServiceProvider).translatePhraseList(phraseObjectsList: phrases, originalLanguage: video.originalLanguage!, translationLanguage: video.translatedLanguage!);
-    } catch (e) {
-      print('Translation APi Error: $e');
+
+      final aiService = ref.read(aiServiceProvider);
+
+      // Беремо дефолтний транспорт із провайдера-затички
+      final defaultTransport = ref.read(defaultAiTransportProvider);
+
+      // Передаємо transportName — AiService обробить його (stream/http)
+      await aiService.translatePhraseList(
+        phraseObjectsList: phrases,
+        originalLanguage: video.originalLanguage!,
+        translationLanguage: video.translatedLanguage!,
+        transportName: defaultTransport,
+      );
+    } catch (e, st) {
+      ref.read(aiRequestStatusProvider.notifier).appendLog('TranslationProvider error: $e');
+      print('Translation API Error: $e\n$st');
     } finally {
       _isProcessing = false;
     }
@@ -127,7 +143,7 @@ class TranslationProvider {
     return Duration(
       hours: time.hour,
       minutes: time.minute,
-      seconds:  time.second,
+      seconds: time.second,
       milliseconds: time.millisecond,
     );
   }
