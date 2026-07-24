@@ -1,4 +1,3 @@
-// Streaming обробник (SSE) для Gemini — парсить чанки, зберігає POJO по ходу
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -63,34 +62,34 @@ class GeminiStreamingService {
 
       final StringBuffer fullTextBuffer = StringBuffer();
 
-      await for (var chunk in streamedResponse.stream.transform(utf8.decoder)) {
-        final lines = chunk.split('\n');
-        for (var line in lines) {
-          if (line.startsWith('data: ')) {
-            final dataStr = line.substring(6);
-            if (dataStr.trim().isEmpty) continue;
+      // Використовуємо LineSplitter для коректної склейки розірваних рядків SSE
+      final stream = streamedResponse.stream
+          .transform(utf8.decoder)
+          .transform(const LineSplitter());
 
-            try {
-              final jsonData = jsonDecode(dataStr);
-              if (jsonData['candidates'] != null &&
-                  jsonData['candidates'][0]['content'] != null) {
-                final String newTextChunk = jsonData['candidates'][0]['content']['parts'][0]['text'];
-                fullTextBuffer.write(newTextChunk);
+      await for (var line in stream) {
+        if (line.startsWith('data: ')) {
+          final dataStr = line.substring(6).trim();
+          if (dataStr.isEmpty) continue;
 
-                // Після додання нового чанку намагаємось знайти повні об'єкти
-                await _extractAndSaveReadyObjects(fullTextBuffer);
-              }
-            } catch (e, st) {
-              // Частковий чанку може бути некоректним JSON, лог для дебагу
-              aiRequestNotifier.appendLog('[PartialParseErr] $e');
+          try {
+            final jsonData = jsonDecode(dataStr);
+            if (jsonData['candidates'] != null &&
+                jsonData['candidates'].isNotEmpty &&
+                jsonData['candidates'][0]['content'] != null) {
+
+              final String newTextChunk = jsonData['candidates'][0]['content']['parts'][0]['text'];
+              fullTextBuffer.write(newTextChunk);
+
+              await _extractAndSaveReadyObjects(fullTextBuffer);
             }
+          } catch (e) {
+            aiRequestNotifier.appendLog('[PartialParseErr] $e');
           }
         }
       }
 
-      // Фінальна перевірка після завершення стріму
       await _extractAndSaveReadyObjects(fullTextBuffer);
-      // streaming успішно завершено
       aiRequestNotifier.success();
     } catch (error, stackTrace) {
       bool isTerminal = !(error is GeminiServerException || error is http.ClientException);
@@ -106,16 +105,34 @@ class GeminiStreamingService {
     }
   }
 
-  // Тепер приймаємо StringBuffer, щоб ми могли обрізати вже оброблені частини
   Future<void> _extractAndSaveReadyObjects(StringBuffer buffer) async {
-    final raw = buffer.toString().replaceAll('```json', '').replaceAll('```', '');
+    final raw = buffer.toString();
     int depth = 0;
     int startIndex = -1;
+
+    // Прапорці для ігнорування дужок всередині текстових значень
+    bool insideString = false;
+    bool isEscape = false;
+
     final List<_ExtractedPiece> readyPieces = [];
 
     for (int i = 0; i < raw.length; i++) {
       final ch = raw[i];
-      if (ch == '{') {
+
+      if (insideString) {
+        if (isEscape) {
+          isEscape = false;
+        } else if (ch == '\\') {
+          isEscape = true;
+        } else if (ch == '"') {
+          insideString = false;
+        }
+        continue;
+      }
+
+      if (ch == '"') {
+        insideString = true;
+      } else if (ch == '{') {
         if (depth == 0) startIndex = i;
         depth++;
       } else if (ch == '}') {
@@ -130,8 +147,6 @@ class GeminiStreamingService {
 
     if (readyPieces.isEmpty) return;
 
-    // Зберігаємо знайдені об'єкти по черзі і видаляємо оброблені частини з буфера
-    // (щоб уникнути повторної обробки)
     int removedUntil = 0;
     for (var p in readyPieces) {
       try {
@@ -140,12 +155,11 @@ class GeminiStreamingService {
           await _saveParsedData(parsed);
         }
       } catch (_) {
-        // ігноруємо невалидні секції
+        // ігноруємо невалідні секції
       }
       removedUntil = p.end;
     }
 
-    // Обрізаємо буфер, залишаємо лише неповні частини справа
     final remaining = raw.substring(removedUntil);
     buffer.clear();
     buffer.write(remaining);
@@ -164,9 +178,11 @@ class GeminiStreamingService {
       final contentSignature = "${phraseId}_${block['b_pos']}";
       if (_processedBlockSignatures.contains(contentSignature)) continue;
 
+      // Додаємо сигнатуру до перевірки в БД, щоб інші чанки стріму не почали її обробляти
+      _processedBlockSignatures.add(contentSignature);
+
       final existingBlock = await blockService.getBlockByContentSignature(contentSignature);
       if (existingBlock != null) {
-        _processedBlockSignatures.add(contentSignature);
         continue;
       }
 
@@ -180,7 +196,6 @@ class GeminiStreamingService {
       );
 
       final blockId = await blockService.createBlock(blockObject: newBlock);
-      _processedBlockSignatures.add(contentSignature);
       aiRequestNotifier.appendLog('Stream -> Block created ID: $blockId for Phrase: $phraseId');
       aiRequestNotifier.incrementProgress();
 
@@ -204,7 +219,6 @@ class GeminiStreamingService {
       }
     }
 
-    // Помітити фразу як перекладену
     await phraseService.markAsTranslatedAndMarkNotTranslating(phraseId);
   }
 
