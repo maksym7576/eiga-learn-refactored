@@ -2,28 +2,29 @@ import 'package:eiga/config/secureStorage.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 
-final tokenProvider = AsyncNotifierProvider<TokenNotifier, String>(
+final tokenProvider = AsyncNotifierProvider.family<TokenNotifier, String, ApiTokenType>(
   TokenNotifier.new,
 );
 
-class TokenNotifier extends AsyncNotifier<String> {
+class TokenNotifier extends FamilyAsyncNotifier<String, ApiTokenType> {
 
   @override
-  Future<String> build() async {
+  Future<String> build(ApiTokenType arg) async {
     try {
-      return await SecureTokenStorage.getToken();
+      return await SecureTokenStorage.getToken(arg);
     } catch (e) {
       return '';
     }
   }
 
   Future<void> setToken(String apiKey) async {
+    final trimmedKey = apiKey.trim();
     if (apiKey.trim().isEmpty) return;
 
     state = const AsyncValue.loading();
     try {
-      await SecureTokenStorage.setToken(apiKey.trim());
-      state = AsyncValue.data(apiKey.trim());
+      await SecureTokenStorage.setToken(arg,trimmedKey);
+      state = AsyncValue.data(trimmedKey);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
     }
@@ -33,7 +34,7 @@ class TokenNotifier extends AsyncNotifier<String> {
     state = const AsyncValue.loading();
 
     try {
-      await SecureTokenStorage.deleteToken();
+      await SecureTokenStorage.deleteToken(arg);
       state = const AsyncValue.data('');
     } catch (e, st) {
       state = AsyncValue.error(e, st);

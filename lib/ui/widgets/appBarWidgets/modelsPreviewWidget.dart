@@ -153,21 +153,19 @@ class _ModelPreviewWidget extends State<ModelPreviewWidget> {
               ),
             ],
           ),
-          SingleChildScrollView(
-            scrollDirection: Axis.vertical,
+          ListView(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Column(
-              children: [
-                ModelWidget(modelDTO: widget.selectedModel, isActive: true),
-                ...widget.otherModels.map((model) {
-                  return Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
-                    child: ModelWidget(modelDTO: model, isActive: false),
-                  );
-                }).toList(),
-              ],
-            ),
-          ),
+            shrinkWrap: true,
+            children: [
+              ModelWidget(modelDTO: widget.selectedModel, isActive: true),
+              ...widget.otherModels.map((model) {
+                return Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: ModelWidget(modelDTO: model, isActive: false),
+                );
+              }).toList(),
+            ],
+          )
         ],
       ),
     );

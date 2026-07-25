@@ -27,7 +27,7 @@ class GeminiService {
     final aiModelManager = AiModelManager();
     final model = await aiModelManager.getCurrentModel();
     final baseUrl = model.url;
-    final token = await SecureTokenStorage.getToken();
+    final token = await SecureTokenStorage.getToken(ApiTokenType.gemeni);
 
     return '$baseUrl?key=$token';
   }

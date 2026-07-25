@@ -27,14 +27,13 @@ class AiService {
     required this.aiRequestNotifier,
   });
 
-  // Формує URL + токен. isStreaming визначає endpoint (:streamGenerateContent / :generateContent)
   Future<String> _formToken({required bool isStreaming}) async {
     final aiModelManager = AiModelManager();
     final model = await aiModelManager.getCurrentModel();
 
     final String endpoint = isStreaming ? ':streamGenerateContent' : ':generateContent';
     final String fullUrl = '${model.url}$endpoint';
-    final token = await SecureTokenStorage.getToken();
+    final token = await SecureTokenStorage.getToken(ApiTokenType.gemeni);
 
     if (token == null || token.isEmpty) {
       throw Exception('AI token is not set');
@@ -43,7 +42,6 @@ class AiService {
     return '$fullUrl?key=$token';
   }
 
-  // Формує prompt на основі шаблону + JSON з даними фраз
   Future<String> _formPrompt(
       List<PhraseObject> phraseObjectsList,
       String originalLanguage,
@@ -70,8 +68,6 @@ $jsonData
 ''';
   }
 
-  /// transportName: 'stream' | 'http'
-  /// Якщо transportName == null, TranslationProvider має передати значення із defaultAiTransportProvider.
   Future<void> translatePhraseList({
     required List<PhraseObject> phraseObjectsList,
     required String originalLanguage,
