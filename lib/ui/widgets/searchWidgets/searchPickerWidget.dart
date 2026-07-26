@@ -243,7 +243,7 @@ class _SearchPickerWidgetState<TEntry, TFile>
           child: results.isEmpty
               ? Padding(
             padding: const EdgeInsets.all(24),
-            child: Text('Немає результатів',
+            child: Text('No results',
                 style: TextStyle(color: Colors.black.withOpacity(0.4))),
           )
               : ListView.builder(

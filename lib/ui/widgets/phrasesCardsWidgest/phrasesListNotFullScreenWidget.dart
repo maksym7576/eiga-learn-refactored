@@ -1,39 +1,26 @@
-import 'dart:math';
-
 import 'package:eiga/backend/data/models/phraseObject.dart';
 import 'package:eiga/providers/phraseListProvider.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
 import 'package:eiga/ui/widgets/phrasesCardsWidgest/phraseNotTranslatedWidget.dart';
 import 'package:eiga/ui/widgets/phrasesCardsWidgest/phraseTranslatedWidget.dart';
-import 'package:flutter/animation.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
-enum TranslationState { translated, translating, notTranslated }
+import '../../styles/phraseListStyles.dart';
 
 class PhraseListNotFullScreenWidget extends ConsumerStatefulWidget {
-  PhraseListNotFullScreenWidget({super.key});
+  const PhraseListNotFullScreenWidget({super.key});
 
   @override
   ConsumerState<PhraseListNotFullScreenWidget> createState() =>
       _PhraseListNotFullScreenWidgetState();
 }
 
-class _PhraseListNotFullScreenWidgetState
-    extends ConsumerState<PhraseListNotFullScreenWidget> {
+class _PhraseListNotFullScreenWidgetState extends ConsumerState<PhraseListNotFullScreenWidget> {
   late ItemScrollController itemScrollController;
   int lastActiveIndex = -1;
-
-  String _formatTime(DateTime? time) {
-    if (time == null) return '--:--';
-    final h = time.hour;
-    final m = time.minute.toString().padLeft(2, '0');
-    final s = time.second.toString().padLeft(2, '0');
-    return h > 0 ? '$h:$m:$s' : '$m:$s';
-  }
 
   @override
   void initState() {
@@ -41,7 +28,7 @@ class _PhraseListNotFullScreenWidgetState
     itemScrollController = ItemScrollController();
   }
 
-  Duration toDuration(DateTime dataTime) {
+  Duration _toDuration(DateTime dataTime) {
     return Duration(
       hours: dataTime.hour,
       minutes: dataTime.minute,
@@ -54,20 +41,10 @@ class _PhraseListNotFullScreenWidgetState
     if (itemScrollController.isAttached) {
       itemScrollController.scrollTo(
         index: index,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOutCubic,
-        alignment: 0.2,
+        duration: PhraseListStyles.durationScroll,
+        curve: PhraseListStyles.curveScroll,
+        alignment: PhraseListStyles.scrollAlignment,
       );
-    }
-  }
-
-  TranslationState _getTranslationState(PhraseObject phrase) {
-    if (phrase.isTranslated) {
-      return TranslationState.translated;
-    } else if (phrase.isTranslating) {
-      return TranslationState.translating;
-    } else {
-      return TranslationState.translated;
     }
   }
 
@@ -76,44 +53,29 @@ class _PhraseListNotFullScreenWidgetState
     final id = ref.read(playerIdProvider);
     final currentTime = ref.watch(playerTimeProvider);
     final phraseAsync = ref.watch(phraseListProvider(id!));
-
     final isAutoScrollEnabled = ref.watch(autoScrollProvider);
 
     return phraseAsync.when(
       data: (phrases) {
         final activeIndex = phrases.indexWhere((phrase) {
-          final start = toDuration(phrase.startTime!);
-          final end = toDuration(phrase.endTime!);
+          final start = _toDuration(phrase.startTime!);
+          final end = _toDuration(phrase.endTime!);
           return currentTime >= start && currentTime < end;
         });
 
-        if (isAutoScrollEnabled &&
-            activeIndex != -1 &&
-            activeIndex != lastActiveIndex) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _scrollToIndex(activeIndex);
-          });
+        if (isAutoScrollEnabled && activeIndex != -1 && activeIndex != lastActiveIndex) {
+          WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToIndex(activeIndex));
           lastActiveIndex = activeIndex;
         }
 
-        final pastIndex = phrases
-            .asMap()
-            .entries
-            .where((entry) {
-              final end = toDuration(entry.value.endTime!);
-              return currentTime >= end;
-            })
-            .map((entry) => entry.key)
-            .toList();
+        final pastIndex = phrases.asMap().entries.where((entry) {
+          return currentTime >= _toDuration(entry.value.endTime!);
+        }).map((entry) => entry.key).toList();
 
-        return NotificationListener(
+        return NotificationListener<UserScrollNotification>(
           onNotification: (notification) {
-            if (notification is UserScrollNotification) {
-              if (notification.direction != ScrollDirection.idle) {
-                if (ref.read(autoScrollProvider)) {
-                  ref.read(autoScrollProvider.notifier).disable();
-                }
-              }
+            if (notification.direction != ScrollDirection.idle && ref.read(autoScrollProvider)) {
+              ref.read(autoScrollProvider.notifier).disable();
             }
             return false;
           },
@@ -122,109 +84,13 @@ class _PhraseListNotFullScreenWidgetState
             itemCount: phrases.length,
             itemBuilder: (context, index) {
               final phrase = phrases[index];
-              final isActive = index == activeIndex;
-              final isFinished = pastIndex.contains(index);
-              return InkWell(
+              return _PhraseCardItem(
+                phrase: phrase,
+                isActive: index == activeIndex,
+                isFinished: pastIndex.contains(index),
                 onTap: () {
-                  final seekTime = toDuration(phrase.startTime!);
-
-                  ref.read(playerSeekProvider.notifier).state = seekTime;
+                  ref.read(playerSeekProvider.notifier).state = _toDuration(phrase.startTime!);
                 },
-                child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 20,
-                ),
-                decoration: BoxDecoration(
-                  color: isFinished
-                      ? Colors.deepPurpleAccent.withOpacity(0.3)
-                      : isActive
-                      ? Colors.deepPurpleAccent.withOpacity(0.5)
-                      : Colors.deepPurpleAccent.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  children: [
-                    phrase.isTranslated
-                        ? PhraseTranslatedWidget(
-                            key: ValueKey(phrase.id),
-                            phraseObject: phrase,
-                          )
-                        : PhraseNotTranslatedWidget(
-                            key: ValueKey(phrase.id),
-                            phraseObject: phrase,
-                            isActive: isActive,
-                          ),
-                    SizedBox(height: 3),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              _formatTime(phrase.startTime),
-                              style: TextStyle(
-                                color: Colors.deepPurpleAccent,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            Icon(
-                              Icons.arrow_forward,
-                              size: 14,
-                              color: Colors.deepPurpleAccent,
-                            ),
-                            Text(
-                              _formatTime(phrase.endTime),
-                              style: TextStyle(
-                                color: Colors.deepPurpleAccent,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            if (!phrase.isTranslated && !phrase.isTranslating)
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: Colors.deepPurpleAccent.withOpacity(
-                                      0.7,
-                                    ),
-                                  ),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  'Not translated',
-                                  style: TextStyle(
-                                    fontSize: 8,
-                                    color: Colors.deepPurpleAccent[400],
-                                  ),
-                                ),
-                              ),
-
-                            if (phrase.isTranslating)
-                              SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.deepPurpleAccent,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                ),
               );
             },
           ),
@@ -232,6 +98,128 @@ class _PhraseListNotFullScreenWidgetState
       },
       error: (e, st) => Text('Error: $e'),
       loading: () => const Center(child: CircularProgressIndicator()),
+    );
+  }
+}
+
+class _PhraseCardItem extends StatelessWidget {
+  final PhraseObject phrase;
+  final bool isActive;
+  final bool isFinished;
+  final VoidCallback onTap;
+
+  const _PhraseCardItem({
+    required this.phrase,
+    required this.isActive,
+    required this.isFinished,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: PhraseListStyles.durationCardAnimation,
+        margin: const EdgeInsets.symmetric(
+          vertical: PhraseListStyles.cardMarginVertical,
+          horizontal: PhraseListStyles.cardMarginHorizontal,
+        ),
+        // Якщо карточки досі завеликі, зменште cardPaddingVertical у файлі стилів (наприклад, до 8)
+        padding: const EdgeInsets.symmetric(
+          vertical: PhraseListStyles.cardPaddingVertical,
+          horizontal: PhraseListStyles.cardPaddingHorizontal,
+        ),
+        decoration: PhraseListStyles.getCardDecoration(
+          isFinished: isFinished,
+          isActive: isActive,
+        ),
+        child: Column(
+          // ГОЛОВНИЙ ФІКС: Розтягуємо контент, щоб він автоматично ставав по лівому краю
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            phrase.isTranslated
+                ? PhraseTranslatedWidget(key: ValueKey(phrase.id), phraseObject: phrase)
+                : PhraseNotTranslatedWidget(
+              key: ValueKey(phrase.id),
+              phraseObject: phrase,
+              isActive: isActive,
+            ),
+            const SizedBox(height: PhraseListStyles.contentSpacing),
+            _PhraseMetaRow(phrase: phrase),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PhraseMetaRow extends StatelessWidget {
+  final PhraseObject phrase;
+
+  const _PhraseMetaRow({required this.phrase});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _TimeRangeWidget(
+          startTime: phrase.startTime,
+          endTime: phrase.endTime,
+        ),
+        _TranslationStatusWidget(phrase: phrase),
+      ],
+    );
+  }
+}
+
+class _TimeRangeWidget extends StatelessWidget {
+  final DateTime? startTime;
+  final DateTime? endTime;
+
+  const _TimeRangeWidget({required this.startTime, required this.endTime});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(PhraseListStyles.formatTime(startTime), style: PhraseListStyles.getTimeTextStyle()),
+        const Icon(Icons.arrow_forward, size: PhraseListStyles.iconSizeArrow, color: PhraseListStyles.primaryColor),
+        Text(PhraseListStyles.formatTime(endTime), style: PhraseListStyles.getTimeTextStyle()),
+      ],
+    );
+  }
+}
+
+class _TranslationStatusWidget extends StatelessWidget {
+  final PhraseObject phrase;
+
+  const _TranslationStatusWidget({required this.phrase});
+
+  @override
+  Widget build(BuildContext context) {
+    if (phrase.isTranslated || phrase.isTranslating) {
+      return phrase.isTranslating
+          ? const SizedBox(
+        width: PhraseListStyles.iconSizeLoading,
+        height: PhraseListStyles.iconSizeLoading,
+        child: CircularProgressIndicator(strokeWidth: 2, color: PhraseListStyles.primaryColor),
+      )
+          : const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: PhraseListStyles.labelPaddingHorizontal,
+        vertical: PhraseListStyles.labelPaddingVertical,
+      ),
+      decoration: BoxDecoration(
+        border: PhraseListStyles.getLabelBorder(),
+        borderRadius: BorderRadius.circular(PhraseListStyles.labelBorderRadius),
+      ),
+      child: Text('Not translated', style: PhraseListStyles.getLabelTextStyle()),
     );
   }
 }

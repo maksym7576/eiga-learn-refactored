@@ -4,12 +4,12 @@ import 'package:eiga/backend/data/models/phraseObject.dart';
 import 'package:eiga/backend/data/models/wordObject.dart';
 import 'package:eiga/config/depacker/readingTypeLanguageConfig.dart';
 import 'package:eiga/providers/servicesProviders.dart';
-import 'package:eiga/providers/videoComponentsProvider.dart';
-import 'package:eiga/providers/videoDataProviders.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+
+import '../../styles/phraseListStyles.dart';
 
 class PhraseTranslatedWidget extends ConsumerStatefulWidget {
   final PhraseObject phraseObject;
@@ -17,57 +17,44 @@ class PhraseTranslatedWidget extends ConsumerStatefulWidget {
   const PhraseTranslatedWidget({super.key, required this.phraseObject});
 
   @override
-  ConsumerState<PhraseTranslatedWidget> createState() =>
-      _PhraseTranslatedWidgetState();
+  ConsumerState<PhraseTranslatedWidget> createState() => _PhraseTranslatedWidgetState();
 }
 
-class _PhraseTranslatedWidgetState
-    extends ConsumerState<PhraseTranslatedWidget> {
+class _PhraseTranslatedWidgetState extends ConsumerState<PhraseTranslatedWidget> {
   late Future<PhraseDataDTO> _praseDataDTOFuture;
   int? _selectedBlockId;
 
   @override
   void initState() {
     super.initState();
-    _praseDataDTOFuture = loadData();
+    _praseDataDTOFuture = _loadData();
   }
 
-  Future<PhraseDataDTO> loadData() async {
+  Future<PhraseDataDTO> _loadData() async {
     final blockService = ref.read(blockServiceProvider);
     final wordService = ref.read(wordServiceProvider);
 
-    final blocks = await blockService.getBlocksForPhrase(
-      widget.phraseObject.id,
-    );
-    blocks.sort(
-      (a, b) => a.translatedPositionIndex.first.compareTo(
-        b.translatedPositionIndex.first,
-      ),
-    );
+    final blocks = await blockService.getBlocksForPhrase(widget.phraseObject.id);
+    blocks.sort((a, b) => a.translatedPositionIndex.first.compareTo(b.translatedPositionIndex.first));
 
     List<WordObject> allWords = [];
     for (var block in blocks) {
-      final words = await wordService.getWordsBlocks([block.id]);
-      allWords.addAll(words);
+      allWords.addAll(await wordService.getWordsBlocks([block.id]));
     }
+    allWords.sort((a, b) => (a.wordPosition ?? 0).compareTo(b.wordPosition ?? 0));
 
-    allWords.sort(
-      (a, b) => (a.wordPosition ?? 0).compareTo(b.wordPosition ?? 0),
-    );
     return PhraseDataDTO(blocks, allWords);
   }
 
-  void toggleSelection(int? blockId) {
+  void _toggleSelection(int? blockId) {
     if (blockId == null) return;
-    setState(() {
-      _selectedBlockId = (_selectedBlockId == blockId) ? null : blockId;
-    });
+    setState(() => _selectedBlockId = (_selectedBlockId == blockId) ? null : blockId);
   }
 
   String _getVersionText(WordObject word, String key) {
     try {
       return word.versions.firstWhere((v) => v.key == key).text ?? '';
-    } catch (e) {
+    } catch (_) {
       return '';
     }
   }
@@ -77,109 +64,181 @@ class _PhraseTranslatedWidgetState
     final readingSettings = ref.watch(readingTypeNotifierProvider).value;
     final mainOption = readingSettings?.mainOption ?? 'original';
     final additionalOption = readingSettings?.additionalOptions ?? '';
-    return FutureBuilder(
+
+    return FutureBuilder<PhraseDataDTO>(
       future: _praseDataDTOFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Padding(
-            padding: EdgeInsets.all(16.0),
+          // Компактний індикатор завантаження без величезних відступів
+          return const SizedBox(
+            height: 40,
             child: Center(child: CupertinoActivityIndicator()),
           );
         }
         if (snapshot.hasError || !snapshot.hasData) {
-          return Center(child: Text('Error to load data'));
+          return const Text(
+            'Error to load data',
+            textAlign: TextAlign.left,
+          );
         }
 
-        final data = snapshot.data!;
-        final blocks = data.blocks;
-        final blocksList = List.from(blocks)
-          ..sort((a, b) => a.translatedPositionIndex.first.compareTo(b.translatedPositionIndex.first));
-        final allWords = data.allOriginalWords;
-        return Align(
-          alignment: Alignment.centerLeft,
-          child:
-          Padding(
-          padding: EdgeInsets.all(6.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                child: Wrap(
-                  spacing: 1.0,
-                  runSpacing: 5.0,
-                  children: allWords.map((word) {
-                    final isSelected =
-                        _selectedBlockId != null &&
-                        _selectedBlockId == word.blockId;
-                    final cleanedMainWord = _getVersionText(word, mainOption).trim();
-                    final cleanedAdditionalWord = _getVersionText(word, additionalOption).trim();
-
-                    return GestureDetector(
-                      onTap: () => toggleSelection(word.blockId),
-                      child: AnimatedContainer(
-                        duration: Duration(milliseconds: 150),
-                        curve: Curves.easeOut,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 2,
-                          vertical: 2,
-                        ),
-                        child: Column(
-                          children: [
-                            Text(
-                              cleanedAdditionalWord,
-                              style: TextStyle(
-                                fontSize: 8.0,
-                                color: isSelected
-                                    ? Colors.deepPurple
-                                    : Colors.deepPurpleAccent.withOpacity(0.7),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              cleanedMainWord,
-                              style: TextStyle(
-                                color: isSelected
-                                    ? Colors.deepPurple
-                                    : Colors.deepPurpleAccent.withOpacity(0.7),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              RichText(
-                text: TextSpan(
-                  children: blocksList.map((block) {
-                    final cleanedText = block.blockTranslation?.trim() ?? '';
-                    final isSelected = _selectedBlockId == block.id;
-
-                    return TextSpan(
-                      text: '$cleanedText ',
-                      style: TextStyle(
-                        color: isSelected
-                            ? Colors.deepPurple
-                            : Colors.deepPurpleAccent.withOpacity(0.7),
-                        fontWeight: FontWeight.bold,
-                      ),
-                        recognizer: TapGestureRecognizer()
-                        ..onTap = () => toggleSelection(block.id),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
-          ),
-        ),
+        return _PhraseTranslatedContent(
+          blocks: snapshot.data!.blocks,
+          allWords: snapshot.data!.allOriginalWords,
+          mainOption: mainOption,
+          additionalOption: additionalOption,
+          selectedBlockId: _selectedBlockId,
+          onToggleSelection: _toggleSelection,
+          getVersionText: _getVersionText,
         );
       },
+    );
+  }
+}
+
+class _PhraseTranslatedContent extends StatelessWidget {
+  final List<BlockObject> blocks;
+  final List<WordObject> allWords;
+  final String mainOption;
+  final String additionalOption;
+  final int? selectedBlockId;
+  final Function(int?) onToggleSelection;
+  final String Function(WordObject, String) getVersionText;
+
+  const _PhraseTranslatedContent({
+    required this.blocks,
+    required this.allWords,
+    required this.mainOption,
+    required this.additionalOption,
+    required this.selectedBlockId,
+    required this.onToggleSelection,
+    required this.getVersionText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final blocksList = [...blocks]
+      ..sort((a, b) => a.translatedPositionIndex.first.compareTo(b.translatedPositionIndex.first));
+
+    // Прибрано зайвий Padding, який збільшував розмір картки
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start, // Чітке вирівнювання по лівому краю
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _WordsSection(
+          allWords: allWords,
+          mainOption: mainOption,
+          additionalOption: additionalOption,
+          selectedBlockId: selectedBlockId,
+          onToggleSelection: onToggleSelection,
+          getVersionText: getVersionText,
+        ),
+        const SizedBox(height: PhraseListStyles.blockSectionSpacing),
+        _BlocksSection(
+          blocksList: blocksList,
+          selectedBlockId: selectedBlockId,
+          onToggleSelection: onToggleSelection,
+        ),
+      ],
+    );
+  }
+}
+
+class _WordsSection extends StatelessWidget {
+  final List<WordObject> allWords;
+  final String mainOption;
+  final String additionalOption;
+  final int? selectedBlockId;
+  final Function(int?) onToggleSelection;
+  final String Function(WordObject, String) getVersionText;
+
+  const _WordsSection({
+    required this.allWords,
+    required this.mainOption,
+    required this.additionalOption,
+    required this.selectedBlockId,
+    required this.onToggleSelection,
+    required this.getVersionText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: PhraseListStyles.wordSpacing,
+      runSpacing: PhraseListStyles.wordRunSpacing,
+      children: allWords.map((word) {
+        return _WordItem(
+          isSelected: selectedBlockId == word.blockId,
+          cleanedMainWord: getVersionText(word, mainOption).trim(),
+          cleanedAdditionalWord: getVersionText(word, additionalOption).trim(),
+          onTap: () => onToggleSelection(word.blockId),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _WordItem extends StatelessWidget {
+  final bool isSelected;
+  final String cleanedMainWord;
+  final String cleanedAdditionalWord;
+  final VoidCallback onTap;
+
+  const _WordItem({
+    required this.isSelected,
+    required this.cleanedMainWord,
+    required this.cleanedAdditionalWord,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: PhraseListStyles.durationWordAnimation,
+        curve: PhraseListStyles.curveWord,
+        padding: const EdgeInsets.all(PhraseListStyles.wordPadding),
+        child: Column(
+          children: [
+            Text(
+              cleanedAdditionalWord,
+              style: PhraseListStyles.getWordTextStyle(isSelected: isSelected, isAdditional: true),
+            ),
+            Text(
+              cleanedMainWord,
+              style: PhraseListStyles.getWordTextStyle(isSelected: isSelected, isAdditional: false),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BlocksSection extends StatelessWidget {
+  final List<BlockObject> blocksList;
+  final int? selectedBlockId;
+  final Function(int?) onToggleSelection;
+
+  const _BlocksSection({
+    required this.blocksList,
+    required this.selectedBlockId,
+    required this.onToggleSelection,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return RichText(
+      text: TextSpan(
+        children: blocksList.map((block) {
+          return TextSpan(
+            text: '${block.blockTranslation?.trim() ?? ''} ',
+            style: PhraseListStyles.getBlockTextStyle(isSelected: selectedBlockId == block.id),
+            recognizer: TapGestureRecognizer()..onTap = () => onToggleSelection(block.id),
+          );
+        }).toList(),
+      ),
     );
   }
 }
