@@ -7,6 +7,16 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 /// TFile  — тип елемента другого рівня, якщо він є (файл субтитрів, конкретна
 ///          знахідка в тексті і т.д.). Якщо другого рівня нема — став TFile = Never
 ///          і hasFileStage = false, TFile просто не використовується.
+///
+/// ВАЖЛИВО: search / getFiles / resolve отримують [WidgetRef] — саме через нього
+/// джерело має діставати свої сервіси (наприклад `ref.read(jimakuServiceProvider.future)`),
+/// а НЕ створювати їх напряму (`JimakuService.create()`). Використовуємо саме
+/// WidgetRef (а не Ref), бо в Riverpod 2.x WidgetRef НЕ є підтипом Ref, а ці
+/// методи завжди викликаються з ConsumerState/ConsumerWidget, де є WidgetRef.
+/// Це дає:
+///  - єдину точку створення/кешування сервісу (провайдер),
+///  - можливість підмінити сервіс у тестах через ProviderScope(overrides: ...),
+///  - консистентність з рештою Riverpod-архітектури.
 abstract class SearchSource<TEntry, TFile> {
   /// Унікальний ключ — на ньому будуються провайдери (щоб різні джерела
   /// не ділили один стейт, навіть якщо відкриті "одночасно" в різних місцях UI)
@@ -22,15 +32,27 @@ abstract class SearchSource<TEntry, TFile> {
   /// Початкові фільтри цього джерела (кожне джерело має свою форму фільтрів)
   Map<String, dynamic> get defaultFilters;
 
-  Future<List<TEntry>> search(String query, Map<String, dynamic> filters);
+  /// [ref] — звідси дістаємо сервіс(и), потрібні для запиту
+  /// (наприклад `await ref.read(jimakuServiceProvider.future)`).
+  Future<List<TEntry>> search(
+      String query,
+      Map<String, dynamic> filters,
+      WidgetRef ref,
+      );
 
-  /// Викликається тільки якщо hasFileStage == true
-  Future<List<TFile>> getFiles(TEntry entry, Map<String, dynamic> filters) =>
+  /// Викликається тільки якщо hasFileStage == true.
+  /// [ref] — так само, для доступу до сервісу через провайдер.
+  Future<List<TFile>> getFiles(
+      TEntry entry,
+      Map<String, dynamic> filters,
+      WidgetRef ref,
+      ) =>
       Future.value(const []);
 
   /// Перетворює фінально обране (entry, якщо !hasFileStage, або file, якщо
   /// hasFileStage) на кінцевий результат — шлях до файлу, ID, що завгодно.
-  Future<String> resolve(dynamic selected);
+  /// [ref] — так само, для доступу до сервісу через провайдер.
+  Future<String> resolve(dynamic selected, WidgetRef ref);
 
   /// Панель фільтрів під пошуковим полем. Читає/пише через searchFiltersProvider(key).
   Widget buildFilterBar(BuildContext context, WidgetRef ref);

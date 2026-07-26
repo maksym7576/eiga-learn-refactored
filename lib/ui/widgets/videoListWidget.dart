@@ -1,11 +1,5 @@
-
-
-import 'dart:io';
-
-import 'package:eiga/backend/data/models/videoObject.dart';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/ui/widgets/videoCard.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -17,24 +11,14 @@ class VideoListWidget extends ConsumerStatefulWidget {
 }
 
 class _VideoListWidgetState extends ConsumerState<VideoListWidget> {
-
   @override
   Widget build(BuildContext context) {
     final videos = ref.watch(videoServiceProvider);
 
     if (videos.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.video_library, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text("You don't have videos", style: TextStyle(fontSize: 18),
-            ),
-          ],
-        ),
-      );
+      return const _EmptyState();
     }
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -44,9 +28,63 @@ class _VideoListWidgetState extends ConsumerState<VideoListWidget> {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 0.7,
+        // 3 / 4 узгоджено з AspectRatio всередині VideoCard,
+        // щоб картки заповнювали клітинку без порожніх зазорів
+        childAspectRatio: 3 / 4,
       ),
-      itemBuilder: (context, index) => VideoCard(videos[index]),
+      itemBuilder: (context, index) {
+        final video = videos[index];
+        return VideoCard(
+          key: ValueKey(video.id),
+          video,
+        );
+      },
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.deepPurpleAccent.withOpacity(0.08),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.video_library_outlined,
+              size: 56,
+              color: Colors.deepPurpleAccent.withOpacity(0.6),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Тут ще немає відео',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.deepPurpleAccent.withOpacity(0.8),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Додайте своє перше відео, щоб побачити його тут',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

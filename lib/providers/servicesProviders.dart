@@ -99,3 +99,4 @@ final aiServiceProvider = Provider<AiService>((ref) {
 final jimakuServiceProvider = FutureProvider<JimakuService>((ref) async {
   return JimakuService.create();
 });
+

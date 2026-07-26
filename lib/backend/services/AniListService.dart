@@ -1,70 +1,70 @@
 import 'dart:convert';
+import 'dart:io';
+
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
-class AniListService {
-  static const String baseUrl = 'https://graphql.anilist.co';
+import '../data/dto/AnilistDataDTO.dart';
 
-  static const Map<String, String> _headers = {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  };
+class AnilistService {
+  static const _endpoint = 'https://graphql.anilist.co';
 
-  static const String _mediaQuery = r'''
+  static const _query = r'''
     query ($id: Int) {
-      Media (id: $id, type: ANIME) {
+      Media(id: $id, type: ANIME) {
+        id
         title {
           romaji
           english
-          native
         }
         coverImage {
+          extraLarge
           large
-          medium
         }
       }
     }
   ''';
 
-  Future<AniListMediaDTO> getTitleAndCover(int anilistId) async {
+  /// Отримати дані аніме по anilistId. Повертає null, якщо не знайдено / помилка.
+  Future<AnilistDataDTO?> getById(int anilistId) async {
     final response = await http.post(
-      Uri.parse(baseUrl),
-      headers: _headers,
-      body: json.encode({
-        'query': _mediaQuery,
+      Uri.parse(_endpoint),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({
+        'query': _query,
         'variables': {'id': anilistId},
       }),
     );
 
-    if (response.statusCode == 200) {
-      final decoded = json.decode(response.body) as Map<String, dynamic>;
+    if (response.statusCode != 200) return null;
 
-      if (decoded.containsKey('errors')) {
-        throw Exception('AniList error: ${decoded['errors']}');
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    final media = decoded['data']?['Media'] as Map<String, dynamic>?;
+    if (media == null) return null;
+
+    return AnilistDataDTO.fromJson(media);
+  }
+
+  Future<String?> downloadAndSaveCover(String url, int anilistId) async {
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode != 200) return null;
+
+      final dir = await getApplicationDocumentsDirectory();
+      final coversDir = Directory('${dir.path}/anilist_covers');
+      if (!await coversDir.exists()) {
+        await coversDir.create(recursive: true);
       }
 
-      final media = decoded['data']['Media'] as Map<String, dynamic>;
-      return AniListMediaDTO.fromJson(media);
-    } else {
-      throw Exception(
-        'Error fetching AniList data: ${response.statusCode} - ${response.body}',
-      );
+      final extension = url.split('.').last.split('?').first;
+      final file = File('${coversDir.path}/$anilistId.$extension');
+      await file.writeAsBytes(response.bodyBytes);
+      return file.path;
+    } catch (_) {
+      return null;
     }
-  }
-}
-
-class AniListMediaDTO {
-  final String title;
-  final String coverImageUrl;
-
-  AniListMediaDTO({required this.title, required this.coverImageUrl});
-
-  factory AniListMediaDTO.fromJson(Map<String, dynamic> json) {
-    final titleMap = json['title'] as Map<String, dynamic>;
-    final cover = json['coverImage'] as Map<String, dynamic>;
-
-    return AniListMediaDTO(
-      title: titleMap['english'] ?? titleMap['romaji'] ?? titleMap['native'] ?? '',
-      coverImageUrl: cover['large'] ?? cover['medium'] ?? '',
-    );
   }
 }

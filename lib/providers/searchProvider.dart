@@ -1,6 +1,16 @@
-
-
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+
+import 'package:eiga/backend/data/dto/JimakuDataDTO.dart';
+import 'package:eiga/backend/services/jimakuService.dart';
+
+class SearchSourceKeys {
+  static const String jimaku = 'jimaku';
+}
+
+
+final jimakuServiceProvider = FutureProvider<JimakuService>((ref) async {
+  return JimakuService.create();
+});
 
 
 final searchResultsProvider =
@@ -26,3 +36,20 @@ StateProvider.family<bool, String>((ref, key) => false);
 
 final isResolvingProvider =
 StateProvider.family<bool, String>((ref, key) => false);
+
+
+extension JimakuProviders on WidgetRef {
+  List<JimakuDataDTO> watchJimakuResults() => watch(
+    searchResultsProvider(SearchSourceKeys.jimaku),
+  ).cast<JimakuDataDTO>();
+
+  JimakuDataDTO? watchJimakuSelectedEntry() =>
+      watch(selectedEntryProvider(SearchSourceKeys.jimaku)) as JimakuDataDTO?;
+
+  List<FileJimakuDTO> watchJimakuFiles() => watch(
+    filesProvider(SearchSourceKeys.jimaku),
+  ).cast<FileJimakuDTO>();
+
+  FileJimakuDTO? watchJimakuSelectedResult() =>
+      watch(selectedResultProvider(SearchSourceKeys.jimaku)) as FileJimakuDTO?;
+}

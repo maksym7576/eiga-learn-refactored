@@ -11,7 +11,7 @@ import '../searchSourceAbstract.dart';
 
 class JimakuSubtitleSource implements SearchSource<JimakuDataDTO, FileJimakuDTO> {
   @override
-  String get key => 'jimaku';
+  String get key => SearchSourceKeys.jimaku;
 
   @override
   String get title => 'Subtitles (Jimaku)';
@@ -29,10 +29,14 @@ class JimakuSubtitleSource implements SearchSource<JimakuDataDTO, FileJimakuDTO>
     'includeUnverified': true,
   };
 
+  Future<JimakuService> _service(WidgetRef ref) {
+    return ref.read(jimakuServiceProvider.future);
+  }
+
   @override
   Future<List<JimakuDataDTO>> search(
-      String query, Map<String, dynamic> filters) async {
-    final service = await JimakuService.create();
+      String query, Map<String, dynamic> filters, WidgetRef ref) async {
+    final service = await _service(ref);
     final results = await service.searchJumakuObjects(
       query: query,
       anime: filters['animeOnly'] as bool? ?? true,
@@ -50,15 +54,15 @@ class JimakuSubtitleSource implements SearchSource<JimakuDataDTO, FileJimakuDTO>
 
   @override
   Future<List<FileJimakuDTO>> getFiles(
-      JimakuDataDTO entry, Map<String, dynamic> filters) async {
-    final service = await JimakuService.create();
+      JimakuDataDTO entry, Map<String, dynamic> filters, WidgetRef ref) async {
+    final service = await _service(ref);
     return service.getFiles(entry.id);
   }
 
   @override
-  Future<String> resolve(dynamic selected) async {
+  Future<String> resolve(dynamic selected, WidgetRef ref) async {
     final file = selected as FileJimakuDTO;
-    final service = await JimakuService.create();
+    final service = await _service(ref);
     return service.downloadAndCacheFile(file.url, preferredName: file.name);
   }
 

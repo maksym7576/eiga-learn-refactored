@@ -2,21 +2,21 @@ import 'package:eiga/backend/data/dto/JimakuDataDTO.dart';
 import 'package:eiga/backend/data/models/videoObject.dart';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoComponentsProvider.dart';
-import 'package:eiga/ui/widgets/dialogUtils.dart';
 import 'package:eiga/ui/widgets/phrasesDepacked/phraseDepPreviewWidget.dart';
 import 'package:eiga/ui/widgets/searchWidgets/JimakuSearch/JimakuSubtitleSource.dart';
 import 'package:eiga/ui/widgets/searchWidgets/searchPickerWidget.dart';
-import 'package:eiga/ui/widgets/videoUploating/swipeableFileBoxWidget.dart';
+import 'package:eiga/ui/widgets/videoUploating/videoFilePickersRow.dart';
+import 'package:eiga/ui/widgets/videoUploating/videoFormActionButtons.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../../config/secureStorage.dart';
+import '../../../providers/anilistServiceProvider.dart';
 import '../../../providers/localStoragesProviders.dart';
-import '../../../providers/redirectProviders.dart';
+import '../../../providers/searchProvider.dart';
+import 'AnilistPreviewWidget.dart';
+import 'VideoTitleField.dart';
 import 'languageButtonWidget.dart';
-
 
 class VideoUploadingWidget extends ConsumerStatefulWidget {
   const VideoUploadingWidget({super.key});
@@ -44,12 +44,20 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
 
   void _pickJimakuSrt(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        builder: (_) => SearchPickerWidget<JimakuDataDTO, FileJimakuDTO>(
-          source: JimakuSubtitleSource(),
-          onResolved: (path) => ref.read(srtPathProvider.notifier).state = path,
-        ),
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => SearchPickerWidget<JimakuDataDTO, FileJimakuDTO>(
+        source: JimakuSubtitleSource(),
+        onResolved: (path) {
+          ref.read(srtPathProvider.notifier).state = path;
+
+          final entry = ref.read(selectedEntryProvider(SearchSourceKeys.jimaku)) as JimakuDataDTO?;
+          final anilistId = entry?.anilistId;
+          if (anilistId != null) {
+            ref.fetchAnilistMetadata(anilistId);
+          }
+        },
+      ),
     );
   }
 
@@ -58,6 +66,7 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
     ref.read(videoPathProvider.notifier).state = null;
     ref.read(srtPathProvider.notifier).state = null;
     ref.read(languageProvider.notifier).clear();
+    ref.clearAnilistData();
   }
 
   Future<void> _submitVideo() async {
@@ -73,30 +82,32 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
       return;
     }
 
+    final anilistData = ref.read(anilistDataProvider);
+    final hasAnilistTitle = (anilistData?.displayTitle ?? '').isNotEmpty;
+
     final videoObj = VideoObject()
-      ..videoName = name.isEmpty ? videoPath.toString().trim() : name
+      ..videoName = name.isEmpty ? (hasAnilistTitle ? anilistData!.displayTitle : videoPath.toString().trim()) : name
       ..videoPath = videoPath
       ..pathSubtitle = srtPath
       ..originalLanguage = originalLanguage
       ..translatedLanguage = targetLanguage
+      ..anilistId = anilistData?.id
+      ..animeTitle = anilistData?.displayTitle
+      ..coverImagePath = anilistData?.localCoverPath
       ..createdAt = DateTime.now();
 
     final newVideo = await videoService.addVideoAndGet(videoObj);
     await ref.read(subtitleDepackerServiceProvider).depack(newVideo);
 
-    _titleController.clear();
-    ref.read(videoPathProvider.notifier).state = null;
-    ref.read(srtPathProvider.notifier).state = null;
-    ref.read(languageProvider.notifier).clear();
+    _clearForm();
   }
 
   @override
   Widget build(BuildContext context) {
-    final jimakuTokenAsync = ref.watch(tokenProvider(ApiTokenType.jimaku));
-    final hasJimakuToken = jimakuTokenAsync.valueOrNull?.isNotEmpty ?? false;
     final lanProv = ref.watch(languageProvider);
     final videoPatch = ref.watch(videoPathProvider);
     final srtPatch = ref.watch(srtPathProvider);
+
     final hasAnyData = (videoPatch?.isNotEmpty ?? false) ||
         (srtPatch?.isNotEmpty ?? false) ||
         lanProv.original.isNotEmpty ||
@@ -110,46 +121,14 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Column(
         children: [
-          TextField(
-            controller: _titleController,
-            decoration: InputDecoration(
-              labelText: 'Name',
-              labelStyle: const TextStyle(color: Colors.deepPurple),
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: const OutlineInputBorder(),
-              focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.deepPurpleAccent, width: 2)),
-              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.deepPurple.withOpacity(0.4))),
-            ),
-          ),
+          VideoTitleField(controller: _titleController),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: SwipeableFileBox(
-                  variants: [
-                    FileBoxVariant(label: 'Attach video', path: videoPatch, icon: Icons.video_file_rounded, onTap: _pickVideo),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: SwipeableFileBox(
-                  variants: [
-                    FileBoxVariant(label: 'Attach subtitle', path: srtPatch, icon: Icons.subtitles_sharp, onTap: _pickPath),
-                    FileBoxVariant(label: hasJimakuToken ? 'Jimaku subtitle' : 'Jimaku token not exists',
-                      path: hasJimakuToken ? srtPatch : null,
-                      icon: Icons.closed_caption,
-                      onTap: hasJimakuToken
-                          ? () => _pickJimakuSrt(context, ref)
-                          : () {
-                        ref.read(openJimakuDialogProvider.notifier).state = true;
-                        context.go('/settings');
-                      },),
-                  ],
-                ),
-              ),
-            ],
+          VideoFilePickersRow(
+            videoPath: videoPatch,
+            srtPath: srtPatch,
+            onPickVideo: _pickVideo,
+            onPickSrt: _pickPath,
+            onPickJimakuSrt: _pickJimakuSrt,
           ),
           const SizedBox(height: 7),
           Row(
@@ -158,42 +137,14 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
             ],
           ),
           const SizedBox(height: 7),
+          const AnilistPreviewWidget(),
           if (srtPatch != null && lanProv.original.isNotEmpty) const PhrasesDepPreviewWidget(),
           const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30),
-            child: Row(
-              children: [
-                if (hasAnyData) ...[
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _clearForm,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.deepPurple,
-                        side: const BorderSide(color: Colors.deepPurpleAccent),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text('Cancel', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0.4)),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                ],
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: isButtonEnabled ? _submitVideo : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurpleAccent,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      elevation: 0,
-                    ),
-                    child: const Text('Submit', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0.4)),
-                  ),
-                ),
-              ],
-            ),
+          VideoFormActionButtons(
+            hasAnyData: hasAnyData,
+            isSubmitEnabled: isButtonEnabled,
+            onCancel: _clearForm,
+            onSubmit: _submitVideo,
           ),
           const SizedBox(height: 100),
         ],

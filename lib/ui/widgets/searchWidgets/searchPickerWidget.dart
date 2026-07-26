@@ -49,7 +49,9 @@ class _SearchPickerWidgetState<TEntry, TFile>
 
     try {
       final filters = ref.read(searchFiltersProvider(_key));
-      final results = await widget.source.search(query, filters);
+      // ref передаємо в джерело — саме через нього джерело дістає свій
+      // сервіс (наприклад jimakuServiceProvider), а не створює його самостійно.
+      final results = await widget.source.search(query, filters, ref);
       ref.read(searchResultsProvider(_key).notifier).state = results;
     } catch (e) {
       ref.read(searchResultsProvider(_key).notifier).state = [];
@@ -79,7 +81,7 @@ class _SearchPickerWidgetState<TEntry, TFile>
 
     try {
       final filters = ref.read(searchFiltersProvider(_key));
-      final files = await widget.source.getFiles(entry, filters);
+      final files = await widget.source.getFiles(entry, filters, ref);
       ref.read(filesProvider(_key).notifier).state = files;
     } catch (e) {
       if (mounted) {
@@ -105,7 +107,7 @@ class _SearchPickerWidgetState<TEntry, TFile>
 
     ref.read(isResolvingProvider(_key).notifier).state = true;
     try {
-      final result = await widget.source.resolve(selected);
+      final result = await widget.source.resolve(selected, ref);
       widget.onResolved(result);
 
       if (mounted) Navigator.pop(context);
