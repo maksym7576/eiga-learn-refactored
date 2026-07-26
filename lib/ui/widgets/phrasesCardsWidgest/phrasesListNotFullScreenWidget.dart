@@ -119,58 +119,84 @@ class _PhraseCardItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: PhraseListStyles.durationCardAnimation,
-        margin: const EdgeInsets.symmetric(
-          vertical: PhraseListStyles.cardMarginVertical,
-          horizontal: PhraseListStyles.cardMarginHorizontal,
-        ),
-        // Якщо карточки досі завеликі, зменште cardPaddingVertical у файлі стилів (наприклад, до 8)
-        padding: const EdgeInsets.symmetric(
-          vertical: PhraseListStyles.cardPaddingVertical,
-          horizontal: PhraseListStyles.cardPaddingHorizontal,
-        ),
-        decoration: PhraseListStyles.getCardDecoration(
-          isFinished: isFinished,
-          isActive: isActive,
-        ),
-        child: Column(
-          // ГОЛОВНИЙ ФІКС: Розтягуємо контент, щоб він автоматично ставав по лівому краю
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            phrase.isTranslated
-                ? PhraseTranslatedWidget(key: ValueKey(phrase.id), phraseObject: phrase)
-                : PhraseNotTranslatedWidget(
-              key: ValueKey(phrase.id),
-              phraseObject: phrase,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // 1. Головна картка виключно з текстом
+          AnimatedContainer(
+            duration: PhraseListStyles.durationCardAnimation,
+            margin: const EdgeInsets.only(
+              top: PhraseListStyles.cardMarginVertical,
+              bottom: 14, // Збільшений відступ знизу, щоб туди "ліг" час
+              left: PhraseListStyles.cardMarginHorizontal,
+              right: PhraseListStyles.cardMarginHorizontal,
+            ),
+            padding: const EdgeInsets.symmetric(
+              vertical: PhraseListStyles.cardPaddingVertical,
+              horizontal: PhraseListStyles.cardPaddingHorizontal,
+            ),
+            decoration: PhraseListStyles.getCardDecoration(
+              isFinished: isFinished,
               isActive: isActive,
             ),
-            const SizedBox(height: PhraseListStyles.contentSpacing),
-            _PhraseMetaRow(phrase: phrase),
-          ],
-        ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                phrase.isTranslated
+                    ? PhraseTranslatedWidget(key: ValueKey(phrase.id), phraseObject: phrase)
+                    : PhraseNotTranslatedWidget(
+                  key: ValueKey(phrase.id),
+                  phraseObject: phrase,
+                  isActive: isActive,
+                ),
+              ],
+            ),
+          ),
+
+          // 2. Блок часу та статусу, який "плаває" знизу зліва
+          // 2. Блок часу та статусу, який "плаває" знизу справа
+          Positioned(
+            bottom: -4, // Трохи опускаємо вниз, щоб плашка красиво "перекривала" нижній край картки (можна змінити на 0 або 2)
+            right: PhraseListStyles.cardMarginHorizontal + 12,
+            child: Transform.scale(
+              scale: 0.85, // Трохи збільшив масштаб. Якщо текст все ще завеликий - поверніть 0.7, але краще зменшувати сам шрифт у стилях
+              alignment: Alignment.bottomRight,
+              child: Container(
+                // Додаємо більше "повітря" всередині плашки
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  // Використовуємо колір фону екрану або картки, щоб зробити плашку непрозорою
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  borderRadius: BorderRadius.circular(20), // Сучасна форма "пігулки"
+                  border: Border.all(
+                    color: PhraseListStyles.primaryColor.withOpacity(0.2), // Ніжніший бордер
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.08), // М'якша, природніша тінь
+                      blurRadius: 10,
+                      offset: const Offset(0, 4), // Тінь падає рівномірно вниз
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _TimeRangeWidget(
+                      startTime: phrase.startTime,
+                      endTime: phrase.endTime,
+                    ),
+                    const SizedBox(width: 8), // Трохи збільшений відступ між часом і статусом
+                    _TranslationStatusWidget(phrase: phrase),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
-    );
-  }
-}
-
-class _PhraseMetaRow extends StatelessWidget {
-  final PhraseObject phrase;
-
-  const _PhraseMetaRow({required this.phrase});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _TimeRangeWidget(
-          startTime: phrase.startTime,
-          endTime: phrase.endTime,
-        ),
-        _TranslationStatusWidget(phrase: phrase),
-      ],
     );
   }
 }

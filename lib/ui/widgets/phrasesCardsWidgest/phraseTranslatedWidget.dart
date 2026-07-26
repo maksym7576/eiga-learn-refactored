@@ -69,7 +69,6 @@ class _PhraseTranslatedWidgetState extends ConsumerState<PhraseTranslatedWidget>
       future: _praseDataDTOFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          // Компактний індикатор завантаження без величезних відступів
           return const SizedBox(
             height: 40,
             child: Center(child: CupertinoActivityIndicator()),
@@ -120,9 +119,8 @@ class _PhraseTranslatedContent extends StatelessWidget {
     final blocksList = [...blocks]
       ..sort((a, b) => a.translatedPositionIndex.first.compareTo(b.translatedPositionIndex.first));
 
-    // Прибрано зайвий Padding, який збільшував розмір картки
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start, // Чітке вирівнювання по лівому краю
+      crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
         _WordsSection(
@@ -167,11 +165,18 @@ class _WordsSection extends StatelessWidget {
       spacing: PhraseListStyles.wordSpacing,
       runSpacing: PhraseListStyles.wordRunSpacing,
       children: allWords.map((word) {
+        final mainText = getVersionText(word, mainOption).trim();
+        final additionalText = getVersionText(word, additionalOption).trim();
+
+        // Визначаємо, чи текст поміститься в один рядок
+        final shouldWrap = mainText.length > 12 || additionalText.length > 12;
+
         return _WordItem(
           isSelected: selectedBlockId == word.blockId,
-          cleanedMainWord: getVersionText(word, mainOption).trim(),
-          cleanedAdditionalWord: getVersionText(word, additionalOption).trim(),
+          cleanedMainWord: mainText,
+          cleanedAdditionalWord: additionalText,
           onTap: () => onToggleSelection(word.blockId),
+          shouldReduceFont: shouldWrap,
         );
       }).toList(),
     );
@@ -183,16 +188,53 @@ class _WordItem extends StatelessWidget {
   final String cleanedMainWord;
   final String cleanedAdditionalWord;
   final VoidCallback onTap;
+  final bool shouldReduceFont;
 
   const _WordItem({
     required this.isSelected,
     required this.cleanedMainWord,
     required this.cleanedAdditionalWord,
     required this.onTap,
+    this.shouldReduceFont = false,
   });
+
+  double _calculateOptimalFontSize(String text, double defaultSize, int maxLines) {
+    // Якщо текст короткий, використовуємо стандартний розмір
+    if (text.length <= 8) {
+      return defaultSize;
+    }
+
+    // Якщо текст середній, трошки зменшуємо
+    if (text.length <= 15) {
+      return defaultSize * 0.9;
+    }
+
+    // Якщо текст довгий, зменшуємо більше
+    return defaultSize * 0.75;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final additionalStyle = PhraseListStyles.getWordTextStyle(
+      isSelected: isSelected,
+      isAdditional: true,
+    );
+    final mainStyle = PhraseListStyles.getWordTextStyle(
+      isSelected: isSelected,
+      isAdditional: false,
+    );
+
+    final additionalDefaultSize = additionalStyle.fontSize ?? 12;
+    final mainDefaultSize = mainStyle.fontSize ?? 14;
+
+    final additionalFontSize = shouldReduceFont
+        ? _calculateOptimalFontSize(cleanedAdditionalWord, additionalDefaultSize, 2)
+        : additionalDefaultSize;
+
+    final mainFontSize = shouldReduceFont
+        ? _calculateOptimalFontSize(cleanedMainWord, mainDefaultSize, 2)
+        : mainDefaultSize;
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -200,14 +242,21 @@ class _WordItem extends StatelessWidget {
         curve: PhraseListStyles.curveWord,
         padding: const EdgeInsets.all(PhraseListStyles.wordPadding),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               cleanedAdditionalWord,
-              style: PhraseListStyles.getWordTextStyle(isSelected: isSelected, isAdditional: true),
+              softWrap: true,
+              maxLines: shouldReduceFont ? 2 : null,
+              overflow: TextOverflow.ellipsis,
+              style: additionalStyle.copyWith(fontSize: additionalFontSize),
             ),
             Text(
               cleanedMainWord,
-              style: PhraseListStyles.getWordTextStyle(isSelected: isSelected, isAdditional: false),
+              softWrap: true,
+              maxLines: shouldReduceFont ? 2 : null,
+              overflow: TextOverflow.ellipsis,
+              style: mainStyle.copyWith(fontSize: mainFontSize),
             ),
           ],
         ),
@@ -229,16 +278,24 @@ class _BlocksSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RichText(
-      text: TextSpan(
+    return Text.rich(
+      TextSpan(
         children: blocksList.map((block) {
+          final blockText = block.blockTranslation?.trim() ?? '';
           return TextSpan(
-            text: '${block.blockTranslation?.trim() ?? ''} ',
-            style: PhraseListStyles.getBlockTextStyle(isSelected: selectedBlockId == block.id),
+            text: '$blockText\u2009',
+            style: PhraseListStyles.getBlockTextStyle(
+              isSelected: selectedBlockId == block.id,
+            ).copyWith(
+              fontSize: (PhraseListStyles.getBlockTextStyle(isSelected: selectedBlockId == block.id).fontSize ?? 14) * 0.9,
+            ),
             recognizer: TapGestureRecognizer()..onTap = () => onToggleSelection(block.id),
           );
         }).toList(),
       ),
+      softWrap: true,
+      overflow: TextOverflow.visible,
+      textAlign: TextAlign.start,
     );
   }
 }

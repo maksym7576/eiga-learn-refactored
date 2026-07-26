@@ -17,30 +17,34 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
   @override
   Widget build(BuildContext context) {
     ref.watch(translationProvider);
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.only(top: 7.0),
+          padding: const EdgeInsets.only(top: 7.0),
           child: Column(
             children: [
-              Flexible(
-                child: Stack(
-                  children: [
-                    VideoPlayerWidget(),
-                    Positioned(
-                      top: 0,
-                      left: 0,
-                      child: IconButton(
-                        onPressed: () => context.go('/main'),
-                        icon: const Icon(Icons.arrow_back),
-                        color: Colors.white,
-                      ),
+              // Відеоплеєр з можливістю рисайзу
+              Stack(
+                children: [
+                  VideoPlayerWidget(),
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    child: IconButton(
+                      onPressed: () => context.go('/main'),
+                      icon: const Icon(Icons.arrow_back),
+                      color: Colors.white,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+              // Налаштування
               VideoSettingsNotFullScreenWidget(),
-              Expanded(child: PhraseListNotFullScreenWidget()),
+              // Список фраз займає весь простір що залишився
+              Expanded(
+                child: PhraseListNotFullScreenWidget(),
+              ),
             ],
           ),
         ),
