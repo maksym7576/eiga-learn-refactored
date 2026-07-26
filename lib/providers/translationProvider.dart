@@ -74,7 +74,6 @@ class TranslationProvider {
     final futurePhrases = <PhraseObject>[];
 
     for (var phrase in allPhrases) {
-      // Пропускаємо ті, що вже в процесі або вже перекладені
       if (phrase.isTranslating == true || phrase.isTranslated == true) continue;
 
       final phraseTime = _toDuration(phrase.startTime!);
@@ -87,7 +86,6 @@ class TranslationProvider {
 
     if (futurePhrases.isNotEmpty) {
       final config = ref.read(appConfigsProvider);
-      // Очікуємо, що config має геттери getSecondsAhead та getNumberOfPhrases
       final lookAhead = Duration(seconds: (config as dynamic).getSecondsAhead as int? ?? 5);
       final nextPhraseTime = _toDuration(futurePhrases.first.startTime!);
 
@@ -124,7 +122,6 @@ class TranslationProvider {
         return;
       }
 
-      // Помітити фрази як "translating"
       try {
         await ref.read(phraseServiceProvider).markPhrasesAsTranslatingByPhraseList(phrases);
       } catch (e) {
@@ -134,7 +131,6 @@ class TranslationProvider {
       final aiService = ref.read(aiServiceProvider);
       final defaultTransport = ref.read(defaultAiTransportProvider);
 
-      // Виклик основного сервісу з вибором транспорту
       await aiService.translatePhraseList(
         phraseObjectsList: phrases,
         originalLanguage: video.originalLanguage!,
@@ -142,15 +138,12 @@ class TranslationProvider {
         transportName: defaultTransport,
       );
     } catch (e, st) {
-      // Лог та репорт у провайдер статусу
       ref.read(aiRequestStatusProvider.notifier).appendLog('TranslationProvider error: $e');
       ref.read(aiRequestStatusProvider.notifier).reportError(e, message: e.toString(), stackTrace: st, terminal: false);
 
-      // Спроба зняти мітку "translating" якщо було помилково встановлено
       try {
         await ref.read(phraseServiceProvider).markPhrasesAsTranslatingByPhraseList(phrases);
       } catch (_) {
-        // якщо метода немає або він падає — просто логнемо
         ref.read(aiRequestStatusProvider.notifier).appendLog('TranslationProvider: failed to unmark phrases after error');
       }
 

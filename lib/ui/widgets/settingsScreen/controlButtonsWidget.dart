@@ -4,6 +4,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../providers/redirectProviders.dart';
+
 class ControlButtonWidget extends ConsumerStatefulWidget {
   const ControlButtonWidget({super.key});
 
@@ -16,6 +18,17 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (ref.read(openJimakuDialogProvider)) {
+        ref.read(openJimakuDialogProvider.notifier).state = false;
+
+        _openSettingDialog(
+          context,
+          title: 'Jimaku key',
+          builder: (context) => _apiKeyView(context, ApiTokenType.jimaku),
+        );
+      }
+    });
   }
 
   void _openSettingDialog(

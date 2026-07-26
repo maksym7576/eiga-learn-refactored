@@ -14,4 +14,8 @@ class VideoObject {
   String? videoPath;
   String? thumbnailPath;
   DateTime? createdAt;
+
+  int? anilistId;
+  String? animeTitle;
+  String? coverImagePath;
 }

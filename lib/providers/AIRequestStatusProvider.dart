@@ -1,4 +1,3 @@
-// Провайдер статусу AI-запиту (реальний час, логування, детальні помилки)
 import 'dart:async';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -158,7 +157,6 @@ class AiRequestState {
 class AiRequestNotifier extends StateNotifier<AiRequestState> {
   AiRequestNotifier() : super(const AiRequestState());
 
-  // Stream for real-time subscribers (UI / logs)
   final StreamController<AiRequestState> _controller =
   StreamController<AiRequestState>.broadcast();
 
@@ -255,7 +253,6 @@ class AiRequestNotifier extends StateNotifier<AiRequestState> {
     print('[AI_REQ] success: ${state.toString()}');
   }
 
-  /// Регіструє подію / лог у state та емісує її
   void recordEvent(String message, {String? kind}) {
     final e = AiEvent(message, kind: kind);
     state = state.copyWith(events: [...state.events, e], logs: [...state.logs, message]);
@@ -263,7 +260,6 @@ class AiRequestNotifier extends StateNotifier<AiRequestState> {
     print('[AI_REQ] event: $message');
   }
 
-  /// Детально звітує про помилку: тип, HTTP-код (якщо є), stackTrace і чи термінальна
   void setErrorWithDetails(
       Object error, {
         String? message,

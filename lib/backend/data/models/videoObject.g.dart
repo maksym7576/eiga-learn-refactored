@@ -17,43 +17,58 @@ const VideoObjectSchema = CollectionSchema(
   name: r'VideoObject',
   id: -4838623918200537773,
   properties: {
-    r'createdAt': PropertySchema(
+    r'anilistId': PropertySchema(
       id: 0,
+      name: r'anilistId',
+      type: IsarType.long,
+    ),
+    r'animeTitle': PropertySchema(
+      id: 1,
+      name: r'animeTitle',
+      type: IsarType.string,
+    ),
+    r'coverImagePath': PropertySchema(
+      id: 2,
+      name: r'coverImagePath',
+      type: IsarType.string,
+    ),
+    r'createdAt': PropertySchema(
+      id: 3,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'originalLanguage': PropertySchema(
-      id: 1,
+      id: 4,
       name: r'originalLanguage',
       type: IsarType.string,
     ),
     r'pathSubtitle': PropertySchema(
-      id: 2,
+      id: 5,
       name: r'pathSubtitle',
       type: IsarType.string,
     ),
     r'textFormat': PropertySchema(
-      id: 3,
+      id: 6,
       name: r'textFormat',
       type: IsarType.string,
     ),
     r'thumbnailPath': PropertySchema(
-      id: 4,
+      id: 7,
       name: r'thumbnailPath',
       type: IsarType.string,
     ),
     r'translatedLanguage': PropertySchema(
-      id: 5,
+      id: 8,
       name: r'translatedLanguage',
       type: IsarType.string,
     ),
     r'videoName': PropertySchema(
-      id: 6,
+      id: 9,
       name: r'videoName',
       type: IsarType.string,
     ),
     r'videoPath': PropertySchema(
-      id: 7,
+      id: 10,
       name: r'videoPath',
       type: IsarType.string,
     ),
@@ -80,6 +95,18 @@ int _videoObjectEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.animeTitle;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.coverImagePath;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   {
     final value = object.originalLanguage;
     if (value != null) {
@@ -131,14 +158,17 @@ void _videoObjectSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeDateTime(offsets[0], object.createdAt);
-  writer.writeString(offsets[1], object.originalLanguage);
-  writer.writeString(offsets[2], object.pathSubtitle);
-  writer.writeString(offsets[3], object.textFormat);
-  writer.writeString(offsets[4], object.thumbnailPath);
-  writer.writeString(offsets[5], object.translatedLanguage);
-  writer.writeString(offsets[6], object.videoName);
-  writer.writeString(offsets[7], object.videoPath);
+  writer.writeLong(offsets[0], object.anilistId);
+  writer.writeString(offsets[1], object.animeTitle);
+  writer.writeString(offsets[2], object.coverImagePath);
+  writer.writeDateTime(offsets[3], object.createdAt);
+  writer.writeString(offsets[4], object.originalLanguage);
+  writer.writeString(offsets[5], object.pathSubtitle);
+  writer.writeString(offsets[6], object.textFormat);
+  writer.writeString(offsets[7], object.thumbnailPath);
+  writer.writeString(offsets[8], object.translatedLanguage);
+  writer.writeString(offsets[9], object.videoName);
+  writer.writeString(offsets[10], object.videoPath);
 }
 
 VideoObject _videoObjectDeserialize(
@@ -148,15 +178,18 @@ VideoObject _videoObjectDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = VideoObject();
-  object.createdAt = reader.readDateTimeOrNull(offsets[0]);
+  object.anilistId = reader.readLongOrNull(offsets[0]);
+  object.animeTitle = reader.readStringOrNull(offsets[1]);
+  object.coverImagePath = reader.readStringOrNull(offsets[2]);
+  object.createdAt = reader.readDateTimeOrNull(offsets[3]);
   object.id = id;
-  object.originalLanguage = reader.readStringOrNull(offsets[1]);
-  object.pathSubtitle = reader.readStringOrNull(offsets[2]);
-  object.textFormat = reader.readStringOrNull(offsets[3]);
-  object.thumbnailPath = reader.readStringOrNull(offsets[4]);
-  object.translatedLanguage = reader.readStringOrNull(offsets[5]);
-  object.videoName = reader.readStringOrNull(offsets[6]);
-  object.videoPath = reader.readStringOrNull(offsets[7]);
+  object.originalLanguage = reader.readStringOrNull(offsets[4]);
+  object.pathSubtitle = reader.readStringOrNull(offsets[5]);
+  object.textFormat = reader.readStringOrNull(offsets[6]);
+  object.thumbnailPath = reader.readStringOrNull(offsets[7]);
+  object.translatedLanguage = reader.readStringOrNull(offsets[8]);
+  object.videoName = reader.readStringOrNull(offsets[9]);
+  object.videoPath = reader.readStringOrNull(offsets[10]);
   return object;
 }
 
@@ -168,13 +201,13 @@ P _videoObjectDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 1:
       return (reader.readStringOrNull(offset)) as P;
     case 2:
       return (reader.readStringOrNull(offset)) as P;
     case 3:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 4:
       return (reader.readStringOrNull(offset)) as P;
     case 5:
@@ -182,6 +215,12 @@ P _videoObjectDeserializeProp<P>(
     case 6:
       return (reader.readStringOrNull(offset)) as P;
     case 7:
+      return (reader.readStringOrNull(offset)) as P;
+    case 8:
+      return (reader.readStringOrNull(offset)) as P;
+    case 9:
+      return (reader.readStringOrNull(offset)) as P;
+    case 10:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -288,6 +327,397 @@ extension VideoObjectQueryWhere
 
 extension VideoObjectQueryFilter
     on QueryBuilder<VideoObject, VideoObject, QFilterCondition> {
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  anilistIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'anilistId'),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  anilistIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'anilistId'),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  anilistIdEqualTo(int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'anilistId', value: value),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  anilistIdGreaterThan(int? value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'anilistId',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  anilistIdLessThan(int? value, {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'anilistId',
+          value: value,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  anilistIdBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'anilistId',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  animeTitleIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'animeTitle'),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  animeTitleIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'animeTitle'),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  animeTitleEqualTo(String? value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'animeTitle',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  animeTitleGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'animeTitle',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  animeTitleLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'animeTitle',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  animeTitleBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'animeTitle',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  animeTitleStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'animeTitle',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  animeTitleEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'animeTitle',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  animeTitleContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'animeTitle',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  animeTitleMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'animeTitle',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  animeTitleIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'animeTitle', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  animeTitleIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'animeTitle', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  coverImagePathIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'coverImagePath'),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  coverImagePathIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'coverImagePath'),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  coverImagePathEqualTo(String? value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'coverImagePath',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  coverImagePathGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'coverImagePath',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  coverImagePathLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'coverImagePath',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  coverImagePathBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'coverImagePath',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  coverImagePathStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'coverImagePath',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  coverImagePathEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'coverImagePath',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  coverImagePathContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'coverImagePath',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  coverImagePathMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'coverImagePath',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  coverImagePathIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'coverImagePath', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
+  coverImagePathIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'coverImagePath', value: ''),
+      );
+    });
+  }
+
   QueryBuilder<VideoObject, VideoObject, QAfterFilterCondition>
   createdAtIsNull() {
     return QueryBuilder.apply(this, (query) {
@@ -1542,6 +1972,43 @@ extension VideoObjectQueryLinks
 
 extension VideoObjectQuerySortBy
     on QueryBuilder<VideoObject, VideoObject, QSortBy> {
+  QueryBuilder<VideoObject, VideoObject, QAfterSortBy> sortByAnilistId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'anilistId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterSortBy> sortByAnilistIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'anilistId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterSortBy> sortByAnimeTitle() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'animeTitle', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterSortBy> sortByAnimeTitleDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'animeTitle', Sort.desc);
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterSortBy> sortByCoverImagePath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverImagePath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterSortBy>
+  sortByCoverImagePathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverImagePath', Sort.desc);
+    });
+  }
+
   QueryBuilder<VideoObject, VideoObject, QAfterSortBy> sortByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -1647,6 +2114,43 @@ extension VideoObjectQuerySortBy
 
 extension VideoObjectQuerySortThenBy
     on QueryBuilder<VideoObject, VideoObject, QSortThenBy> {
+  QueryBuilder<VideoObject, VideoObject, QAfterSortBy> thenByAnilistId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'anilistId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterSortBy> thenByAnilistIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'anilistId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterSortBy> thenByAnimeTitle() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'animeTitle', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterSortBy> thenByAnimeTitleDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'animeTitle', Sort.desc);
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterSortBy> thenByCoverImagePath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverImagePath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QAfterSortBy>
+  thenByCoverImagePathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'coverImagePath', Sort.desc);
+    });
+  }
+
   QueryBuilder<VideoObject, VideoObject, QAfterSortBy> thenByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -1764,6 +2268,31 @@ extension VideoObjectQuerySortThenBy
 
 extension VideoObjectQueryWhereDistinct
     on QueryBuilder<VideoObject, VideoObject, QDistinct> {
+  QueryBuilder<VideoObject, VideoObject, QDistinct> distinctByAnilistId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'anilistId');
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QDistinct> distinctByAnimeTitle({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'animeTitle', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<VideoObject, VideoObject, QDistinct> distinctByCoverImagePath({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(
+        r'coverImagePath',
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
   QueryBuilder<VideoObject, VideoObject, QDistinct> distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'createdAt');
@@ -1840,6 +2369,25 @@ extension VideoObjectQueryProperty
   QueryBuilder<VideoObject, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<VideoObject, int?, QQueryOperations> anilistIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'anilistId');
+    });
+  }
+
+  QueryBuilder<VideoObject, String?, QQueryOperations> animeTitleProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'animeTitle');
+    });
+  }
+
+  QueryBuilder<VideoObject, String?, QQueryOperations>
+  coverImagePathProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'coverImagePath');
     });
   }
 
