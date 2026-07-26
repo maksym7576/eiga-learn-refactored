@@ -54,18 +54,37 @@ class _VideoPlayerWidgetState extends ConsumerState<VideoPlayerWidget> {
       File(videoObject!.videoPath!),
     );
 
-    flickManager = FlickManager(videoPlayerController: controller);
+    await controller.initialize();
+    await controller.play();
+    if (!mounted) {
+      controller.dispose();
+      return;
+    }
 
-    controller.addListener(() {
-      final position = controller.value.position;
-      ref.read(playerTimeProvider.notifier).state = position;
-    });
+    flickManager = FlickManager(
+      videoPlayerController: controller,
+      autoInitialize: false,
+      autoPlay: true, // ← додано: автоматичний запуск після ініціалізації
+    );
+
+    controller.addListener(_onControllerUpdate);
 
     setState(() {});
   }
 
+  void _onControllerUpdate() {
+    final controller =
+        flickManager?.flickVideoManager?.videoPlayerController;
+    if (controller == null) return;
+
+    final position = controller.value.position;
+    ref.read(playerTimeProvider.notifier).state = position;
+  }
+
   @override
   void dispose() {
+    flickManager?.flickVideoManager?.videoPlayerController
+        ?.removeListener(_onControllerUpdate);
     flickManager?.dispose();
     super.dispose();
   }
@@ -100,8 +119,11 @@ class _VideoPlayerWidgetState extends ConsumerState<VideoPlayerWidget> {
       );
     }
 
-    final double videoRatio =
-        flickManager!.flickVideoManager!.videoPlayerController!.value.aspectRatio;
+    final double videoRatio = flickManager!
+        .flickVideoManager!
+        .videoPlayerController!
+        .value
+        .aspectRatio;
     final double aspectRatio = videoRatio > 0 ? videoRatio : 16 / 9;
 
     return Column(

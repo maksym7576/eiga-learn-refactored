@@ -1,32 +1,31 @@
 import 'package:flutter/material.dart';
 
 class PhraseListStyles {
-  // ========== Colors — чорно-біла тема ==========
+  // ========== Colors — фіолетово-бірюзова тема ==========
   // Фон карток
-  static const Color surfaceInactive = Color(0xFFF5F5F5); // світло-сірий
+  static const Color surfaceInactive = Color(0xFFFCFBFF); // майже білий, ледь помітний фіолетовий відтінок
   static const Color surfaceActive   = Color(0xFFFFFFFF); // чисто білий — для активного
-  static const Color surfaceFinished = Color(0xFFE8E8E8); // трохи темніший за inactive
+  static const Color surfaceFinished = Color(0xFFF5F2FB); // трохи світліший лавандовий, все ще близько до білого
 
-  static const Color primaryColor = Color(0xFF1A1A1A); // майже чорний — замість фіолетового
-  static const Color accentColor  = Color(0xFF404040); // темно-сірий — замість бірюзового
+  static const Color primaryColor = Color(0xFF4A2C82); // насичений фіолетовий
+  static const Color accentColor  = Color(0xFF00BFA5); // бірюзовий — для рамки активної картки
 
   // Текст фрази (PhraseNotTranslatedWidget)
-  static const Color textColorDark     = Color(0xFF1A1A1A); // майже чорний — за замовчуванням
-  static const Color textColorActive   = Color(0xFF000000); // чистий чорний — коли активне
-  static const Color textColorInactive = Color(0xFF8A8A8A); // сірий — коли не активне
-  static const Color textColorFinished = Color(0xFFA0A0A0); // світліший сірий — завершене
+  static const Color textColorDark     = Color(0xFF2E1A47); // темно-фіолетовий — за замовчуванням
+  static const Color textColorActive   = Color(0xFF1A0033); // майже чорно-фіолетовий — коли активне
+  static const Color textColorInactive = Color(0xFFB8A9D4); // світлий фіолетовий, без сірого відтінку
+  static const Color textColorFinished = Color(0xFFD1C4E8); // майже пастельний лавандовий — завершене
 
   // Текст слів/блоків (WordItem, BlocksSection)
-  static const Color wordColorSelected   = Color(0xFF000000); // чорний, жирний — виділене
-  static const Color wordColorUnselectedOnLight = Color(0xFF2B2B2B);
-  static const Color wordColorUnselectedOnDark  = Color(0xFF2B2B2B);
+  static const Color wordColorSelected   = Color(0xFF6A1B9A); // яскравий фіолетовий, жирний — виділене
+  static const Color wordColorUnselectedOnLight = Color(0xFF3D2C52);
+  static const Color wordColorUnselectedOnDark  = Color(0xFF3D2C52);
 
-  // ========== Монохромна "трикольна" палітра для граматичного виділення ==========
-  // Розрізняються не тоном (кольору немає), а відтінком сірого + вагою + підкресленням,
-  // щоб три категорії лишались візуально відмінними одна від одної
-  static const Color highlightWarm = Color(0xFF000000); // чорний, найтемніший — категорія 1
-  static const Color highlightGold = Color(0xFF5A5A5A); // середньо-сірий — категорія 2
-  static const Color highlightCool = Color(0xFF8A8A8A); // світліший сірий — категорія 3
+  // ========== Кольорова палітра для граматичного виділення ==========
+  // Три чітко різні кольори за відтінком (тон + вага), а не лише сірим
+  static const Color highlightWarm = Color(0xFFE64A19); // теплий коралово-оранжевий — категорія 1
+  static const Color highlightGold = Color(0xFFFFB300); // янтарно-золотий — категорія 2
+  static const Color highlightCool = Color(0xFF00ACC1); // холодний бірюзово-блакитний — категорія 3
 
   // ========== Opacity ==========
   static const double opacityLabel = 0.75;
@@ -145,7 +144,7 @@ class PhraseListStyles {
 
   static Border getLabelBorder() => Border.all(color: primaryColor.withOpacity(opacityLabel));
 
-  /// Колір + стиль підкреслення для граматичної категорії (0/1/2)
+  /// Колір для граматичної категорії (0/1/2)
   static Color getHighlightColor(int categoryIndex) {
     switch (categoryIndex % 3) {
       case 0: return highlightWarm;

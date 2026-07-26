@@ -29,10 +29,10 @@ class AiModelManager {
       final pref = await prefs;
       await pref.setString(_currentKey, name);
     }
-    
+
     Future<void> incrementUsage(String name) async {
       final pref = await prefs;
-      final used = (pref.getInt(_usedKey(name)) ?? 0 + 1);
+      final used = (pref.getInt(_usedKey(name)) ?? 0) + 1;
       await pref.setInt(_usedKey(name), used);
       await pref.setInt(_updatedTimeKey(name), DateTime.now().microsecondsSinceEpoch);
     }

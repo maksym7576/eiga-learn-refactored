@@ -89,62 +89,66 @@ $jsonData
       itemsTotal: phraseObjectsList.length,
     );
 
-    while (true) {
-      try {
-        attempts++;
-        aiRequestNotifier.setRetry(attempts - 1);
-        aiRequestNotifier.setSending();
+    try {
+      while (true) {
+        try {
+          attempts++;
+          aiRequestNotifier.setRetry(attempts - 1);
+          aiRequestNotifier.setSending();
 
-        final String fullUrl = await _formToken(isStreaming: isStreamingMode);
-        final String promptWithPhrases = await _formPrompt(
-          phraseObjectsList,
-          originalLanguage,
-          translationLanguage,
-        );
+          final String fullUrl = await _formToken(isStreaming: isStreamingMode);
+          final String promptWithPhrases = await _formPrompt(
+            phraseObjectsList,
+            originalLanguage,
+            translationLanguage,
+          );
 
-        if (model.name.toLowerCase().contains('gemini') || model.name.toLowerCase().contains('gemma')) {
-          if (isStreamingMode) {
-            aiRequestNotifier.setStreamingResponse();
-            await geminiStreamingService.sendStreamAndParseRequest(fullUrl, promptWithPhrases);
+          if (model.name.toLowerCase().contains('gemini') || model.name.toLowerCase().contains('gemma')) {
+            if (isStreamingMode) {
+              aiRequestNotifier.setStreamingResponse();
+              await geminiStreamingService.sendStreamAndParseRequest(fullUrl, promptWithPhrases);
+            } else {
+              aiRequestNotifier.setWaitingResponse();
+              await geminiHTTPService.sendAndParseRequest(fullUrl, promptWithPhrases);
+            }
           } else {
-            aiRequestNotifier.setWaitingResponse();
-            await geminiHTTPService.sendAndParseRequest(fullUrl, promptWithPhrases);
+            throw Exception("Model type ${model.name} is not supported yet");
           }
-        } else {
-          throw Exception("Model type ${model.name} is not supported yet");
-        }
 
-        aiRequestNotifier.success();
-        break;
-      } catch (error, stackTrace) {
-        if (error is GeminiGeneralException ||
-            error is GeminiModelExpiredException ||
-            error is GeminiIncorrectTokenException) {
+          aiRequestNotifier.success();
+          break;
+        } catch (error, stackTrace) {
+          if (error is GeminiGeneralException ||
+              error is GeminiModelExpiredException ||
+              error is GeminiIncorrectTokenException) {
+            aiRequestNotifier.reportError(
+              error,
+              message: error.toString(),
+              stackTrace: stackTrace,
+              terminal: true,
+            );
+            rethrow;
+          }
+
+          bool isRetryable = error is GeminiServerException || error is Exception;
+
           aiRequestNotifier.reportError(
             error,
             message: error.toString(),
             stackTrace: stackTrace,
-            terminal: true,
+            terminal: !isRetryable,
           );
-          rethrow;
-        }
 
-        bool isRetryable = error is GeminiServerException || error is Exception;
-
-        aiRequestNotifier.reportError(
-          error,
-          message: error.toString(),
-          stackTrace: stackTrace,
-          terminal: !isRetryable,
-        );
-
-        if (isRetryable && attempts <= maxRetries) {
-          await Future.delayed(const Duration(seconds: 2));
-          continue;
-        } else {
-          rethrow;
+          if (isRetryable && attempts <= maxRetries) {
+            await Future.delayed(const Duration(seconds: 2));
+            continue;
+          } else {
+            rethrow;
+          }
         }
       }
+    } finally {
+      await aiModelManager.incrementUsage(model.name);
     }
   }
 }

@@ -160,7 +160,7 @@ class _PhraseCardItem extends StatelessWidget {
             bottom: -4, // Трохи опускаємо вниз, щоб плашка красиво "перекривала" нижній край картки (можна змінити на 0 або 2)
             right: PhraseListStyles.cardMarginHorizontal + 12,
             child: Transform.scale(
-              scale: 0.85, // Трохи збільшив масштаб. Якщо текст все ще завеликий - поверніть 0.7, але краще зменшувати сам шрифт у стилях
+              scale: 0.70, // Трохи збільшив масштаб. Якщо текст все ще завеликий - поверніть 0.7, але краще зменшувати сам шрифт у стилях
               alignment: Alignment.bottomRight,
               child: Container(
                 // Додаємо більше "повітря" всередині плашки

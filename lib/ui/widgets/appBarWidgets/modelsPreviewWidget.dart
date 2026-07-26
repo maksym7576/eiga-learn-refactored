@@ -95,7 +95,7 @@ class _ModelPreviewWidget extends State<ModelPreviewWidget> {
                     const SizedBox(height: 6),
                     Text(
                       'Models',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
                         color: Colors.deepPurpleAccent,
@@ -110,9 +110,9 @@ class _ModelPreviewWidget extends State<ModelPreviewWidget> {
                           'Select the model',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.deepPurpleAccent.withOpacity(0.4),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.deepPurpleAccent.withOpacity(0.4),
                           ),
                         ),
                         const SizedBox(width: 4),
@@ -136,36 +136,39 @@ class _ModelPreviewWidget extends State<ModelPreviewWidget> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 6),
                   ],
                 ),
               ),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 16, bottom: 0),
-                  child: Container(
-                  decoration: BoxDecoration(color: Colors.white),
+                child: const Padding(
+                  padding: EdgeInsets.only(right: 16, bottom: 0),
                   child: Icon(Icons.close, size: 27, color: Colors.black87),
                 ),
               ),
-              ),
             ],
           ),
-          ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            shrinkWrap: true,
-            children: [
-              ModelWidget(modelDTO: widget.selectedModel, isActive: true),
-              ...widget.otherModels.map((model) {
+          // ← ключова зміна: Expanded замість "голого" ListView
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              itemCount: widget.otherModels.length + 1,
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return ModelWidget(
+                    modelDTO: widget.selectedModel,
+                    isActive: true,
+                  );
+                }
+                final model = widget.otherModels[index - 1];
                 return Padding(
                   padding: const EdgeInsets.only(left: 8.0),
                   child: ModelWidget(modelDTO: model, isActive: false),
                 );
-              }).toList(),
-            ],
-          )
+              },
+            ),
+          ),
         ],
       ),
     );
