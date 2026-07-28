@@ -49,8 +49,6 @@ class _SearchPickerWidgetState<TEntry, TFile>
 
     try {
       final filters = ref.read(searchFiltersProvider(_key));
-      // ref передаємо в джерело — саме через нього джерело дістає свій
-      // сервіс (наприклад jimakuServiceProvider), а не створює його самостійно.
       final results = await widget.source.search(query, filters, ref);
       ref.read(searchResultsProvider(_key).notifier).state = results;
     } catch (e) {
@@ -66,14 +64,11 @@ class _SearchPickerWidgetState<TEntry, TFile>
 
   Future<void> _onEntryTap(TEntry entry) async {
     if (!widget.source.hasFileStage) {
-      // entry — сам фінальний результат, окрема сторінка не потрібна
       ref.read(selectedEntryProvider(_key).notifier).state = entry;
       ref.read(selectedResultProvider(_key).notifier).state = entry;
       return;
     }
 
-    // переходимо на "сторінку деталей": ставимо entry, це саме те,
-    // що вмикає AnimatedSwitcher нижче
     ref.read(selectedEntryProvider(_key).notifier).state = entry;
     ref.read(selectedResultProvider(_key).notifier).state = null;
     ref.read(filesProvider(_key).notifier).state = [];
@@ -93,8 +88,6 @@ class _SearchPickerWidgetState<TEntry, TFile>
     }
   }
 
-  /// Повертає з "сторінки деталей" назад на список пошуку.
-  /// Результати пошуку не чіпаємо — вони лишаються, як були.
   void _goBack() {
     ref.read(selectedEntryProvider(_key).notifier).state = null;
     ref.read(filesProvider(_key).notifier).state = [];
@@ -272,8 +265,6 @@ class _SearchPickerWidgetState<TEntry, TFile>
     return Column(
       key: const ValueKey('details-view'),
       children: [
-        // короткий "заголовок" обраного тайтла — теж клікабельний, як ще один
-        // спосіб повернутись назад
         widget.source.buildEntryCard(entry, true, _goBack),
         const Padding(
           padding: EdgeInsets.fromLTRB(16, 8, 16, 4),

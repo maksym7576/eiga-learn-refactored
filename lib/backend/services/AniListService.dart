@@ -1,13 +1,15 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
-import '../data/dto/AnilistDataDTO.dart';
+import '../data/dto/AniListDataDTO.dart';
 
-class AnilistService {
+class AniListService {
   static const _endpoint = 'https://graphql.anilist.co';
+  static const _timeout = Duration(seconds: 15);
 
   static const _query = r'''
     query ($id: Int) {
@@ -16,55 +18,133 @@ class AnilistService {
         title {
           romaji
           english
+          native
         }
+        description(asHtml: false)
+        bannerImage
+        genres
         coverImage {
           extraLarge
           large
+          color
         }
       }
     }
   ''';
 
-  /// Отримати дані аніме по anilistId. Повертає null, якщо не знайдено / помилка.
-  Future<AnilistDataDTO?> getById(int anilistId) async {
-    final response = await http.post(
-      Uri.parse(_endpoint),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: jsonEncode({
-        'query': _query,
-        'variables': {'id': anilistId},
-      }),
-    );
-
-    if (response.statusCode != 200) return null;
-
-    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-    final media = decoded['data']?['Media'] as Map<String, dynamic>?;
-    if (media == null) return null;
-
-    return AnilistDataDTO.fromJson(media);
-  }
-
-  Future<String?> downloadAndSaveCover(String url, int anilistId) async {
+  Future<AniListDataDTO?> getById(
+      int anilistId, {
+        bool downloadImages = true,
+      }) async {
     try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode != 200) return null;
+      final response = await http
+          .post(
+        Uri.parse(_endpoint),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'query': _query,
+          'variables': {'id': anilistId},
+        }),
+      )
+          .timeout(_timeout);
 
-      final dir = await getApplicationDocumentsDirectory();
-      final coversDir = Directory('${dir.path}/anilist_covers');
-      if (!await coversDir.exists()) {
-        await coversDir.create(recursive: true);
+      if (response.statusCode == 429) {
+        developer.log('AniList rate limit exceeded', name: 'AniListService');
+        return null;
       }
 
-      final extension = url.split('.').last.split('?').first;
-      final file = File('${coversDir.path}/$anilistId.$extension');
-      await file.writeAsBytes(response.bodyBytes);
-      return file.path;
-    } catch (_) {
+      if (response.statusCode != 200) {
+        developer.log(
+          'AniList request failed: ${response.statusCode}',
+          name: 'AniListService',
+        );
+        return null;
+      }
+
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final media = decoded['data']?['Media'] as Map<String, dynamic>?;
+      if (media == null) return null;
+
+      var dto = AniListDataDTO.fromJson(media);
+
+      if (downloadImages) {
+        final results = await Future.wait([
+          if (dto.coverImageUrl != null)
+            _downloadAndSave(dto.coverImageUrl!, anilistId, suffix: 'cover')
+          else
+            Future.value(null),
+          if (dto.bannerImage != null)
+            _downloadAndSave(dto.bannerImage!, anilistId, suffix: 'banner')
+          else
+            Future.value(null),
+        ]);
+
+        final coverPath = results[0];
+        final bannerPath = results[1];
+
+        dto = dto.copyWith(
+          coverImagePath: coverPath ?? dto.coverImagePath,
+          bannerImagePath: bannerPath ?? dto.bannerImagePath,
+        );
+      }
+
+      return dto;
+    } catch (e, st) {
+      developer.log(
+        'AniList getById failed',
+        name: 'AniListService',
+        error: e,
+        stackTrace: st,
+      );
       return null;
     }
+  }
+
+  Future<String?> _downloadAndSave(
+      String url,
+      int anilistId, {
+        required String suffix,
+      }) async {
+    try {
+      final extension = _extractExtension(url);
+      final dir = await getApplicationDocumentsDirectory();
+      final imagesDir = Directory('${dir.path}/anilist_images');
+      if (!await imagesDir.exists()) {
+        await imagesDir.create(recursive: true);
+      }
+
+      final file = File('${imagesDir.path}/${anilistId}_$suffix.$extension');
+
+      if (await file.exists()) {
+        return file.path;
+      }
+
+      final response = await http.get(Uri.parse(url)).timeout(_timeout);
+      if (response.statusCode != 200) return null;
+
+      await file.writeAsBytes(response.bodyBytes);
+      return file.path;
+    } catch (e, st) {
+      developer.log(
+        'Failed to download image: $url',
+        name: 'AniListService',
+        error: e,
+        stackTrace: st,
+      );
+      return null;
+    }
+  }
+
+  String _extractExtension(String url) {
+    final path = Uri.parse(url).path;
+    final segment = path.split('/').last;
+    final dotIndex = segment.lastIndexOf('.');
+    if (dotIndex == -1 || dotIndex == segment.length - 1) {
+      return 'jpg';
+    }
+    return segment.substring(dotIndex + 1);
   }
 }

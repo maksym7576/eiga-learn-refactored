@@ -5,8 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'package:eiga/backend/data/dto/JimakuDataDTO.dart';
-import 'package:eiga/backend/services/jimakuService.dart';
 
+import '../../../../backend/services/JimakuService.dart';
+import '../../../../providers/servicesProviders.dart';
 import '../searchSourceAbstract.dart';
 
 class JimakuSubtitleSource implements SearchSource<JimakuDataDTO, FileJimakuDTO> {

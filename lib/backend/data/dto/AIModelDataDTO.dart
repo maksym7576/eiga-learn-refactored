@@ -1,5 +1,3 @@
-
-
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -9,6 +7,7 @@ class AiModelDataDTO {
   final String url;
   final int maxLimit;
   final int used;
+  final int phrasesPerRequest;
   final DateTime? lastUpdated;
 
   AiModelDataDTO({
@@ -16,9 +15,9 @@ class AiModelDataDTO {
     required this.url,
     required this.maxLimit,
     required this.used,
+    required this.phrasesPerRequest,
     this.lastUpdated,
-});
-
+  });
 
   Color get usageColor {
     if (maxLimit == 0) return Colors.grey;
@@ -29,6 +28,4 @@ class AiModelDataDTO {
     if (usage < 1.0) return Colors.orange;
     return Colors.red;
   }
-
-
 }

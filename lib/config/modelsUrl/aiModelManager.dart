@@ -6,82 +6,122 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AiModelManager {
-    static const String _currentKey = 'current_ai_model';
-    static const String _defaultModel = 'gemini-2.5-flash-lite';
-    
-    Future<SharedPreferences> get prefs async => SharedPreferences.getInstance();
+  static const String _currentKey = 'current_ai_model';
+  static const String _defaultModel = 'gemini-2.5-flash-lite';
 
-    String _maxKey(String name) => '${name}_max_limit';
-    String _usedKey(String name) => '${name}_used';
-    String _updatedTimeKey(String name) => '${name}_last_updated';
-    
-    Future<String> getCurrentModelName() async {
-      final pref = await prefs;
-      return pref.getString(_currentKey) ?? _defaultModel;
-    }
-    
-    Future<AiModelEntry> getCurrentModel() async {
-      final name = await getCurrentModelName();
-      return aiModels.firstWhere((element) => element.name == name, orElse: () => aiModels.first);
-    }
-    
-    Future<void> setCurrentModel(String name) async {
-      final pref = await prefs;
-      await pref.setString(_currentKey, name);
+  Future<SharedPreferences> get prefs async => SharedPreferences.getInstance();
+
+  String _maxKey(String name) => '${name}_max_limit';
+  String _usedKey(String name) => '${name}_used';
+  String _updatedTimeKey(String name) => '${name}_last_updated';
+  String _phrasesPerRequestKey(String name) => '${name}_phrases_per_request';
+
+  Future<String> getCurrentModelName() async {
+    final pref = await prefs;
+    return pref.getString(_currentKey) ?? _defaultModel;
+  }
+
+  Future<AiModelEntry> getCurrentModel() async {
+    final name = await getCurrentModelName();
+    return aiModels.firstWhere(
+          (element) => element.name == name,
+      orElse: () => aiModels.first,
+    );
+  }
+
+  Future<void> setCurrentModel(String name) async {
+    final pref = await prefs;
+    await pref.setString(_currentKey, name);
+  }
+
+  Future<void> incrementUsage(String name) async {
+    final pref = await prefs;
+    final used = (pref.getInt(_usedKey(name)) ?? 0) + 1;
+    await pref.setInt(_usedKey(name), used);
+    await pref.setInt(
+      _updatedTimeKey(name),
+      DateTime.now().microsecondsSinceEpoch,
+    );
+  }
+
+  Future<void> setMaxLimit(String name, int value) async {
+    if (value < 1) return;
+    final pref = await prefs;
+    await pref.setInt(_maxKey(name), value);
+  }
+
+  Future<void> setPhrasesPerRequest(String name, int value) async {
+    if (value < 1) return;
+    final pref = await prefs;
+    await pref.setInt(_phrasesPerRequestKey(name), value);
+  }
+
+  Future<int> getPhrasesPerRequest(String name) async {
+    final pref = await prefs;
+    final entry = aiModels.firstWhere(
+          (element) => element.name == name,
+      orElse: () => aiModels.first,
+    );
+    return pref.getInt(_phrasesPerRequestKey(name)) ??
+        entry.defaultPhrasesPerRequest;
+  }
+
+  Future<void> resetUsage(String name) async {
+    final pref = await prefs;
+    await pref.setInt(_usedKey(name), 0);
+    await pref.setInt(
+      _updatedTimeKey(name),
+      DateTime.now().microsecondsSinceEpoch,
+    );
+  }
+
+  Future<AiModelDataDTO> getModelData(String name) async {
+    final pref = await prefs;
+    final entry = aiModels.firstWhere(
+          (element) => element.name == name,
+      orElse: () => aiModels.first,
+    );
+    final max = pref.getInt(_maxKey(name)) ?? entry.defaultLimit;
+    final used = pref.getInt(_usedKey(name)) ?? 0;
+    final updated = pref.getInt(_updatedTimeKey(name));
+    final phrasesPerRequest = pref.getInt(_phrasesPerRequestKey(name)) ??
+        entry.defaultPhrasesPerRequest;
+    return AiModelDataDTO(
+      name: name,
+      url: entry.url,
+      maxLimit: max,
+      used: used,
+      phrasesPerRequest: phrasesPerRequest,
+      lastUpdated:
+      updated != null ? DateTime.fromMillisecondsSinceEpoch(updated) : null,
+    );
+  }
+
+  Future<List<AiModelDataDTO>> getAllModelsData() async {
+    final currentName = await getCurrentModelName();
+
+    List<AiModelDataDTO> result = [];
+
+    for (final m in aiModels) {
+      result.add(await getModelData(m.name));
     }
 
-    Future<void> incrementUsage(String name) async {
-      final pref = await prefs;
-      final used = (pref.getInt(_usedKey(name)) ?? 0) + 1;
-      await pref.setInt(_usedKey(name), used);
-      await pref.setInt(_updatedTimeKey(name), DateTime.now().microsecondsSinceEpoch);
-    }
-    
-    Future<void> setMaxLimit(String name, int value) async {
-      final pref = await prefs;
-      await pref.setInt(name, value);
-    }
-    
-    Future<void> resetUsage(String name) async {
-      final pref = await prefs;
-      await pref.setInt(_usedKey(name), 0);
-      await pref.setInt(_updatedTimeKey(name), DateTime.now().microsecondsSinceEpoch);
-    }
-    
-    Future<AiModelDataDTO> getModelData(String name) async {
-      final pref = await prefs;
-      final entry = aiModels.firstWhere((element) => element.name == name, orElse: () => aiModels.first);
-      final max = pref.getInt(_maxKey(name)) ?? entry.defaultLimit;
-      final used = pref.getInt(_usedKey(name)) ?? 0;
-      final updated = pref.getInt(_updatedTimeKey(name));
-      return AiModelDataDTO(name: name, url: entry.url, maxLimit: max, used: used, lastUpdated: updated != null ? DateTime.fromMillisecondsSinceEpoch(updated): null);
-    }
+    result.sort((a, b) {
+      if (a.name == currentName) return -1;
+      if (b.name == currentName) return 1;
+      return 0;
+    });
 
-    Future<List<AiModelDataDTO>> getAllModelsData() async {
-      final currentName = await getCurrentModelName();
+    return result;
+  }
 
-      List<AiModelDataDTO> result = [];
+  Future<bool> isLimitReached(String name) async {
+    final data = await getModelData(name);
+    return data.used >= data.maxLimit;
+  }
 
-      for (final m in aiModels) {
-        result.add(await getModelData(m.name));
-      }
-
-      result.sort((a, b) {
-        if (a.name == currentName) return -1;
-        if (b.name == currentName) return 1;
-        return 0;
-      });
-
-      return result;
-    }
-
-    Future<bool> isLimitReached(String name) async {
-      final data = await getModelData(name);
-      return data.used >= data.maxLimit;
-    }
-
-    Future<int> remainingUses(String name) async {
-      final data = await getModelData(name);
-      return data.maxLimit - data.used;
-    }
+  Future<int> remainingUses(String name) async {
+    final data = await getModelData(name);
+    return data.maxLimit - data.used;
+  }
 }

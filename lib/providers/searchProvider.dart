@@ -1,16 +1,10 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'package:eiga/backend/data/dto/JimakuDataDTO.dart';
-import 'package:eiga/backend/services/jimakuService.dart';
 
 class SearchSourceKeys {
   static const String jimaku = 'jimaku';
 }
-
-
-final jimakuServiceProvider = FutureProvider<JimakuService>((ref) async {
-  return JimakuService.create();
-});
 
 
 final searchResultsProvider =

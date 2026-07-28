@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:eiga/backend/data/models/phraseObject.dart';
+import 'package:eiga/backend/data/models/videoObject.dart';
 import 'package:eiga/config/modelsUrl/aiModelManager.dart';
 import 'package:eiga/config/prompts/promptManager.dart';
 import 'package:eiga/config/secureStorage.dart';
@@ -42,12 +43,29 @@ class AiService {
     return '$fullUrl?key=$token';
   }
 
+  Map<String, dynamic> videoToMap(VideoObject video) {
+    return {
+      'id': video.id,
+      'originalLanguage': video.originalLanguage,
+      'translatedLanguage': video.translatedLanguage,
+      'videoName': video.videoName,
+      'textFormat': video.textFormat,
+      'pathSubtitle': video.pathSubtitle,
+      'videoPath': video.videoPath,
+      'createdAt': video.createdAt?.toIso8601String(),
+      'anilistId': video.anilistId,
+      'coverImagePath': video.coverImagePath,
+    }..removeWhere((key, value) => value == null);
+  }
+
   Future<String> _formPrompt(
       List<PhraseObject> phraseObjectsList,
       String originalLanguage,
-      String translationLanguage,
-      ) async {
-    final String prompt = PromptManager.getPromptByLanguage(
+      String translationLanguage, {
+        Map<String, dynamic>? extraMetadata,
+        VideoObject? videoObject,
+      }) async {
+    final String template = PromptManager.getPromptByLanguage(
       originalLanguage,
       translationLanguage,
     );
@@ -55,16 +73,57 @@ class AiService {
     final sortPhraseList = List<PhraseObject>.from(phraseObjectsList)
       ..sort((a, b) => (a.phraseOrder ?? 0).compareTo(b.phraseOrder ?? 0));
 
-    final simplifiedPhrasesList = sortPhraseList
-        .map((phrase) => {'id': phrase.id, 'text': phrase.originalPhrase ?? ''})
-        .toList();
+    final simplifiedPhrasesList = sortPhraseList.map((phrase) {
+      return {
+        'id': phrase.id,
+        'videoId': phrase.videoId,
+        'phraseOrder': phrase.phraseOrder,
+        'originalText': phrase.originalPhrase ?? '',
+        'startTime': phrase.startTime?.toIso8601String(),
+        'endTime': phrase.endTime?.toIso8601String(),
+      };
+    }).toList();
 
-    final String jsonData = jsonEncode(simplifiedPhrasesList);
+    final defaultMetadata = {
+      'sourceLanguage': originalLanguage,
+      'targetLanguage': translationLanguage,
+      'playerId': null,
+      'timestamp': DateTime.now().toIso8601String(),
+    };
+
+    // Merge video metadata if provided
+    final Map<String, dynamic> videoMeta = {};
+    if (videoObject != null) {
+      videoMeta.addAll(videoToMap(videoObject));
+    }
+
+    final metadata = {
+      ...defaultMetadata,
+      if (videoMeta.isNotEmpty) 'video': videoMeta,
+      if (extraMetadata != null) ...extraMetadata,
+    };
+
+    final payload = {
+      'metadata': metadata,
+      'phrases': simplifiedPhrasesList,
+    };
+
+    final String jsonData = jsonEncode(payload);
 
     return '''
-$prompt
-INPUT DATA (JSON Format):
+$template
+
+INPUT_DATA (JSON):
 $jsonData
+
+RESPONSE RULES:
+- OUTPUT MUST BE valid JSON only (no markdown).
+- If multiple phrases provided, return a JSON array (batch mode).
+- Use the 'metadata.video' fields (videoName, animeTitle, textFormat, pathSubtitle, thumbnailPath, etc.)
+  to improve disambiguation, punctuation handling, and translation choices where relevant.
+- Validate continuity of w_pos and tr_pos as integers starting from 1.
+- If a phrase cannot be parsed, return an object with "phraseId" and "error" fields for that item.
+- Do not include any extra commentary.
 ''';
   }
 
@@ -73,6 +132,8 @@ $jsonData
     required String originalLanguage,
     required String translationLanguage,
     String? transportName,
+    Map<String, dynamic>? extraMetadata,
+    VideoObject? videoObject, // NEW: optional video data to include in prompt
   }) async {
     int attempts = 0;
     const int maxRetries = 1;
@@ -101,6 +162,8 @@ $jsonData
             phraseObjectsList,
             originalLanguage,
             translationLanguage,
+            extraMetadata: extraMetadata,
+            videoObject: videoObject,
           );
 
           if (model.name.toLowerCase().contains('gemini') || model.name.toLowerCase().contains('gemma')) {

@@ -16,6 +16,7 @@ class _AppBarWidget extends State<AppBarWidget> {
     url: 'No',
     maxLimit: 0,
     used: 0,
+    phrasesPerRequest: 10,
   );
   List<AiModelDataDTO> _models = [];
   bool _isModelDialogOpen = false;

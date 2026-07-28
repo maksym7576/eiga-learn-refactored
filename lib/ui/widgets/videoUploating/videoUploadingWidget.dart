@@ -2,6 +2,7 @@ import 'package:eiga/backend/data/dto/JimakuDataDTO.dart';
 import 'package:eiga/backend/data/models/videoObject.dart';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoComponentsProvider.dart';
+import 'package:eiga/providers/videoDataProviders.dart';
 import 'package:eiga/ui/widgets/phrasesDepacked/phraseDepPreviewWidget.dart';
 import 'package:eiga/ui/widgets/searchWidgets/JimakuSearch/JimakuSubtitleSource.dart';
 import 'package:eiga/ui/widgets/searchWidgets/searchPickerWidget.dart';
@@ -11,10 +12,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../../providers/anilistServiceProvider.dart';
+import '../../../backend/services/depack_subtitles_services/SeasonEpisodeInfo.dart';
+import '../../../providers/DTOProviders.dart';
 import '../../../providers/localStoragesProviders.dart';
 import '../../../providers/searchProvider.dart';
-import 'AnilistPreviewWidget.dart';
+import 'AniListPreviewWidget.dart';
 import 'VideoTitleField.dart';
 import 'languageButtonWidget.dart';
 
@@ -52,9 +54,14 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
           ref.read(srtPathProvider.notifier).state = path;
 
           final entry = ref.read(selectedEntryProvider(SearchSourceKeys.jimaku)) as JimakuDataDTO?;
+          final file = ref.read(selectedResultProvider(SearchSourceKeys.jimaku)) as FileJimakuDTO?;
+
+          ref.read(jimakuEntryFinalProvider.notifier).state = entry;
+          ref.read(jimakuFileFinalProvider.notifier).state = file;
+
           final anilistId = entry?.anilistId;
           if (anilistId != null) {
-            ref.fetchAnilistMetadata(anilistId);
+            ref.read(aniListProvider.notifier).refresh(anilistId);
           }
         },
       ),
@@ -66,10 +73,14 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
     ref.read(videoPathProvider.notifier).state = null;
     ref.read(srtPathProvider.notifier).state = null;
     ref.read(languageProvider.notifier).clear();
-    ref.clearAnilistData();
+    ref.read(aniListProvider.notifier).clear();
+    ref.read(jimakuEntryFinalProvider.notifier).state = null;
+    ref.read(jimakuFileFinalProvider.notifier).state = null;
   }
 
   Future<void> _submitVideo() async {
+    final jimakuEntry = ref.read(jimakuEntryFinalProvider);
+    final jimakuFile = ref.read(jimakuFileFinalProvider);
     final videoService = ref.read(videoServiceProvider.notifier);
     final videoPath = ref.read(videoPathProvider);
     final srtPath = ref.read(srtPathProvider);
@@ -77,24 +88,58 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
     final targetLanguage = ref.read(languageProvider).target;
     final name = _titleController.text.trim();
 
-    if (videoPath == null || srtPath == null || originalLanguage.isEmpty || targetLanguage.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('You need to fill all')));
+    if (videoPath == null ||
+        srtPath == null ||
+        originalLanguage.isEmpty ||
+        targetLanguage.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You need to fill all')),
+      );
       return;
     }
 
-    final anilistData = ref.read(anilistDataProvider);
-    final hasAnilistTitle = (anilistData?.displayTitle ?? '').isNotEmpty;
+    final anilistData = ref.read(aniListProvider).value;
+
+    final resolvedName = name.isNotEmpty
+        ? name
+        : anilistData?.romajiTitle?.isNotEmpty == true
+        ? anilistData!.romajiTitle!
+        : jimakuEntry?.displayTitle.isNotEmpty == true
+        ? jimakuEntry!.displayTitle
+        : videoPath.toString().trim();
+
+    final seasonEpisode = (jimakuFile != null && jimakuEntry?.isMovie != true)
+        ? parseSeasonEpisode(jimakuFile.name)
+        : const SeasonEpisodeInfo();
 
     final videoObj = VideoObject()
-      ..videoName = name.isEmpty ? (hasAnilistTitle ? anilistData!.displayTitle : videoPath.toString().trim()) : name
+      ..videoName = resolvedName
       ..videoPath = videoPath
       ..pathSubtitle = srtPath
       ..originalLanguage = originalLanguage
       ..translatedLanguage = targetLanguage
-      ..anilistId = anilistData?.id
-      ..animeTitle = anilistData?.displayTitle
-      ..coverImagePath = anilistData?.localCoverPath
-      ..createdAt = DateTime.now();
+      ..createdAt = DateTime.now()
+      ..season = seasonEpisode.season
+      ..episode = seasonEpisode.episode
+
+    // Jimaku
+      ..nameJumaku = jimakuEntry?.name
+      ..englishName = jimakuEntry?.englishName
+      ..japaneseName = jimakuEntry?.japaneseName
+      ..nameFileJumaku = jimakuFile?.name
+      ..anilistId = jimakuEntry?.anilistId
+      ..tmdbId = jimakuEntry?.tmdbId
+      ..isAnime = jimakuEntry?.isAnime
+      ..isMovie = jimakuEntry?.isMovie
+      ..isAdult = jimakuEntry?.isAdult
+      ..isUnverified = jimakuEntry?.isUnverified
+
+    // AniList
+      ..coverImagePath = anilistData?.coverImagePath
+      ..description = anilistData?.description
+      ..bannerImage = anilistData?.bannerImage
+      ..genres = anilistData?.genres
+      ..colorThemeValue = anilistData?.colorThemeValue;
 
     final newVideo = await videoService.addVideoAndGet(videoObj);
     await ref.read(subtitleDepackerServiceProvider).depack(newVideo);

@@ -42,7 +42,6 @@ class VideoCard extends ConsumerWidget {
               children: [
                 Positioned.fill(child: _buildThumbnail(),
                 ),
-                // Біла напівпрозора підкладка під текстом, щоб він не зливався з фото
                 Positioned(
                   left: 0,
                   right: 0,
@@ -183,14 +182,6 @@ class VideoCard extends ConsumerWidget {
   }
 
   Widget _buildLocalThumbnailOrPlaceholder() {
-    final path = video.thumbnailPath;
-    if (path != null && path.isNotEmpty && File(path).existsSync()) {
-      return Image.file(
-        File(path),
-        fit: BoxFit.cover,
-        color: Colors.deepPurpleAccent.withOpacity(0.5),
-      );
-    }
 
     return Container(
       color: Colors.deepPurpleAccent.withOpacity(0.1),

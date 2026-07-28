@@ -13,6 +13,7 @@ import 'package:eiga/providers/translationProvider.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../backend/services/AiService.dart';
+import '../backend/services/AniListService.dart';
 import '../backend/services/JimakuService.dart';
 import '../backend/services/petition_ai/gemini/GeminiHTTPService.dart';
 import '../backend/services/petition_ai/gemini/geminiStreamingService.dart';
@@ -64,17 +65,13 @@ final translationProvider = Provider<TranslationProvider>((ref) {
   return service;
 });
 
-// Провайдер для AiService — робить інстанцію та підключає залежності
 final aiServiceProvider = Provider<AiService>((ref) {
-  // Отримуємо notifier провайдера статусу
   final aiRequestNotifier = ref.read(aiRequestStatusProvider.notifier);
 
-  // Сервіси з проекту (переконайся, що вони визначені в servicesProviders.dart)
   final phraseService = ref.read(phraseServiceProvider);
   final blockService = ref.read(blockServiceProvider);
   final wordService = ref.read(wordServiceProvider);
 
-  // Створюємо сервіси Gemini, передаючи провайдер статусу та інші сервіси
   final geminiHttp = GeminiHTTPService(
     aiRequestNotifier: aiRequestNotifier,
     phraseService: phraseService,
@@ -98,5 +95,9 @@ final aiServiceProvider = Provider<AiService>((ref) {
 
 final jimakuServiceProvider = FutureProvider<JimakuService>((ref) async {
   return JimakuService.create();
+});
+
+final aniListServiceProvider = Provider<AniListService>((ref) {
+  return AniListService();
 });
 

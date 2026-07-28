@@ -149,7 +149,6 @@ class _ModelPreviewWidget extends State<ModelPreviewWidget> {
               ),
             ],
           ),
-          // ← ключова зміна: Expanded замість "голого" ListView
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

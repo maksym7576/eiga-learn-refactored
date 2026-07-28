@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../providers/redirectProviders.dart';
+import 'aiModelsSettingsWidget.dart';
 
 class ControlButtonWidget extends ConsumerStatefulWidget {
   const ControlButtonWidget({super.key});
@@ -282,6 +283,12 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 5),
+        _settingsButton(
+          context,
+          title: 'AI Models',
+          dialogBuilder: (context) => const AiModelsSettingsWidget(),
         ),
       ],
     );
