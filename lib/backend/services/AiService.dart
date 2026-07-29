@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:eiga/config/modelsUrl/TranslationPipelineStep.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:eiga/backend/data/models/phraseObject.dart';
 import 'package:eiga/backend/data/models/videoObject.dart';
@@ -30,7 +31,7 @@ class AiService {
 
   Future<String> _formToken({required bool isStreaming}) async {
     final aiModelManager = AiModelManager();
-    final model = await aiModelManager.getCurrentModel();
+    final model = await aiModelManager.getActiveModel(TranslationPipelineStep.research.name);
 
     final String endpoint = isStreaming ? ':streamGenerateContent' : ':generateContent';
     final String fullUrl = '${model.url}$endpoint';
@@ -139,7 +140,7 @@ RESPONSE RULES:
     const int maxRetries = 1;
 
     final aiModelManager = AiModelManager();
-    final model = await aiModelManager.getCurrentModel();
+    final model = await aiModelManager.getActiveModel(TranslationPipelineStep.research.name);
 
     final resolvedTransport = transportName ?? TRANSPORT_STREAM;
     final bool isStreamingMode = resolvedTransport == TRANSPORT_STREAM;

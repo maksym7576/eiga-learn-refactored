@@ -6,6 +6,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../dialogs/AppDialog.dart';
+
 class PhrasesDepPreviewWidget extends ConsumerStatefulWidget {
   const PhrasesDepPreviewWidget({super.key});
 
@@ -141,102 +143,54 @@ class _PhrasesDepPreviewWidgetState
     );
   }
 
-  void _showAllPhrases() async {
-    await showGeneralDialog(
-        context: context,
-        barrierDismissible: true,
-        barrierLabel: "PhraseLabel",
-        barrierColor: Colors.black.withOpacity(0.5),
-      transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, anim1, anim2) {
-          return Center(
-            child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Material(
-                  color: Colors.transparent,
-                  child: Container(
-                    constraints: BoxConstraints(
-                      maxHeight: MediaQuery.of(context).size.height * 0.6,
-                      maxWidth: MediaQuery.of(context).size.width * 0.9,
-                      minWidth: MediaQuery.of(context).size.width * 0.9,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          spreadRadius: 5,
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      'All Phrases',
-                                      style: const TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.deepPurpleAccent,
-                                        letterSpacing: 1.2,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () => Navigator.pop(context),
-                                child: Padding(
-                                  padding: const EdgeInsets.only(right: 16, bottom: 0),
-                                  child: Container(
-                                    decoration: BoxDecoration(color: Colors.white),
-                                    child: Icon(Icons.close, size: 27, color: Colors.black87),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          Expanded(
-                              child: ListView.builder(
-                            shrinkWrap: true,
-                            padding: EdgeInsets.zero,
-                                itemCount: _phrasesList.length,
-                                itemBuilder: (context, index) => PhraseDepWidget(
-                                  phraseObject: _phrasesList[index],
-                                ),
-                              ),
-                          ),
-                        ],
-                      )
+  void _showAllPhrases(BuildContext context) {
+    AppDialog.show(
+      context: context,
+      barrierLabel: "PhraseLabel",
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 6),
+                  child: Text(
+                    'All Phrases',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.deepPurpleAccent,
+                      letterSpacing: 1.2,
                     ),
                   ),
                 ),
+              ),
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: const Padding(
+                  padding: EdgeInsets.only(right: 16),
+                  child: Icon(Icons.close, size: 27, color: Colors.black87),
+                ),
+              ),
+            ],
+          ),
+          Expanded(
+            child: ListView.builder(
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              itemCount: _phrasesList.length,
+              itemBuilder: (context, index) =>
+                  PhraseDepWidget(phraseObject: _phrasesList[index]),
             ),
-          );
-      },
-      transitionBuilder: (context, anim1, anim2, child) {
-          return ScaleTransition(
-            scale: Tween<double>(begin: 0.8, end: 1.0).animate(
-              CurvedAnimation(parent: anim1, curve: Curves.easeOutBack),
-            ),
-            child: FadeTransition(opacity: anim1, child: child),
-          );
-      }
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildList() {
+  Widget _buildList(BuildContext context) {
     List<PhraseObject> tookPhrases = _phrasesList.take(_previewCount).toList();
     return Column(
       children: [
@@ -256,7 +210,7 @@ class _PhrasesDepPreviewWidgetState
                 ],
               ),
               GestureDetector(
-                onTap: _showAllPhrases,
+                onTap: () => _showAllPhrases(context),
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(40, 0, 40, 10),
                 child: Container(
@@ -321,7 +275,7 @@ class _PhrasesDepPreviewWidgetState
             _buildHeader(),
             if (_isLoading) _buildLoader(),
             if (!_isLoading && _phrasesList.isEmpty) _buildEmpty(),
-            if (!_isLoading && _phrasesList.isNotEmpty) _buildList(),
+            if (!_isLoading && _phrasesList.isNotEmpty) _buildList(context),
           ],
         ),
       ),

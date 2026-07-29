@@ -1,5 +1,5 @@
 import 'package:eiga/providers/servicesProviders.dart';
-import 'package:eiga/ui/widgets/videoCard.dart';
+import 'package:eiga/ui/widgets/videoUploating/videoCard.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 

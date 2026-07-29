@@ -1,5 +1,5 @@
 import 'package:eiga/ui/widgets/appBarWidgets/appBarWidget.dart';
-import 'package:eiga/ui/widgets/videoListWidget.dart';
+import 'package:eiga/ui/widgets/videoUploating/videoListWidget.dart';
 import 'package:eiga/ui/widgets/videoUploating/videoUploadingWidget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';

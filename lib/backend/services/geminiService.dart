@@ -12,6 +12,8 @@ import 'package:eiga/config/modelsUrl/aiModelManager.dart';
 import 'package:eiga/config/prompts/promptManager.dart';
 import 'package:eiga/config/secureStorage.dart';
 
+import '../../config/modelsUrl/TranslationPipelineStep.dart';
+
 class GeminiService {
   final PhraseService phraseService;
   final BlockService blockService;
@@ -25,7 +27,7 @@ class GeminiService {
 
   Future<String> _formToken() async {
     final aiModelManager = AiModelManager();
-    final model = await aiModelManager.getCurrentModel();
+    final model = await aiModelManager.getActiveModel(TranslationPipelineStep.research.name);
     final baseUrl = model.url;
     final token = await SecureTokenStorage.getToken(ApiTokenType.gemeni);
 

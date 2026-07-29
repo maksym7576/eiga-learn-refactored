@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
 
-class DialogUtils {
-  static Future<T?> showAnimatedDialog<T>({
+class AppDialog {
+  static Future<void> show({
     required BuildContext context,
     required Widget child,
+    String barrierLabel = "DialogLabel",
+    Color? backgroundColor,
     double heightFactor = 0.6,
     double widthFactor = 0.9,
-    Color barrierColor = Colors.black54,
-    String barrierLabel = "DialogLabel",
-    Duration transitionDuration = const Duration(milliseconds: 300),
-    Color backgroundColor = Colors.white,
-    double borderRadius = 20,
-  }) {
-    return showGeneralDialog<T>(
+    bool barrierDismissible = true,
+    VoidCallback? onClosed,
+  }) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    await showGeneralDialog(
       context: context,
-      barrierDismissible: true,
+      barrierDismissible: barrierDismissible,
       barrierLabel: barrierLabel,
-      barrierColor: barrierColor,
-      transitionDuration: transitionDuration,
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, anim1, anim2) {
         return Center(
           child: Padding(
@@ -31,8 +32,9 @@ class DialogUtils {
                   minWidth: MediaQuery.of(context).size.width * widthFactor,
                 ),
                 decoration: BoxDecoration(
-                  color: backgroundColor,
-                  borderRadius: BorderRadius.circular(borderRadius),
+                  color: backgroundColor ??
+                      (isDark ? Colors.grey[900] : Colors.white),
+                  borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.1),
@@ -42,7 +44,7 @@ class DialogUtils {
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(borderRadius),
+                  borderRadius: BorderRadius.circular(20),
                   child: child,
                 ),
               ),
@@ -59,5 +61,7 @@ class DialogUtils {
         );
       },
     );
+
+    onClosed?.call();
   }
 }

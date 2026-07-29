@@ -285,11 +285,11 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
           ],
         ),
         const SizedBox(height: 5),
-        _settingsButton(
-          context,
-          title: 'AI Models',
-          dialogBuilder: (context) => const AiModelsSettingsWidget(),
-        ),
+        // _settingsButton(
+        //   context,
+        //   title: 'AI Models',
+        //   dialogBuilder: (context) => const AiModelsSettingsWidget(),
+        // ),
       ],
     );
   }
