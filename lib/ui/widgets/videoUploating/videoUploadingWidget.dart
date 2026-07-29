@@ -122,6 +122,8 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
       ..season = seasonEpisode.season
       ..episode = seasonEpisode.episode
 
+      ..pepelineIndetificator = 'context_translation_v1'
+
     // Jimaku
       ..nameJumaku = jimakuEntry?.name
       ..englishName = jimakuEntry?.englishName
@@ -140,6 +142,7 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
       ..bannerImage = anilistData?.bannerImage
       ..genres = anilistData?.genres
       ..colorThemeValue = anilistData?.colorThemeValue;
+
 
     final newVideo = await videoService.addVideoAndGet(videoObj);
     await ref.read(subtitleDepackerServiceProvider).depack(newVideo);

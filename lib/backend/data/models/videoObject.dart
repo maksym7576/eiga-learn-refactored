@@ -37,6 +37,13 @@ class VideoObject {
 
   int? colorThemeValue;
 
+  //Pepeline
+  String? pepelineIndetificator;
+
+      //peleline 1
+  bool? isResearchDone = false;
+  String? researchInformation;
+
   @ignore
   Color? get colorTheme {
     if (colorThemeValue == null) return null;
