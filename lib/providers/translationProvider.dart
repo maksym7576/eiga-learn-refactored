@@ -129,13 +129,13 @@ class TranslationProvider {
       }
 
       final aiService = ref.read(aiServiceProvider);
-      final defaultTransport = ref.read(defaultAiTransportProvider);
 
+      // Видалено параметр transportName, додано обов'язковий ref
       await aiService.translatePhraseList(
+        ref: ref,
         phraseObjectsList: phrases,
         originalLanguage: video.originalLanguage!,
         translationLanguage: video.translatedLanguage!,
-        transportName: defaultTransport,
       );
     } catch (e, st) {
       ref.read(aiRequestStatusProvider.notifier).appendLog('TranslationProvider error: $e');

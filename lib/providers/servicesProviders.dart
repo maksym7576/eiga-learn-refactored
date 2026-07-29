@@ -46,12 +46,6 @@ final wordServiceProvider = Provider<WordService>((ref) {
 });
 
 
-final geminiServiceProvider = Provider<GeminiService>((ref) {
-  final phraseService = ref.read(phraseServiceProvider);
-  final blockService = ref.read(blockServiceProvider);
-  final wordService = ref.read(wordServiceProvider);
-  return GeminiService(phraseService: phraseService, blockService: blockService, wordService: wordService);
-});
 
 final subtitleDepackerServiceProvider = Provider<SubtitleDepackerService>((ref) {
   final videoService = ref.watch(videoServiceProvider.notifier);
