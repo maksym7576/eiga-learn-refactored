@@ -1,6 +1,6 @@
 
 
-const String defaultPrompt = """
+const String defaultTotalPrompt = """
 STEP 1: Translate the full sentence naturally in {TARGET_LANGUAGE} (native grammar & structure).
 
 STEP 2: Match original words to translation:

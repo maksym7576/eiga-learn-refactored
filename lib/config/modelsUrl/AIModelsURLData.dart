@@ -1,11 +1,11 @@
-
+enum AiProvider { google, openai, anthropic, custom }
 
 enum ModelQuality { basic, standard, high, frontier }
 enum ModelSpeed { ultraFast, fast, medium, slow }
 enum InputType { text, image, audio, video, pdf }
 
-
 class AiModelEntry {
+  final AiProvider provider;
   final String name;
   final String url;
   final int defaultLimit;
@@ -29,6 +29,7 @@ class AiModelEntry {
   final double outputPricePerMToken;
 
   const AiModelEntry({
+    required this.provider,
     required this.name,
     required this.url,
     required this.defaultLimit,
@@ -48,9 +49,9 @@ class AiModelEntry {
   });
 }
 
-
 final List<AiModelEntry> aiModels = [
   AiModelEntry(
+    provider: AiProvider.google,
     name: 'gemini-2.5-flash-lite',
     url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite',
     defaultLimit: 20,
@@ -68,6 +69,7 @@ final List<AiModelEntry> aiModels = [
     outputPricePerMToken: 0.30,
   ),
   AiModelEntry(
+    provider: AiProvider.google,
     name: 'gemini-2.5-flash',
     url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash',
     defaultLimit: 20,
@@ -85,6 +87,7 @@ final List<AiModelEntry> aiModels = [
     outputPricePerMToken: 0.60,
   ),
   AiModelEntry(
+    provider: AiProvider.google,
     name: 'gemini-3-flash',
     url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash',
     defaultLimit: 20,
@@ -102,6 +105,7 @@ final List<AiModelEntry> aiModels = [
     outputPricePerMToken: 0.60,
   ),
   AiModelEntry(
+    provider: AiProvider.google,
     name: 'gemini-3.1-flash-lite',
     url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite',
     defaultLimit: 500,
@@ -119,6 +123,7 @@ final List<AiModelEntry> aiModels = [
     outputPricePerMToken: 0.25,
   ),
   AiModelEntry(
+    provider: AiProvider.google,
     name: 'gemini-3.5-flash-lite',
     url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite',
     defaultLimit: 500,
@@ -136,6 +141,7 @@ final List<AiModelEntry> aiModels = [
     outputPricePerMToken: 0.20,
   ),
   AiModelEntry(
+    provider: AiProvider.google,
     name: 'gemini-3.5-flash',
     url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash',
     defaultLimit: 20,
@@ -153,6 +159,7 @@ final List<AiModelEntry> aiModels = [
     outputPricePerMToken: 0.40,
   ),
   AiModelEntry(
+    provider: AiProvider.google,
     name: 'gemini-3.6-flash',
     url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash',
     defaultLimit: 20,
@@ -170,6 +177,7 @@ final List<AiModelEntry> aiModels = [
     outputPricePerMToken: 0.40,
   ),
   AiModelEntry(
+    provider: AiProvider.google,
     name: 'gemma-4-26b',
     url: 'https://generativelanguage.googleapis.com/v1beta/models/gemma-4-26b',
     defaultLimit: 14400,
@@ -187,6 +195,7 @@ final List<AiModelEntry> aiModels = [
     outputPricePerMToken: 0.0,
   ),
   AiModelEntry(
+    provider: AiProvider.google,
     name: 'gemma-4-31b',
     url: 'https://generativelanguage.googleapis.com/v1beta/models/gemma-4-31b',
     defaultLimit: 14400,

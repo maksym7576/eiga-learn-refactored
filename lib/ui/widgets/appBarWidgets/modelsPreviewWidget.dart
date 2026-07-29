@@ -24,9 +24,6 @@ class ModelPreviewWidget extends ConsumerStatefulWidget {
 class _ModelPreviewWidgetState extends ConsumerState<ModelPreviewWidget> {
   late TranslationPipelineStep _activeStep;
 
-  /// Контролер списку моделей: активна модель завжди рендериться першою
-  /// (index == 0), тому при виборі нової моделі список перебудовується
-  /// і потрібно плавно проскролити назад до верху, а не смикати екран.
   final _scrollController = ScrollController();
 
   @override

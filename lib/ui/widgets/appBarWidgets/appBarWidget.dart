@@ -1,155 +1,248 @@
+import 'dart:async';
+
 import 'package:eiga/backend/data/dto/AIModelDataDTO.dart';
-import 'package:eiga/config/modelsUrl/aiModelManager.dart';
 import 'package:eiga/ui/widgets/appBarWidgets/modelsPreviewWidget.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../config/modelsUrl/TranslationPipelineStep.dart';
+import '../../../providers/AiModelsStateProvuder.dart';
 import '../dialogs/AppBottomSheet.dart';
-import '../dialogs/AppDialog.dart';
 
-class AppBarWidget extends StatefulWidget {
+class AppBarWidget extends ConsumerStatefulWidget implements PreferredSizeWidget {
+  final TranslationPipelineStep step;
+
+  const AppBarWidget({
+    Key? key,
+    this.step = TranslationPipelineStep.translate,
+  }) : super(key: key);
+
   @override
-  _AppBarWidget createState() => _AppBarWidget();
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+
+  @override
+  ConsumerState<AppBarWidget> createState() => _AppBarWidgetState();
 }
 
-class _AppBarWidget extends State<AppBarWidget> {
-  AiModelDataDTO _selectedItem = new AiModelDataDTO(
-    name: 'No model',
-    url: 'No',
-    maxLimit: 0,
-    used: 0,
-    phrasesPerRequest: 10,
-    isStreamingEnabled: false,
-  );
-  List<AiModelDataDTO> _models = [];
+class _AppBarWidgetState extends ConsumerState<AppBarWidget> {
   bool _isModelDialogOpen = false;
+
+  late int _currentStepIndex;
+  Timer? _cycleTimer;
+
+  static const Duration _holdDuration = Duration(seconds: 3);
+  static const Duration _slideDuration = Duration(milliseconds: 400);
 
   @override
   void initState() {
     super.initState();
-    _initModels();
+    _currentStepIndex = widget.step.index;
+    _startCycle();
   }
 
-  Future<void> _initModels() async {
-    final aiModelManager = AiModelManager();
-    List<AiModelDataDTO> models = await aiModelManager.getAllModelsData();
-
-    setState(() {
-      _selectedItem = models.first;
-      _models = models.skip(1).toList();
+  void _startCycle() {
+    _cycleTimer?.cancel();
+    _cycleTimer = Timer.periodic(_holdDuration, (_) {
+      if (!mounted || _isModelDialogOpen) return;
+      setState(() {
+        _currentStepIndex =
+            (_currentStepIndex + 1) % TranslationPipelineStep.values.length;
+      });
     });
   }
 
+  @override
+  void dispose() {
+    _cycleTimer?.cancel();
+    super.dispose();
+  }
+
+  TranslationPipelineStep get _currentStep =>
+      TranslationPipelineStep.values[_currentStepIndex];
+
   void _showAllModelsDialog() async {
+    _cycleTimer?.cancel();
     setState(() => _isModelDialogOpen = true);
     try {
       await AppBottomSheet.show(
         context: context,
         barrierLabel: "ModelsLabel",
-        child: ModelPreviewWidget(
-        ),
+        child: ModelPreviewWidget(initialStep: _currentStep),
       );
     } finally {
-      setState(() => _isModelDialogOpen = false);
+      if (mounted) setState(() => _isModelDialogOpen = false);
     }
-    await _initModels();
-  }
-
-  void _showMenu() {
-    showMenu(
-      context: context,
-      position: RelativeRect.fromLTRB(double.infinity, 56, 0, 0),
-      items: [PopupMenuItem(value: 'settings', child: Text('Settings'))],
-    );
+    _startCycle();
   }
 
   @override
   Widget build(BuildContext context) {
-    Color color = _selectedItem!.usageColor;
+    final step = _currentStep;
+    final aiState = ref.watch(aiModelsProvider);
+    final stepModels = ref.watch(modelsForStepProvider(step));
+
+    final activeName = aiState.activeNameByStep[step];
+    final matches = stepModels.where((m) => m.name == activeName);
+
+    final AiModelDataDTO selectedItem = matches.isNotEmpty
+        ? matches.first
+        : AiModelDataDTO(
+      name: 'No model',
+      url: 'No',
+      maxLimit: 0,
+      used: 0,
+      phrasesPerRequest: 10,
+      isStreamingEnabled: false,
+    );
+
+    const Color purplePrimary = Colors.deepPurpleAccent;
+    final Color purpleAccent = Colors.deepPurple.shade300;
+
     return AppBar(
       backgroundColor: Colors.grey[50],
       elevation: 0,
       title: Row(
         children: [
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Text(
             'eiga',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w900,
-              color: Colors.deepPurpleAccent,
+              color: purplePrimary,
               letterSpacing: 1.2,
             ),
           ),
-          SizedBox(width: 20),
+          const SizedBox(width: 20),
           Expanded(
             child: GestureDetector(
               onTap: _showAllModelsDialog,
-              child: Container(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeOutCirc,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: _isModelDialogOpen
+                      ? purplePrimary.withOpacity(0.08)
+                      : Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(18),
                   border: Border.all(
                     color: _isModelDialogOpen
-                        ? Colors.deepPurpleAccent.withOpacity(0.3)
-                        : Colors.grey[300]!,
-                    width: _isModelDialogOpen ? 2.5 : 1.5,
+                        ? purplePrimary
+                        : purplePrimary.withOpacity(0.3),
+                    width: _isModelDialogOpen ? 2.0 : 1.5,
                   ),
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
+                  boxShadow: _isModelDialogOpen
+                      ? [
                     BoxShadow(
-                      color: _isModelDialogOpen
-                          ? Colors.deepPurpleAccent.withOpacity(0.25)
-                          : Colors.black.withOpacity(0.05),
-                      blurRadius: _isModelDialogOpen ? 8 : 4,
-                      offset: Offset(0, 1),
-                    ),
-                  ],
+                      color: purplePrimary.withOpacity(0.15),
+                      blurRadius: 12,
+                      spreadRadius: 2,
+                    )
+                  ]
+                      : [],
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(width: 5),
-                    Container(
-                      width: 10,
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: color.withOpacity(0.2),
-                            blurRadius: 3,
-                            spreadRadius: 1,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: AnimatedSwitcher(
+                    duration: _slideDuration,
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeIn,
+                    transitionBuilder: (child, animation) {
+                      final isIncoming =
+                          child.key == ValueKey(_currentStepIndex);
+
+                      final offsetTween = isIncoming
+                          ? Tween<Offset>(
+                        begin: const Offset(1, 0),
+                        end: Offset.zero,
+                      )
+                          : Tween<Offset>(
+                        begin: const Offset(-1, 0),
+                        end: Offset.zero,
+                      );
+
+                      return SlideTransition(
+                        position: offsetTween.animate(animation),
+                        child: child,
+                      );
+                    },
+                    child: Padding(
+                      key: ValueKey(_currentStepIndex),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: purplePrimary,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: purplePrimary.withOpacity(0.4),
+                                  blurRadius: 4,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  step.displayName.toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    color: purpleAccent,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.5,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 1),
+                                Text(
+                                  selectedItem.name,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: purplePrimary.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '${selectedItem.used}/${selectedItem.maxLimit}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: purplePrimary,
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
-                    SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        _selectedItem!.name,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.black87,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Container(
-                      decoration: BoxDecoration(color: color.withOpacity(0.05)),
-                      child: Text(
-                        '${_selectedItem!.used}/${_selectedItem!.maxLimit}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: color,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -158,11 +251,12 @@ class _AppBarWidget extends State<AppBarWidget> {
       ),
       actions: [
         IconButton(
-          icon: Icon(Icons.menu, color: Colors.black87),
+          icon: const Icon(Icons.menu_rounded, color: Colors.black87),
           onPressed: () {
             context.go('/settings');
           },
         ),
+        const SizedBox(width: 4),
       ],
     );
   }

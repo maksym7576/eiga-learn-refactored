@@ -32,7 +32,6 @@ class ModelWidget extends StatefulWidget {
 }
 
 class _ModelWidgetState extends State<ModelWidget> {
-  // ---------- Кольори/рівні ----------
 
   Color get _usageColor {
     final used = widget.modelDTO.used;
@@ -88,8 +87,6 @@ class _ModelWidgetState extends State<ModelWidget> {
     Colors.purple,
   ];
 
-  // ---------- UI helpers ----------
-
   Widget _segmentBar({
     required int active,
     required int total,
@@ -133,10 +130,6 @@ class _ModelWidgetState extends State<ModelWidget> {
     );
   }
 
-  /// Перемикач стрімінгу у вигляді "повзунка" (toggle switch):
-  /// - модель не підтримує стрімінг узагалі → приглушений, неактивний, не тапається;
-  /// - підтримує, але зараз вимкнений → повзунок зліва, сірий трек;
-  /// - підтримує і зараз увімкнений → повзунок справа, синій трек.
   Widget _streamingToggle() {
     final supportsStreaming = widget.modelEntry.supportsStreaming;
     final isEnabled = widget.modelDTO.isStreamingEnabled;

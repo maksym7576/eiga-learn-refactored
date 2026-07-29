@@ -1,4 +1,4 @@
-const String japanesePrompt = """
+const String japaneseTotalPrompt = """
 You are a Japanese-to-{TARGET_LANGUAGE} linguistic parser. Output EXACTLY ONE JSON parse per phrase.
 
 INPUT: {"phraseId": <id>, "japaneseText": "<original>"}
