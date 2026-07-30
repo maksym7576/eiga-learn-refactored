@@ -10,14 +10,14 @@ import '../dialogs/AppDialog.dart';
 import '../subtitles/AiRequestStatusWidget.dart';
 
 class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
-  VideoSettingsNotFullScreenWidget({super.key});
+  const VideoSettingsNotFullScreenWidget({super.key});
 
   void _showTimeEditDialog(BuildContext context) async {
       await showGeneralDialog(
         context: context,
         barrierDismissible: true,
         barrierLabel: "ModelsLabel",
-        barrierColor: Colors.black.withOpacity(0.5),
+        barrierColor: Colors.black.withValues(alpha: 0.5),
         transitionDuration: const Duration(milliseconds: 300),
         pageBuilder: (context, anim1, anim2) {
           return Center(
@@ -36,7 +36,7 @@ class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 10,
                         spreadRadius: 5,
                       ),
@@ -69,7 +69,7 @@ class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
       context: context,
       barrierDismissible: true,
       barrierLabel: "AiStatusLabel",
-      barrierColor: Colors.black.withOpacity(0.5),
+      barrierColor: Colors.black.withValues(alpha: 0.5),
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, anim1, anim2) {
         return Center(
@@ -88,7 +88,7 @@ class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 10,
                       spreadRadius: 5,
                     ),
@@ -97,7 +97,7 @@ class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: const SingleChildScrollView(
-                    child: AiRequestStatusWidget(), // Виклик правильного віджета
+                    child: AiRequestStatusWidget(),
                   ),
                 ),
               ),
@@ -148,10 +148,10 @@ class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 3),
           decoration: BoxDecoration(
-            color: Colors.deepPurpleAccent.withOpacity(0.1),
+            color: Colors.deepPurpleAccent.withValues(alpha: 0.1),
             border: Border(
               bottom: BorderSide(
-                color: Colors.deepPurpleAccent.withOpacity(0.3),
+                color: Colors.deepPurpleAccent.withValues(alpha: 0.3),
                 width: 1,
               ),
             ),
@@ -304,7 +304,7 @@ class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: Colors.deepPurpleAccent.withOpacity(0.7),
+              color: Colors.deepPurpleAccent.withValues(alpha: 0.7),
             ),
           ),
           const SizedBox(width: 4),

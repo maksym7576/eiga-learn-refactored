@@ -1,6 +1,5 @@
-import 'package:eiga/backend/data/dto/AIModelDataDTO.dart';
+import 'package:eiga/backend/data/dto/AIModelSettingsDTO.dart';
 import 'package:eiga/config/modelsUrl/AIModelsURLData.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AiModelManager {
@@ -50,20 +49,14 @@ class AiModelManager {
 
   // --- Стрімінг ---
 
-  /// Чи увімкнений стрімінг для моделі [name].
-  /// Якщо модель взагалі не підтримує стрімінг (AiModelEntry.supportsStreaming
-  /// == false) — завжди повертає false, незалежно від збереженого значення.
   Future<bool> isStreamingEnabled(String name) async {
     final entry = _entryOf(name);
     if (!entry.supportsStreaming) return false;
 
     final pref = await prefs;
-    // За замовчуванням: якщо модель вміє стрімити — стрімінг увімкнений.
     return pref.getBool(_streamingEnabledKey(name)) ?? true;
   }
 
-  /// Вмикає/вимикає стрімінг для моделі [name].
-  /// Якщо модель не підтримує стрімінг — виклик ігнорується.
   Future<void> setStreamingEnabled(String name, bool value) async {
     final entry = _entryOf(name);
     if (!entry.supportsStreaming) return;
@@ -72,8 +65,6 @@ class AiModelManager {
     await pref.setBool(_streamingEnabledKey(name), value);
   }
 
-  /// Перемкнути поточний стан стрімінгу на протилежний.
-  /// Повертає нове значення (або null, якщо модель не підтримує стрімінг).
   Future<bool?> toggleStreaming(String name) async {
     final entry = _entryOf(name);
     if (!entry.supportsStreaming) return null;
@@ -83,8 +74,6 @@ class AiModelManager {
     await setStreamingEnabled(name, next);
     return next;
   }
-
-  // --- Використання ---
 
   Future<void> incrementUsage(String name) async {
     final pref = await prefs;
@@ -142,31 +131,78 @@ class AiModelManager {
     await pref.setString(_dailyDateKey(name), _getTodayString());
   }
 
+  // --- Скидання кастомних налаштувань до дефолту ---
+
+  Future<void> resetMaxLimitToDefault(String name) async {
+    final pref = await prefs;
+    await pref.remove(_maxKey(name));
+  }
+
+  Future<void> resetDailyMaxLimitToDefault(String name) async {
+    final pref = await prefs;
+    await pref.remove(_dailyMaxKey(name));
+  }
+
+  Future<void> resetPhrasesPerRequestToDefault(String name) async {
+    final pref = await prefs;
+    await pref.remove(_phrasesPerRequestKey(name));
+  }
+
+  Future<void> resetStreamingToDefault(String name) async {
+    final pref = await prefs;
+    await pref.remove(_streamingEnabledKey(name));
+  }
+
   // --- DTO ---
 
-  Future<AiModelDataDTO> getModelData(String name) async {
+  Future<AiModelSettingsDTO> getModelData(String name) async {
     final pref = await prefs;
     final entry = _entryOf(name);
 
-    final max = pref.getInt(_maxKey(name)) ?? entry.defaultLimit;
-    final used = pref.getInt(_usedKey(name)) ?? 0;
-    final updated = pref.getInt(_updatedTimeKey(name));
-    final phrasesPerRequest = pref.getInt(_phrasesPerRequestKey(name)) ?? entry.defaultPhrasesPerRequest;
-    final streamingEnabled = await isStreamingEnabled(name);
+    // --- max limit ---
+    final storedMax = pref.getInt(_maxKey(name));
+    final currentMax = storedMax ?? entry.defaultLimit;
 
-    return AiModelDataDTO(
+    // --- daily max limit ---
+    final storedDailyMax = pref.getInt(_dailyMaxKey(name));
+    final currentDailyMax = storedDailyMax ?? entry.defaultLimit;
+
+    // --- phrases per request ---
+    final storedPhrases = pref.getInt(_phrasesPerRequestKey(name));
+    final currentPhrases = storedPhrases ?? entry.defaultPhrasesPerRequest;
+
+    // --- streaming ---
+    final storedStreaming = pref.getBool(_streamingEnabledKey(name));
+    final defaultStreaming = entry.supportsStreaming;
+    final currentStreaming = await isStreamingEnabled(name);
+
+    final used = pref.getInt(_usedKey(name)) ?? 0;
+    final dailyUsed = pref.getInt(_dailyUsedKey(name)) ?? 0;
+    final updated = pref.getInt(_updatedTimeKey(name));
+
+    return AiModelSettingsDTO(
       name: name,
       url: entry.url,
-      maxLimit: max,
+      currentMaxLimit: currentMax,
+      defaultMaxLimit: entry.defaultLimit,
+      isMaxLimitCustom: storedMax != null,
       used: used,
-      phrasesPerRequest: phrasesPerRequest,
+      currentDailyMaxLimit: currentDailyMax,
+      defaultDailyMaxLimit: entry.defaultLimit,
+      isDailyMaxLimitCustom: storedDailyMax != null,
+      dailyUsed: dailyUsed,
+      currentPhrasesPerRequest: currentPhrases,
+      defaultPhrasesPerRequest: entry.defaultPhrasesPerRequest,
+      isPhrasesPerRequestCustom: storedPhrases != null,
+      currentStreamingEnabled: currentStreaming,
+      defaultStreamingEnabled: defaultStreaming,
+      isStreamingCustom: storedStreaming != null,
       lastUpdated: updated != null ? DateTime.fromMillisecondsSinceEpoch(updated) : null,
-      isStreamingEnabled: streamingEnabled,
     );
   }
 
-  Future<List<AiModelDataDTO>> getAllModelsData() async {
-    List<AiModelDataDTO> result = [];
+  Future<List<AiModelSettingsDTO>> getAllModelsData() async {
+    List<AiModelSettingsDTO> result = [];
 
     for (final m in aiModels) {
       result.add(await getModelData(m.name));
@@ -179,7 +215,7 @@ class AiModelManager {
 
   Future<bool> isLimitReached(String name) async {
     final data = await getModelData(name);
-    return data.used >= data.maxLimit;
+    return data.used >= data.currentMaxLimit;
   }
 
   Future<bool> isDailyLimitReached(String name) async {
@@ -197,7 +233,7 @@ class AiModelManager {
 
   Future<int> remainingUses(String name) async {
     final data = await getModelData(name);
-    return data.maxLimit - data.used;
+    return data.currentMaxLimit - data.used;
   }
 
   Future<int> remainingDailyUses(String name) async {

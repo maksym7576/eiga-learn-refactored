@@ -14,7 +14,6 @@ class PhraseNotTranslatedWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Максимально просто: лише текст. Вирівнювання забезпечує _PhraseCardItem
     return Text(
       phraseObject.originalPhrase ?? '',
       style: PhraseListStyles.getPhraseTextStyle(isActive: isActive),

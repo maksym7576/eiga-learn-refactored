@@ -1,9 +1,7 @@
 import 'package:eiga/ui/widgets/appBarWidgets/appBarWidget.dart';
 import 'package:eiga/ui/widgets/videoUploating/videoListWidget.dart';
 import 'package:eiga/ui/widgets/videoUploating/videoUploadingWidget.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class MainScreen extends ConsumerStatefulWidget {

@@ -6,7 +6,6 @@ import 'package:eiga/config/depacker/readingTypeLanguageConfig.dart';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../styles/phraseListStyles.dart';
@@ -53,7 +52,15 @@ class _PhraseTranslatedWidgetState extends ConsumerState<PhraseTranslatedWidget>
 
   String _getVersionText(WordObject word, String key) {
     try {
-      return word.versions.firstWhere((v) => v.key == key).text ?? '';
+      // Спробуємо знайти за основним ключем
+      var item = word.versions.where((v) => v.key == key).firstOrNull;
+
+      // Якщо не знайшли і шукаємо romaji, спробуємо знайти за застарілим ключем romanji
+      if (item == null && key == 'romaji') {
+        item = word.versions.where((v) => v.key == 'romanji').firstOrNull;
+      }
+
+      return item?.text ?? '';
     } catch (_) {
       return '';
     }

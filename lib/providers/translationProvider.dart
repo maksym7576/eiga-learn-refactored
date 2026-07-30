@@ -4,10 +4,8 @@ import 'package:eiga/backend/data/models/phraseObject.dart';
 import 'package:eiga/providers/phraseListProvider.dart';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
-import 'package:eiga/providers/AIRequestStatusProvider.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../backend/services/AiService.dart';
 
 class TranslationProvider {
   final Ref ref;
@@ -114,37 +112,35 @@ class TranslationProvider {
 
     _isProcessing = true;
 
-    final aiStatus = ref.read(aiRequestStatusProvider.notifier);
     try {
       final video = await ref.read(videoServiceProvider.notifier).getVideoById(phrases.first.videoId!);
       if (video == null) {
-        aiStatus.appendLog('TranslationProvider: video not found for phrase ${phrases.first.id}');
+        print('TranslationProvider: video not found for phrase ${phrases.first.id}');
         return;
       }
 
       try {
         await ref.read(phraseServiceProvider).markPhrasesAsTranslatingByPhraseList(phrases);
       } catch (e) {
-        aiStatus.appendLog('TranslationProvider: failed to mark phrases as translating: $e');
       }
 
       final aiService = ref.read(aiServiceProvider);
 
-      // Видалено параметр transportName, додано обов'язковий ref
-      await aiService.translatePhraseList(
+      // Маршрутизація по video.pepelineIndetificator відбувається всередині
+      // runTranslationForVideo — TranslationProvider більше не знає і не має
+      // знати, який саме пайплайн (total_v1 / context_translation_v1) буде викликано.
+      await aiService.runTranslationForVideo(
         ref: ref,
+        video: video,
         phraseObjectsList: phrases,
         originalLanguage: video.originalLanguage!,
         translationLanguage: video.translatedLanguage!,
       );
     } catch (e, st) {
-      ref.read(aiRequestStatusProvider.notifier).appendLog('TranslationProvider error: $e');
-      ref.read(aiRequestStatusProvider.notifier).reportError(e, message: e.toString(), stackTrace: st, terminal: false);
 
       try {
         await ref.read(phraseServiceProvider).markPhrasesAsTranslatingByPhraseList(phrases);
       } catch (_) {
-        ref.read(aiRequestStatusProvider.notifier).appendLog('TranslationProvider: failed to unmark phrases after error');
       }
 
       print('Translation API Error: $e\n$st');

@@ -69,8 +69,9 @@ class SrtParser {
     if (m == null) return DateTime(1970);
 
     var ms = m.group(4)!;
-    if (ms.length == 1) ms = '${ms}00';
-    else if (ms.length == 2) ms = '${ms}0';
+    if (ms.length == 1) {
+      ms = '${ms}00';
+    } else if (ms.length == 2) ms = '${ms}0';
 
     return DateTime(1970, 1, 1,
         int.parse(m.group(1)!),

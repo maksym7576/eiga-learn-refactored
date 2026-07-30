@@ -19,7 +19,7 @@ class VideoTitleField extends StatelessWidget {
           borderSide: BorderSide(color: Colors.deepPurpleAccent, width: 2),
         ),
         enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.deepPurple.withOpacity(0.4)),
+          borderSide: BorderSide(color: Colors.deepPurple.withValues(alpha: 0.4)),
         ),
       ),
     );

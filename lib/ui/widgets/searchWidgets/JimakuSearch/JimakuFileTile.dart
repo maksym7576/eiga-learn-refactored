@@ -34,7 +34,7 @@ class JimakuFileTile extends StatelessWidget {
             border: Border.all(
               color: isActive
                   ? Colors.deepPurpleAccent
-                  : Colors.deepPurpleAccent.withOpacity(0.3),
+                  : Colors.deepPurpleAccent.withValues(alpha: 0.3),
               width: isActive ? 2 : 1,
             ),
           ),
@@ -54,7 +54,7 @@ class JimakuFileTile extends StatelessWidget {
               Text(
                 _formatSize(file.size),
                 style:
-                TextStyle(fontSize: 11, color: Colors.black.withOpacity(0.4)),
+                TextStyle(fontSize: 11, color: Colors.black.withValues(alpha: 0.4)),
               ),
               if (isActive)
                 const Padding(

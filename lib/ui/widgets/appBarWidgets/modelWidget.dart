@@ -1,11 +1,11 @@
-import 'package:eiga/backend/data/dto/AIModelDataDTO.dart';
+import 'package:eiga/backend/data/dto/AIModelSettingsDTO.dart';
 import 'package:eiga/config/modelsUrl/AIModelsURLData.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/modelsUrl/TranslationPipelineStep.dart';
 
 class ModelWidget extends StatefulWidget {
-  final AiModelDataDTO modelDTO;
+  final AiModelSettingsDTO modelDTO;
 
   final AiModelEntry modelEntry;
 
@@ -18,14 +18,14 @@ class ModelWidget extends StatefulWidget {
   final VoidCallback onSelect;
 
   const ModelWidget({
-    Key? key,
+    super.key,
     required this.modelDTO,
     required this.modelEntry,
     required this.step,
     required this.isActive,
     required this.onSelect,
     this.onToggleStreaming,
-  }) : super(key: key);
+  });
 
   @override
   State<ModelWidget> createState() => _ModelWidgetState();
@@ -35,7 +35,7 @@ class _ModelWidgetState extends State<ModelWidget> {
 
   Color get _usageColor {
     final used = widget.modelDTO.used;
-    final max = widget.modelDTO.maxLimit;
+    final max = widget.modelDTO.currentDailyMaxLimit;
     if (max <= 0) return Colors.grey;
     final ratio = used / max;
     if (ratio >= 1) return Colors.red;
@@ -48,7 +48,7 @@ class _ModelWidgetState extends State<ModelWidget> {
 
   int get _limitSegmentsActive {
     final used = widget.modelDTO.used;
-    final max = widget.modelDTO.maxLimit;
+    final max = widget.modelDTO.currentDailyMaxLimit;
     if (max <= 0) return 0;
     final ratio = (used / max).clamp(0.0, 1.0);
     return (ratio * _limitSegmentsTotal).ceil().clamp(0, _limitSegmentsTotal);
@@ -105,7 +105,7 @@ class _ModelWidgetState extends State<ModelWidget> {
           width: width,
           height: height,
           decoration: BoxDecoration(
-            color: isOn ? color : color.withOpacity(0.15),
+            color: isOn ? color : color.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(3),
           ),
         );
@@ -132,14 +132,13 @@ class _ModelWidgetState extends State<ModelWidget> {
 
   Widget _streamingToggle() {
     final supportsStreaming = widget.modelEntry.supportsStreaming;
-    final isEnabled = widget.modelDTO.isStreamingEnabled;
-    final isOn = supportsStreaming && isEnabled;
+    final isOn = supportsStreaming && widget.modelDTO.currentStreamingEnabled;
 
     const activeColor = Colors.blueAccent;
 
     final trackColor = !supportsStreaming
-        ? Colors.grey.withOpacity(0.18)
-        : (isOn ? activeColor : Colors.grey.withOpacity(0.35));
+        ? Colors.grey.withValues(alpha: 0.18)
+        : (isOn ? activeColor : Colors.grey.withValues(alpha: 0.35));
 
     final label = !supportsStreaming
         ? 'No streaming'
@@ -183,7 +182,7 @@ class _ModelWidgetState extends State<ModelWidget> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.18),
+                  color: Colors.black.withValues(alpha: 0.18),
                   blurRadius: 3,
                   offset: const Offset(0, 1),
                 ),
@@ -219,7 +218,7 @@ class _ModelWidgetState extends State<ModelWidget> {
   Widget build(BuildContext context) {
     final model = widget.modelDTO;
     final used = model.used;
-    final maxLimit = model.maxLimit;
+    final maxLimit = model.currentDailyMaxLimit;
     final usageColor = _usageColor;
 
     return GestureDetector(
@@ -228,7 +227,7 @@ class _ModelWidgetState extends State<ModelWidget> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: widget.isActive ? Colors.green.withOpacity(0.05) : Colors.white,
+          color: widget.isActive ? Colors.green.withValues(alpha: 0.05) : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: widget.isActive ? Colors.green[400]! : Colors.grey[300]!,
@@ -236,7 +235,7 @@ class _ModelWidgetState extends State<ModelWidget> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -255,7 +254,7 @@ class _ModelWidgetState extends State<ModelWidget> {
                     color: usageColor,
                     shape: BoxShape.circle,
                     boxShadow: [
-                      BoxShadow(color: usageColor.withOpacity(0.4), blurRadius: 4, spreadRadius: 1),
+                      BoxShadow(color: usageColor.withValues(alpha: 0.4), blurRadius: 4, spreadRadius: 1),
                     ],
                   ),
                 ),
@@ -281,7 +280,7 @@ class _ModelWidgetState extends State<ModelWidget> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: usageColor.withOpacity(0.1),
+                    color: usageColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(

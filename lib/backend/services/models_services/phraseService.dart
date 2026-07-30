@@ -107,4 +107,17 @@ class PhraseService {
       }
     });
   }
+
+  Future<void> updateTranslatedPhraseText(int phraseId, String translatedText) async {
+    await db.writeTxn(() async {
+      final phrase = await db.phraseObjects.get(phraseId);
+      if (phrase != null) {
+        phrase.translatedPhrase = translatedText;
+        phrase.isTranslated = false;
+        phrase.isTranslating = true;
+        await db.phraseObjects.put(phrase);
+      }
+    });
+  }
+
 }

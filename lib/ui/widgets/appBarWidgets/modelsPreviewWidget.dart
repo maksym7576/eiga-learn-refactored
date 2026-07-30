@@ -1,4 +1,4 @@
-import 'package:eiga/backend/data/dto/AIModelDataDTO.dart';
+import 'package:eiga/backend/data/dto/AIModelSettingsDTO.dart';
 import 'package:eiga/config/modelsUrl/AIModelsURLData.dart';
 import 'package:eiga/ui/widgets/appBarWidgets/modelWidget.dart';
 import 'package:eiga/ui/widgets/buttons/EqualToggleButtons.dart';
@@ -12,9 +12,9 @@ class ModelPreviewWidget extends ConsumerStatefulWidget {
   final TranslationPipelineStep initialStep;
 
   const ModelPreviewWidget({
-    Key? key,
+    super.key,
     this.initialStep = TranslationPipelineStep.research,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<ModelPreviewWidget> createState() =>
@@ -38,7 +38,7 @@ class _ModelPreviewWidgetState extends ConsumerState<ModelPreviewWidget> {
     super.dispose();
   }
 
-  AiModelEntry _entryFor(AiModelDataDTO dto) {
+  AiModelEntry _entryFor(AiModelSettingsDTO dto) {
     return aiModels.firstWhere(
           (e) => e.name == dto.name,
       orElse: () => aiModels.first,
@@ -178,7 +178,7 @@ class _ModelPreviewWidgetState extends ConsumerState<ModelPreviewWidget> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.deepPurpleAccent.withOpacity(0.12),
+              color: Colors.deepPurpleAccent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
@@ -213,7 +213,7 @@ class _ModelPreviewWidgetState extends ConsumerState<ModelPreviewWidget> {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.deepPurpleAccent.withOpacity(0.08),
+                        color: Colors.deepPurpleAccent.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -222,7 +222,7 @@ class _ModelPreviewWidgetState extends ConsumerState<ModelPreviewWidget> {
                           Icon(
                             Icons.access_time_rounded,
                             size: 11,
-                            color: Colors.deepPurpleAccent.withOpacity(0.8),
+                            color: Colors.deepPurpleAccent.withValues(alpha: 0.8),
                           ),
                           const SizedBox(width: 3),
                           Text(
@@ -244,7 +244,7 @@ class _ModelPreviewWidgetState extends ConsumerState<ModelPreviewWidget> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: Colors.black.withOpacity(0.45),
+                    color: Colors.black.withValues(alpha: 0.45),
                   ),
                 ),
               ],
@@ -256,7 +256,7 @@ class _ModelPreviewWidgetState extends ConsumerState<ModelPreviewWidget> {
             child: Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.close, size: 20, color: Colors.black87),

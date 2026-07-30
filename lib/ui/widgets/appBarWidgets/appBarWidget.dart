@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:eiga/backend/data/dto/AIModelDataDTO.dart';
+import 'package:eiga/backend/data/dto/AIModelSettingsDTO.dart';
 import 'package:eiga/ui/widgets/appBarWidgets/modelsPreviewWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -14,9 +14,9 @@ class AppBarWidget extends ConsumerStatefulWidget implements PreferredSizeWidget
   final TranslationPipelineStep step;
 
   const AppBarWidget({
-    Key? key,
+    super.key,
     this.step = TranslationPipelineStep.translate,
-  }) : super(key: key);
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -85,15 +85,25 @@ class _AppBarWidgetState extends ConsumerState<AppBarWidget> {
     final activeName = aiState.activeNameByStep[step];
     final matches = stepModels.where((m) => m.name == activeName);
 
-    final AiModelDataDTO selectedItem = matches.isNotEmpty
+    final AiModelSettingsDTO selectedItem = matches.isNotEmpty
         ? matches.first
-        : AiModelDataDTO(
+        : const AiModelSettingsDTO(
       name: 'No model',
       url: 'No',
-      maxLimit: 0,
+      currentMaxLimit: 0,
+      defaultMaxLimit: 0,
+      isMaxLimitCustom: false,
       used: 0,
-      phrasesPerRequest: 10,
-      isStreamingEnabled: false,
+      currentDailyMaxLimit: 0,
+      defaultDailyMaxLimit: 0,
+      isDailyMaxLimitCustom: false,
+      dailyUsed: 0,
+      currentPhrasesPerRequest: 0,
+      defaultPhrasesPerRequest: 0,
+      isPhrasesPerRequestCustom: false,
+      currentStreamingEnabled: false,
+      defaultStreamingEnabled: false,
+      isStreamingCustom: false,
     );
 
     const Color purplePrimary = Colors.deepPurpleAccent;
@@ -123,19 +133,19 @@ class _AppBarWidgetState extends ConsumerState<AppBarWidget> {
                 curve: Curves.easeOutCirc,
                 decoration: BoxDecoration(
                   color: _isModelDialogOpen
-                      ? purplePrimary.withOpacity(0.08)
+                      ? purplePrimary.withValues(alpha: 0.08)
                       : Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
                     color: _isModelDialogOpen
                         ? purplePrimary
-                        : purplePrimary.withOpacity(0.3),
+                        : purplePrimary.withValues(alpha: 0.3),
                     width: _isModelDialogOpen ? 2.0 : 1.5,
                   ),
                   boxShadow: _isModelDialogOpen
                       ? [
                     BoxShadow(
-                      color: purplePrimary.withOpacity(0.15),
+                      color: purplePrimary.withValues(alpha: 0.15),
                       blurRadius: 12,
                       spreadRadius: 2,
                     )
@@ -184,7 +194,7 @@ class _AppBarWidgetState extends ConsumerState<AppBarWidget> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: purplePrimary.withOpacity(0.4),
+                                  color: purplePrimary.withValues(alpha: 0.4),
                                   blurRadius: 4,
                                   spreadRadius: 1,
                                 ),
@@ -227,11 +237,11 @@ class _AppBarWidgetState extends ConsumerState<AppBarWidget> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: purplePrimary.withOpacity(0.08),
+                              color: purplePrimary.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              '${selectedItem.used}/${selectedItem.maxLimit}',
+                              '${selectedItem.used}/${selectedItem.currentDailyMaxLimit}',
                               style: const TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,

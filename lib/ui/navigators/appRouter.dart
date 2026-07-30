@@ -12,8 +12,8 @@ final GoRouter AppRouter = GoRouter(
     routes: [
       ShellRoute(
           builder: (context, state, child) => AppNavigator(
-            child: child,
             showBottomBar: false,
+            child: child,
           ),
           routes: [
             GoRoute(path: '/main', builder: (context, state) => const MainScreen()),

@@ -37,14 +37,14 @@ class _SwipeableFileBoxState extends State<SwipeableFileBox> {
         curve: Curves.easeOutCirc,
         height: 120,
         decoration: BoxDecoration(
-          color: isPicked ? Colors.deepPurpleAccent.withOpacity(0.08) : Colors.grey.shade50,
+          color: isPicked ? Colors.deepPurpleAccent.withValues(alpha: 0.08) : Colors.grey.shade50,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isPicked ? Colors.deepPurpleAccent : Colors.deepPurple.withOpacity(0.25),
+            color: isPicked ? Colors.deepPurpleAccent : Colors.deepPurple.withValues(alpha: 0.25),
             width: isPicked ? 2.0 : 1.5,
           ),
           boxShadow: isPicked
-              ? [BoxShadow(color: Colors.deepPurpleAccent.withOpacity(0.12), blurRadius: 12, spreadRadius: 2)]
+              ? [BoxShadow(color: Colors.deepPurpleAccent.withValues(alpha: 0.12), blurRadius: 12, spreadRadius: 2)]
               : [],
         ),
         child: Center(
@@ -77,11 +77,11 @@ class _SwipeableFileBoxState extends State<SwipeableFileBox> {
               key: const ValueKey('empty'),
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, color: Colors.deepPurpleAccent.withOpacity(0.35), size: 36),
+                Icon(icon, color: Colors.deepPurpleAccent.withValues(alpha: 0.35), size: 36),
                 const SizedBox(height: 8),
                 Text(
                   label,
-                  style: TextStyle(fontSize: 13, color: Colors.deepPurpleAccent.withOpacity(0.45), fontWeight: FontWeight.w600),
+                  style: TextStyle(fontSize: 13, color: Colors.deepPurpleAccent.withValues(alpha: 0.45), fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -124,7 +124,7 @@ class _SwipeableFileBoxState extends State<SwipeableFileBox> {
                       borderRadius: BorderRadius.circular(3),
                       color: active
                           ? Colors.deepPurpleAccent
-                          : Colors.deepPurpleAccent.withOpacity(0.25),
+                          : Colors.deepPurpleAccent.withValues(alpha: 0.25),
                     ),
                   );
                 }),

@@ -52,6 +52,67 @@ class VideoObject {
 
   @ignore
   set colorTheme(Color? color) {
-    colorThemeValue = color?.value;
+    colorThemeValue = color?.toARGB32();
+  }
+
+  VideoObject copyWith({
+    Id? id,
+    String? originalLanguage,
+    String? translatedLanguage,
+    String? textFormat,
+    String? pathSubtitle,
+    String? videoPath,
+    DateTime? createdAt,
+    String? videoName,
+    String? episode,
+    String? season,
+    String? nameJumaku,
+    String? englishName,
+    String? japaneseName,
+    String? nameFileJumaku,
+    int? anilistId,
+    String? tmdbId,
+    bool? isAnime,
+    bool? isMovie,
+    bool? isAdult,
+    bool? isUnverified,
+    String? coverImagePath,
+    String? description,
+    String? bannerImage,
+    List<String>? genres,
+    int? colorThemeValue,
+    String? pepelineIndetificator,
+    bool? isResearchDone,
+    String? researchInformation,
+  }) {
+    return VideoObject()
+      ..id = id ?? this.id
+      ..originalLanguage = originalLanguage ?? this.originalLanguage
+      ..translatedLanguage = translatedLanguage ?? this.translatedLanguage
+      ..textFormat = textFormat ?? this.textFormat
+      ..pathSubtitle = pathSubtitle ?? this.pathSubtitle
+      ..videoPath = videoPath ?? this.videoPath
+      ..createdAt = createdAt ?? this.createdAt
+      ..videoName = videoName ?? this.videoName
+      ..episode = episode ?? this.episode
+      ..season = season ?? this.season
+      ..nameJumaku = nameJumaku ?? this.nameJumaku
+      ..englishName = englishName ?? this.englishName
+      ..japaneseName = japaneseName ?? this.japaneseName
+      ..nameFileJumaku = nameFileJumaku ?? this.nameFileJumaku
+      ..anilistId = anilistId ?? this.anilistId
+      ..tmdbId = tmdbId ?? this.tmdbId
+      ..isAnime = isAnime ?? this.isAnime
+      ..isMovie = isMovie ?? this.isMovie
+      ..isAdult = isAdult ?? this.isAdult
+      ..isUnverified = isUnverified ?? this.isUnverified
+      ..coverImagePath = coverImagePath ?? this.coverImagePath
+      ..description = description ?? this.description
+      ..bannerImage = bannerImage ?? this.bannerImage
+      ..genres = genres ?? this.genres
+      ..colorThemeValue = colorThemeValue ?? this.colorThemeValue
+      ..pepelineIndetificator = pepelineIndetificator ?? this.pepelineIndetificator
+      ..isResearchDone = isResearchDone ?? this.isResearchDone
+      ..researchInformation = researchInformation ?? this.researchInformation;
   }
 }

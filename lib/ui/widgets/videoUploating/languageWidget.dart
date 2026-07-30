@@ -3,7 +3,6 @@
 
 import 'package:eiga/providers/videoComponentsProvider.dart';
 import 'package:eiga/ui/widgets/videoUploating/languagePreviewWidget.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -12,10 +11,10 @@ class LanguageWidget extends ConsumerWidget {
   final LanguageType type;
 
   const LanguageWidget({
-    Key? key,
+    super.key,
     required this.language,
     required this.type,
-}) : super(key: key);
+});
 
   Future<void> setLanguage(WidgetRef ref, String language) async {
     if (type == LanguageType.original) {
@@ -36,15 +35,15 @@ class LanguageWidget extends ConsumerWidget {
       if (language == original && type == LanguageType.original || language == translation && type == LanguageType.translation) {
         return Colors.deepPurpleAccent;
       } else if (language == original || language == translation) {
-        return Colors.deepPurpleAccent.withOpacity(0.5);
+        return Colors.deepPurpleAccent.withValues(alpha: 0.5);
       } else {
-        return Colors.deepPurpleAccent.withOpacity(0.3);
+        return Colors.deepPurpleAccent.withValues(alpha: 0.3);
       }
     }
 
     Color getColorInside() {
       if (language == original && type == LanguageType.original || language == translation && type == LanguageType.translation) {
-        return Colors.deepPurple.shade200.withOpacity(0.9);
+        return Colors.deepPurple.shade200.withValues(alpha: 0.9);
       } else if (language == original || language == translation) {
         return Colors.deepPurple.shade100;
       } else {
@@ -78,7 +77,7 @@ class LanguageWidget extends ConsumerWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.06),
+                color: Colors.black.withValues(alpha: 0.06),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),

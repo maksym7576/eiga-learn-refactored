@@ -1,5 +1,6 @@
 import 'package:eiga/config/secureStorage.dart';
 import '../../config/modelsUrl/AIModelsURLData.dart';
+import '../../config/modelsUrl/AiModelManager.dart';
 
 class ApiRequestBuilder {
   static ApiTokenType tokenTypeFor(AiProvider provider) {
@@ -13,15 +14,23 @@ class ApiRequestBuilder {
 
   static Future<String> buildUrl(
       AiModelEntry model, {
-        required bool isStreaming,
+        bool? forceStreamingOverride,
       }) async {
     final tokenType = tokenTypeFor(model.provider);
     final token = await SecureTokenStorage.getToken(tokenType);
 
-    final bool willStream = isStreaming && model.supportsStreaming;
+    final userWantsStreaming =
+        forceStreamingOverride ?? await AiModelManager().isStreamingEnabled(model.name);
+    final willStream = userWantsStreaming && model.supportsStreaming;
+
     final endpoint = willStream ? ':streamGenerateContent' : ':generateContent';
     final sse = willStream ? '&alt=sse' : '';
 
-    return '${model.url}$endpoint?key=$token$sse';
+    final generatedUrl = '${model.url}$endpoint?key=$token$sse';
+
+    // Виведення URL у логи
+    print('API Request URL: $generatedUrl');
+
+    return generatedUrl;
   }
 }

@@ -1,11 +1,9 @@
 import 'package:eiga/config/secureStorage.dart';
 import 'package:eiga/providers/localStoragesProviders.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../providers/redirectProviders.dart';
-import 'aiModelsSettingsWidget.dart';
 
 class ControlButtonWidget extends ConsumerStatefulWidget {
   const ControlButtonWidget({super.key});
@@ -41,7 +39,7 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
       context: context,
       barrierDismissible: true,
       barrierLabel: 'SettingsDialog',
-      barrierColor: Colors.black.withOpacity(0.5),
+      barrierColor: Colors.black.withValues(alpha: 0.5),
       transitionDuration: const Duration(milliseconds: 250),
       pageBuilder: (context, anim1, anim2) {
         return Center(
@@ -60,7 +58,7 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 10,
                       spreadRadius: 5,
                     ),

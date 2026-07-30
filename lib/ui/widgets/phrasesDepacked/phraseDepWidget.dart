@@ -1,11 +1,10 @@
 import 'package:eiga/backend/data/models/phraseObject.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class PhraseDepWidget extends StatefulWidget {
   final PhraseObject phraseObject;
 
-  PhraseDepWidget({super.key, required this.phraseObject});
+  const PhraseDepWidget({super.key, required this.phraseObject});
 
   @override
   State<PhraseDepWidget> createState() => _PhraseDepWidgetState();
@@ -34,7 +33,7 @@ class _PhraseDepWidgetState extends State<PhraseDepWidget> {
           color: Colors.grey.shade50,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: Colors.deepPurple.withOpacity(0.1),
+            color: Colors.deepPurple.withValues(alpha: 0.1),
             width: 1.2,
           ),
         ),
@@ -46,7 +45,7 @@ class _PhraseDepWidgetState extends State<PhraseDepWidget> {
               margin: const EdgeInsets.only(top: 2),
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               decoration: BoxDecoration(
-                color: Colors.deepPurpleAccent.withOpacity(0.12),
+                color: Colors.deepPurpleAccent.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -78,17 +77,17 @@ class _PhraseDepWidgetState extends State<PhraseDepWidget> {
                       Icon(
                         Icons.access_time_rounded,
                         size: 12,
-                        color: Colors.deepPurple.withOpacity(0.4),
+                        color: Colors.deepPurple.withValues(alpha: 0.4),
                       ),
                       const SizedBox(width: 4),
                       Row(
                         children: [
                           Text(
-                            '$start',
+                            start,
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
-                              color: Colors.deepPurple.withOpacity(0.4),
+                              color: Colors.deepPurple.withValues(alpha: 0.4),
                               fontFeatures: const [
                                 FontFeature.tabularFigures(),
                               ],
@@ -98,14 +97,14 @@ class _PhraseDepWidgetState extends State<PhraseDepWidget> {
                           Icon(
                             Icons.arrow_right_alt,
                             size: 11,
-                            color: Colors.deepPurple.withOpacity(0.4),
+                            color: Colors.deepPurple.withValues(alpha: 0.4),
                           ),
                           Text(
-                            '$end',
+                            end,
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
-                              color: Colors.deepPurple.withOpacity(0.4),
+                              color: Colors.deepPurple.withValues(alpha: 0.4),
                               fontFeatures: const [
                                 FontFeature.tabularFigures(),
                               ],

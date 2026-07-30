@@ -24,7 +24,7 @@ class ReadingTypeProvider {
     return ReadingTypeProvider(
         config: config ?? this.config,
         mainOption: mainOption ?? this.mainOption,
-        additionalOptions: additionalOption != null ? additionalOption() : this.additionalOptions,
+        additionalOptions: additionalOption != null ? additionalOption() : additionalOptions,
     );
   }
 }

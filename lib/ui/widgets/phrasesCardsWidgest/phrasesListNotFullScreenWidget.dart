@@ -170,12 +170,12 @@ class _PhraseCardItem extends StatelessWidget {
                   color: Theme.of(context).scaffoldBackgroundColor,
                   borderRadius: BorderRadius.circular(20), // Сучасна форма "пігулки"
                   border: Border.all(
-                    color: PhraseListStyles.primaryColor.withOpacity(0.2), // Ніжніший бордер
+                    color: PhraseListStyles.primaryColor.withValues(alpha: 0.2), // Ніжніший бордер
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08), // М'якша, природніша тінь
+                      color: Colors.black.withValues(alpha: 0.08), // М'якша, природніша тінь
                       blurRadius: 10,
                       offset: const Offset(0, 4), // Тінь падає рівномірно вниз
                     ),

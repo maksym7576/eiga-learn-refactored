@@ -1,20 +1,35 @@
-class GeminiModelExpiredException implements Exception {
+import 'AiUserFacingError.dart';
+
+abstract class GeminiException implements Exception {
   final String message;
-  GeminiModelExpiredException(this.message);
+  GeminiException(this.message);
+
+  AiErrorType get type;
+
+  @override
+  String toString() => message;
 }
 
-class GeminiIncorrectTokenException implements Exception {
-  final String message;
-  GeminiIncorrectTokenException(this.message);
+class GeminiModelExpiredException extends GeminiException {
+  GeminiModelExpiredException(String message) : super(message);
+  @override
+  AiErrorType get type => AiErrorType.rateLimit;
 }
 
-class GeminiGeneralException implements Exception {
-  final String message;
-  GeminiGeneralException(this.message);
+class GeminiIncorrectTokenException extends GeminiException {
+  GeminiIncorrectTokenException(String message) : super(message);
+  @override
+  AiErrorType get type => AiErrorType.auth;
 }
 
-class GeminiServerException implements Exception {
-  final String message;
-  GeminiServerException(this.message);
+class GeminiGeneralException extends GeminiException {
+  GeminiGeneralException(String message) : super(message);
+  @override
+  AiErrorType get type => AiErrorType.unknown;
 }
 
+class GeminiServerException extends GeminiException {
+  GeminiServerException(String message) : super(message);
+  @override
+  AiErrorType get type => AiErrorType.server;
+}

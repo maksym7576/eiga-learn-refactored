@@ -1,21 +1,15 @@
 import 'dart:async';
 
-import 'package:eiga/backend/data/dto/AIModelDataDTO.dart';
+import 'package:eiga/backend/data/dto/AIModelSettingsDTO.dart';
 import 'package:eiga/config/modelsUrl/AIModelsURLData.dart';
 import 'package:eiga/config/modelsUrl/aiModelManager.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../config/modelsUrl/TranslationPipelineStep.dart';
 
-// TODO: якщо TranslationPipelineStep лежить в окремому файлі — імпортуйте
-// його тут явно. Я припускаю, що він доступний через один із імпортів вище
-// (як і у вашому оригінальному ModelPreviewWidget).
-
-/// Стан усіх AI-моделей: список даних по моделях, яка модель активна
-/// на кожному кроці пайплайну, скільки лишилось до ресету лімітів.
 class AiModelsState {
   final bool isLoading;
-  final List<AiModelDataDTO> allModels;
+  final List<AiModelSettingsDTO> allModels;
   final Map<TranslationPipelineStep, String> activeNameByStep;
   final String remainingTime;
 
@@ -28,7 +22,7 @@ class AiModelsState {
 
   AiModelsState copyWith({
     bool? isLoading,
-    List<AiModelDataDTO>? allModels,
+    List<AiModelSettingsDTO>? allModels,
     Map<TranslationPipelineStep, String>? activeNameByStep,
     String? remainingTime,
   }) {
@@ -49,7 +43,6 @@ class AiModelsNotifier extends StateNotifier<AiModelsState> {
   final _aiModelManager = AiModelManager();
   Timer? _timer;
 
-  /// О котрій годині UTC відбувається щоденний ресет лімітів.
   static const int resetHourUTC = 0;
 
   Future<void> _init() async {
@@ -74,7 +67,7 @@ class AiModelsNotifier extends StateNotifier<AiModelsState> {
 
   void _startTimer() {
     _timer?.cancel();
-    _tick(); // одразу порахувати, не чекаючи першої секунди
+    _tick();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
   }
 
@@ -97,8 +90,6 @@ class AiModelsNotifier extends StateNotifier<AiModelsState> {
     final remaining = resetTime.difference(now);
 
     if (remaining <= Duration.zero) {
-      // Дійшли до нуля — це те, чого не вистачало в оригіналі: реально
-      // скидаємо використання і одразу перезавантажуємо дані моделей.
       await _resetAllUsage();
       return;
     }
@@ -109,8 +100,6 @@ class AiModelsNotifier extends StateNotifier<AiModelsState> {
   Future<void> _resetAllUsage() async {
     for (final model in aiModels) {
       await _aiModelManager.resetDailyUsage(model.name);
-      // Якщо треба скидати ще й загальний (не денний) ліміт — розкоментуйте:
-      // await _aiModelManager.resetUsage(model.name);
     }
     await _loadData();
   }
@@ -122,7 +111,6 @@ class AiModelsNotifier extends StateNotifier<AiModelsState> {
         '${two(duration.inSeconds.remainder(60))}';
   }
 
-  /// Змінити активну модель для конкретного кроку пайплайну.
   Future<void> setActiveModel(TranslationPipelineStep step, String modelName) async {
     await _aiModelManager.setActiveModel(tag: step.name, modelName: modelName);
     state = state.copyWith(
@@ -133,26 +121,24 @@ class AiModelsNotifier extends StateNotifier<AiModelsState> {
     );
   }
 
-  /// Ручне оновлення даних (напр. pull-to-refresh).
   Future<void> refresh() => _loadData();
 
-  /// Перемкнути стрімінг для конкретної моделі (research/translate/parse-
-  /// незалежний, це властивість самої моделі, а не кроку).
-  /// Якщо модель не підтримує стрімінг — нічого не робить.
-  Future<void> toggleStreaming(AiModelDataDTO model) async {
+  Future<void> toggleStreaming(AiModelSettingsDTO model) async {
     final entry = _entryFor(model);
     if (!entry.supportsStreaming) return;
 
-    await _aiModelManager.setStreamingEnabled(
-      model.name,
-      !model.isStreamingEnabled,
-    );
+    final newValue = !model.currentStreamingEnabled;
+
+    await _aiModelManager.setStreamingEnabled(model.name, newValue);
 
     state = state.copyWith(
       allModels: [
         for (final m in state.allModels)
           if (m.name == model.name)
-            m.copyWith(isStreamingEnabled: !model.isStreamingEnabled)
+            m.copyWith(
+              currentStreamingEnabled: newValue,
+              isStreamingCustom: true,
+            )
           else
             m,
       ],
@@ -171,7 +157,7 @@ StateNotifierProvider<AiModelsNotifier, AiModelsState>((ref) {
   return AiModelsNotifier();
 });
 
-AiModelEntry _entryFor(AiModelDataDTO dto) {
+AiModelEntry _entryFor(AiModelSettingsDTO dto) {
   return aiModels.firstWhere(
         (e) => e.name == dto.name,
     orElse: () => aiModels.first,
@@ -191,15 +177,11 @@ int _qualityRank(ModelQuality quality) {
   }
 }
 
-/// ⚠️ ГОЛОВНЕ МІСЦЕ ДЛЯ ПРАВИЛ ФІЛЬТРАЦІЇ ПО КРОКАХ.
-///
-/// Додайте сюди `case` для кожного кроку, де є обмеження на моделі.
-/// Кроки, яких тут немає, проходять без фільтрації (гілка `default`).
+
 bool _isModelAllowedForStep(AiModelEntry entry, TranslationPipelineStep step) {
   switch (step) {
     case TranslationPipelineStep.research:
-    // displayName цього кроку — 'Analyze'. Аналіз потребує виходу
-    // в інтернет — моделі без web search відсіюємо.
+
       return entry.supportsWebSearch;
 
     case TranslationPipelineStep.translate:
@@ -210,11 +192,8 @@ bool _isModelAllowedForStep(AiModelEntry entry, TranslationPipelineStep step) {
   }
 }
 
-/// Відфільтрований і відсортований (найкраща якість — першою) список
-/// моделей для конкретного кроку. Реактивний: перебудується сам, щойно
-/// зміниться [aiModelsProvider] (наприклад, після щоденного ресету).
 final modelsForStepProvider =
-Provider.family<List<AiModelDataDTO>, TranslationPipelineStep>((ref, step) {
+Provider.family<List<AiModelSettingsDTO>, TranslationPipelineStep>((ref, step) {
   final allModels = ref.watch(aiModelsProvider).allModels;
 
   final filtered = allModels

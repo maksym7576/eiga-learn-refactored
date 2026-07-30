@@ -142,7 +142,7 @@ class PhraseListStyles {
     fontWeight: FontWeight.w700,
   );
 
-  static Border getLabelBorder() => Border.all(color: primaryColor.withOpacity(opacityLabel));
+  static Border getLabelBorder() => Border.all(color: primaryColor.withValues(alpha: opacityLabel));
 
   /// Колір для граматичної категорії (0/1/2)
   static Color getHighlightColor(int categoryIndex) {

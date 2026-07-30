@@ -15,7 +15,7 @@ class ReadingTypeLanguageConfigRegistry {
   static final Map<String, ReadingTypeLanguageConfig> _confing = {
     'japanese': ReadingTypeLanguageConfig (
       language: 'japanese',
-      options: ['original', 'kana', 'romanji'],
+      options: ['original', 'kana', 'romaji'],
     ),
   };
 

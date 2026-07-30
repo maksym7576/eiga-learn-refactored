@@ -24,7 +24,6 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
           padding: const EdgeInsets.only(top: 7.0),
           child: Column(
             children: [
-              // Відеоплеєр з можливістю рисайзу
               Stack(
                 children: [
                   VideoPlayerWidget(),
@@ -41,7 +40,6 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
               ),
               // Налаштування
               VideoSettingsNotFullScreenWidget(),
-              // Список фраз займає весь простір що залишився
               Expanded(
                 child: PhraseListNotFullScreenWidget(),
               ),

@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 import 'package:path/path.dart' as p;
 import 'package:eiga/backend/data/dto/JimakuDataDTO.dart';
 import 'package:http/http.dart' as http;
@@ -18,7 +17,7 @@ class JimakuService {
   static Future<JimakuService> create() async {
     final token = await SecureTokenStorage.getToken(ApiTokenType.jimaku);
 
-    if (token == null || token.isEmpty) {
+    if (token.isEmpty) {
       throw Exception('Jimaku API token not found');
     }
     return JimakuService._(token);

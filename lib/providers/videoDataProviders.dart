@@ -1,6 +1,9 @@
 
 
+import 'package:eiga/providers/servicesProviders.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+
+import '../backend/data/models/videoObject.dart';
 
 final playerTimeProvider = StateProvider<Duration>((ref) {
   return Duration.zero;
@@ -35,3 +38,27 @@ class AutoScrollNotifier extends StateNotifier<bool> {
 }
 
 final playerSeekProvider = StateProvider<Duration?>((ref) => null);
+
+final currentVideoProvider = FutureProvider<VideoObject?>((ref) async {
+  final videoId = ref.watch(playerIdProvider);
+
+  if (videoId == null) {
+    return null;
+  }
+
+  final videoService = ref.read(videoServiceProvider.notifier);
+  return await videoService.getVideoById(videoId);
+});
+
+final videoResearchInfoProvider = Provider<AsyncValue<({bool? isResearchDone, String? researchInformation})?>>((ref) {
+  final videoState = ref.watch(currentVideoProvider);
+
+  return videoState.whenData((video) {
+    if (video == null) return null;
+
+    return (
+    isResearchDone: video.isResearchDone,
+    researchInformation: video.researchInformation,
+    );
+  });
+});

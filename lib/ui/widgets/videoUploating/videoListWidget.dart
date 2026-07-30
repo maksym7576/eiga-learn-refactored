@@ -56,13 +56,13 @@ class _EmptyState extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.deepPurpleAccent.withOpacity(0.08),
+              color: Colors.deepPurpleAccent.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.video_library_outlined,
               size: 56,
-              color: Colors.deepPurpleAccent.withOpacity(0.6),
+              color: Colors.deepPurpleAccent.withValues(alpha: 0.6),
             ),
           ),
           const SizedBox(height: 20),
@@ -71,7 +71,7 @@ class _EmptyState extends StatelessWidget {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: Colors.deepPurpleAccent.withOpacity(0.8),
+              color: Colors.deepPurpleAccent.withValues(alpha: 0.8),
             ),
           ),
           const SizedBox(height: 8),

@@ -28,10 +28,10 @@ class LanguageButtonWidget extends StatelessWidget {
         duration: const Duration(milliseconds: 300),
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
-          color: hasLanguages ? Colors.deepPurpleAccent.withOpacity(0.3) : Colors.grey.shade50,
+          color: hasLanguages ? Colors.deepPurpleAccent.withValues(alpha: 0.3) : Colors.grey.shade50,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: hasLanguages ? Colors.deepPurpleAccent.shade100 : Colors.deepPurple.withOpacity(0.25),
+            color: hasLanguages ? Colors.deepPurpleAccent.shade100 : Colors.deepPurple.withValues(alpha: 0.25),
             width: hasLanguages ? 2 : 1.5,
           ),
         ),
@@ -40,14 +40,14 @@ class LanguageButtonWidget extends StatelessWidget {
           children: [
             Text(
               hasOriginal ? original : 'original',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: hasOriginal ? Colors.deepPurpleAccent : Colors.deepPurple.withOpacity(0.4)),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: hasOriginal ? Colors.deepPurpleAccent : Colors.deepPurple.withValues(alpha: 0.4)),
             ),
             const SizedBox(width: 1),
-            Icon(Icons.arrow_right_alt, size: 20, color: hasLanguages ? Colors.deepPurpleAccent : Colors.deepPurple.withOpacity(0.4)),
+            Icon(Icons.arrow_right_alt, size: 20, color: hasLanguages ? Colors.deepPurpleAccent : Colors.deepPurple.withValues(alpha: 0.4)),
             const SizedBox(width: 1),
             Text(
               hasTranslation ? translation : 'translation',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: hasTranslation ? Colors.deepPurpleAccent : Colors.deepPurple.withOpacity(0.4)),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: hasTranslation ? Colors.deepPurpleAccent : Colors.deepPurple.withValues(alpha: 0.4)),
             ),
           ],
         ),

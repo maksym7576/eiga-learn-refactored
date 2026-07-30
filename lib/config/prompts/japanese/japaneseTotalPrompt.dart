@@ -12,7 +12,7 @@ STEP 1: Tokenize all Japanese text into morphemes
 STEP 2: For each morpheme, provide:
 - original: text as written
 - kana: hiragana reading (katakana unchanged), empty "" for symbols
-- romanji: Hepburn romanization, empty "" for symbols
+- romaji: Hepburn romanization, empty "" for symbols
 - w_pos: position 1..N
 
 STEP 3: Translate entire phrase to {TARGET_LANGUAGE}
@@ -43,7 +43,7 @@ OUTPUT FORMAT:
     {
       "b_pos": 1,
       "word": [
-        {"original": "<text>", "kana": "<reading>", "romanji": "<romaji>", "w_pos": 1},
+        {"original": "<text>", "kana": "<reading>", "romaji": "<romaji>", "w_pos": 1},
         ...
       ],
       "tr": "<translation>",
@@ -61,9 +61,9 @@ OUTPUT:
   "japaneseText": "「好き」",
   "{TARGET_LANGUAGE}Translation": "Like",
   "blocks": [
-    {"b_pos": 1, "word": [{"original": "「", "kana": "", "romanji": "", "w_pos": 1}], "tr": "", "tr_pos": [0,0]},
-    {"b_pos": 2, "word": [{"original": "好き", "kana": "すき", "romanji": "suki", "w_pos": 2}], "tr": "Like", "tr_pos": [1,1]},
-    {"b_pos": 3, "word": [{"original": "」", "kana": "", "romanji": "", "w_pos": 3}], "tr": "", "tr_pos": [0,0]}
+    {"b_pos": 1, "word": [{"original": "「", "kana": "", "romaji": "", "w_pos": 1}], "tr": "", "tr_pos": [0,0]},
+    {"b_pos": 2, "word": [{"original": "好き", "kana": "すき", "romaji": "suki", "w_pos": 2}], "tr": "Like", "tr_pos": [1,1]},
+    {"b_pos": 3, "word": [{"original": "」", "kana": "", "romaji": "", "w_pos": 3}], "tr": "", "tr_pos": [0,0]}
   ]
 }
 
@@ -71,6 +71,6 @@ CRITICAL:
 ✓ ONLY valid JSON output
 ✓ w_pos 1..N continuous, NO gaps
 ✓ tr_pos 1..M continuous, NO gaps
-✓ EVERY word has: original, kana, romanji, w_pos
+✓ EVERY word has: original, kana, romaji, w_pos
 ✓ BATCH MODE: output [{...}, {...}] for multiple phrases
 """;

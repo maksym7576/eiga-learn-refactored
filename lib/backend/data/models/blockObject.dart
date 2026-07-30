@@ -23,10 +23,10 @@ class BlockObject {
   BlockObject({
     this.phraseId,
     this.blockPositionIndex,
-    List<int> translatedPositionIndex = const [],
+    this.translatedPositionIndex = const [],
     this.blockTranslation,
     this.contentSignature,
     this.colorHex,
-}) : translatedPositionIndex = translatedPositionIndex;
+});
 
 }

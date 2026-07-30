@@ -48,7 +48,12 @@ const PhraseObjectSchema = CollectionSchema(
       name: r'startTime',
       type: IsarType.dateTime,
     ),
-    r'videoId': PropertySchema(id: 7, name: r'videoId', type: IsarType.long),
+    r'translatedPhrase': PropertySchema(
+      id: 7,
+      name: r'translatedPhrase',
+      type: IsarType.string,
+    ),
+    r'videoId': PropertySchema(id: 8, name: r'videoId', type: IsarType.long),
   },
 
   estimateSize: _phraseObjectEstimateSize,
@@ -92,6 +97,12 @@ int _phraseObjectEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  {
+    final value = object.translatedPhrase;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -108,7 +119,8 @@ void _phraseObjectSerialize(
   writer.writeString(offsets[4], object.originalPhrase);
   writer.writeLong(offsets[5], object.phraseOrder);
   writer.writeDateTime(offsets[6], object.startTime);
-  writer.writeLong(offsets[7], object.videoId);
+  writer.writeString(offsets[7], object.translatedPhrase);
+  writer.writeLong(offsets[8], object.videoId);
 }
 
 PhraseObject _phraseObjectDeserialize(
@@ -122,12 +134,13 @@ PhraseObject _phraseObjectDeserialize(
     originalPhrase: reader.readStringOrNull(offsets[4]),
     phraseOrder: reader.readLongOrNull(offsets[5]),
     startTime: reader.readDateTimeOrNull(offsets[6]),
-    videoId: reader.readLongOrNull(offsets[7]),
+    videoId: reader.readLongOrNull(offsets[8]),
   );
   object.id = id;
   object.isActive = reader.readBool(offsets[1]);
   object.isTranslated = reader.readBool(offsets[2]);
   object.isTranslating = reader.readBool(offsets[3]);
+  object.translatedPhrase = reader.readStringOrNull(offsets[7]);
   return object;
 }
 
@@ -153,6 +166,8 @@ P _phraseObjectDeserializeProp<P>(
     case 6:
       return (reader.readDateTimeOrNull(offset)) as P;
     case 7:
+      return (reader.readStringOrNull(offset)) as P;
+    case 8:
       return (reader.readLongOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -857,6 +872,165 @@ extension PhraseObjectQueryFilter
   }
 
   QueryBuilder<PhraseObject, PhraseObject, QAfterFilterCondition>
+  translatedPhraseIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'translatedPhrase'),
+      );
+    });
+  }
+
+  QueryBuilder<PhraseObject, PhraseObject, QAfterFilterCondition>
+  translatedPhraseIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'translatedPhrase'),
+      );
+    });
+  }
+
+  QueryBuilder<PhraseObject, PhraseObject, QAfterFilterCondition>
+  translatedPhraseEqualTo(String? value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'translatedPhrase',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PhraseObject, PhraseObject, QAfterFilterCondition>
+  translatedPhraseGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'translatedPhrase',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PhraseObject, PhraseObject, QAfterFilterCondition>
+  translatedPhraseLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'translatedPhrase',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PhraseObject, PhraseObject, QAfterFilterCondition>
+  translatedPhraseBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'translatedPhrase',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PhraseObject, PhraseObject, QAfterFilterCondition>
+  translatedPhraseStartsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'translatedPhrase',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PhraseObject, PhraseObject, QAfterFilterCondition>
+  translatedPhraseEndsWith(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'translatedPhrase',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PhraseObject, PhraseObject, QAfterFilterCondition>
+  translatedPhraseContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'translatedPhrase',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PhraseObject, PhraseObject, QAfterFilterCondition>
+  translatedPhraseMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'translatedPhrase',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<PhraseObject, PhraseObject, QAfterFilterCondition>
+  translatedPhraseIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'translatedPhrase', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<PhraseObject, PhraseObject, QAfterFilterCondition>
+  translatedPhraseIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'translatedPhrase', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<PhraseObject, PhraseObject, QAfterFilterCondition>
   videoIdIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(
@@ -1027,6 +1201,20 @@ extension PhraseObjectQuerySortBy
     });
   }
 
+  QueryBuilder<PhraseObject, PhraseObject, QAfterSortBy>
+  sortByTranslatedPhrase() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'translatedPhrase', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PhraseObject, PhraseObject, QAfterSortBy>
+  sortByTranslatedPhraseDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'translatedPhrase', Sort.desc);
+    });
+  }
+
   QueryBuilder<PhraseObject, PhraseObject, QAfterSortBy> sortByVideoId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'videoId', Sort.asc);
@@ -1143,6 +1331,20 @@ extension PhraseObjectQuerySortThenBy
     });
   }
 
+  QueryBuilder<PhraseObject, PhraseObject, QAfterSortBy>
+  thenByTranslatedPhrase() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'translatedPhrase', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PhraseObject, PhraseObject, QAfterSortBy>
+  thenByTranslatedPhraseDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'translatedPhrase', Sort.desc);
+    });
+  }
+
   QueryBuilder<PhraseObject, PhraseObject, QAfterSortBy> thenByVideoId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'videoId', Sort.asc);
@@ -1206,6 +1408,16 @@ extension PhraseObjectQueryWhereDistinct
     });
   }
 
+  QueryBuilder<PhraseObject, PhraseObject, QDistinct>
+  distinctByTranslatedPhrase({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(
+        r'translatedPhrase',
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
   QueryBuilder<PhraseObject, PhraseObject, QDistinct> distinctByVideoId() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'videoId');
@@ -1261,6 +1473,13 @@ extension PhraseObjectQueryProperty
   QueryBuilder<PhraseObject, DateTime?, QQueryOperations> startTimeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'startTime');
+    });
+  }
+
+  QueryBuilder<PhraseObject, String?, QQueryOperations>
+  translatedPhraseProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'translatedPhrase');
     });
   }
 

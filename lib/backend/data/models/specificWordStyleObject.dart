@@ -30,9 +30,9 @@ class SpecificWordStyleObject {
 }) {
     return SpecificWordStyleObject()
         ..name = name
-        ..colorValue = color.value
+        ..colorValue = color.toARGB32()
         ..fontWeightIndex = FontWeight.values.indexOf(fontWeight)
-        ..borderColorValue = color.value
+        ..borderColorValue = color.toARGB32()
         ..borderSize = borderSize;
   }
   

@@ -2,7 +2,6 @@ import 'package:eiga/backend/data/dto/JimakuDataDTO.dart';
 import 'package:eiga/backend/data/models/videoObject.dart';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoComponentsProvider.dart';
-import 'package:eiga/providers/videoDataProviders.dart';
 import 'package:eiga/ui/widgets/phrasesDepacked/phraseDepPreviewWidget.dart';
 import 'package:eiga/ui/widgets/searchWidgets/JimakuSearch/JimakuSubtitleSource.dart';
 import 'package:eiga/ui/widgets/searchWidgets/searchPickerWidget.dart';
@@ -14,7 +13,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../backend/services/depack_subtitles_services/SeasonEpisodeInfo.dart';
 import '../../../providers/DTOProviders.dart';
-import '../../../providers/localStoragesProviders.dart';
 import '../../../providers/searchProvider.dart';
 import 'AniListPreviewWidget.dart';
 import 'VideoTitleField.dart';

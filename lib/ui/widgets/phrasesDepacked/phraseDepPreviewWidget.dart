@@ -2,7 +2,6 @@ import 'package:eiga/backend/data/models/phraseObject.dart';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoComponentsProvider.dart';
 import 'package:eiga/ui/widgets/phrasesDepacked/phraseDepWidget.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -79,7 +78,7 @@ class _PhrasesDepPreviewWidgetState
         language: originalLanguage,
       );
       return result;
-    } catch (e, st) {
+    } catch (e) {
       rethrow;
     }
   }
@@ -107,7 +106,7 @@ class _PhrasesDepPreviewWidgetState
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: Colors.deepPurpleAccent.withOpacity(0.45),
+              color: Colors.deepPurpleAccent.withValues(alpha: 0.45),
             ),
           ),
         ],
@@ -135,7 +134,7 @@ class _PhrasesDepPreviewWidgetState
           'No phrases found',
           style: TextStyle(
             fontSize: 14,
-            color: Colors.deepPurple.withOpacity(0.4),
+            color: Colors.deepPurple.withValues(alpha: 0.4),
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -218,9 +217,9 @@ class _PhrasesDepPreviewWidgetState
                   margin: const EdgeInsets.only(top: 8),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
-                    color: Colors.deepPurpleAccent.withOpacity(0.08),
+                    color: Colors.deepPurpleAccent.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.deepPurpleAccent.withOpacity(0.4)),
+                    border: Border.all(color: Colors.deepPurpleAccent.withValues(alpha: 0.4)),
                   ),
                   child: Text(
                     'See more',
@@ -256,12 +255,12 @@ class _PhrasesDepPreviewWidgetState
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Colors.deepPurpleAccent.withOpacity(0.3),
+          color: Colors.deepPurpleAccent.withValues(alpha: 0.3),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             spreadRadius: 2,
           ),

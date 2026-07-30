@@ -151,7 +151,7 @@ class _SearchPickerWidgetState<TEntry, TFile>
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: Colors.deepPurpleAccent.withOpacity(0.5),
+                          color: Colors.deepPurpleAccent.withValues(alpha: 0.5),
                         ),
                       ),
                     Text(
@@ -237,7 +237,7 @@ class _SearchPickerWidgetState<TEntry, TFile>
               ? Padding(
             padding: const EdgeInsets.all(24),
             child: Text('No results',
-                style: TextStyle(color: Colors.black.withOpacity(0.4))),
+                style: TextStyle(color: Colors.black.withValues(alpha: 0.4))),
           )
               : ListView.builder(
             itemCount: results.length,
@@ -278,7 +278,7 @@ class _SearchPickerWidgetState<TEntry, TFile>
             padding: const EdgeInsets.all(24),
             child: Text('Нічого не знайдено',
                 style:
-                TextStyle(color: Colors.black.withOpacity(0.4))),
+                TextStyle(color: Colors.black.withValues(alpha: 0.4))),
           )
               : ListView.builder(
             itemCount: files.length,

@@ -13,6 +13,8 @@ class PhraseObject {
 
   String? originalPhrase;
 
+  String? translatedPhrase;
+
   DateTime? startTime;
 
   DateTime? endTime;

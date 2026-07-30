@@ -19,7 +19,6 @@ class LanguageService extends StateNotifier<List<LanguageObject>> {
     return languages
         .where(
           (language) =>
-              language.language != null &&
               language.language.toLowerCase().contains(lowerCase),
         )
         .toList();

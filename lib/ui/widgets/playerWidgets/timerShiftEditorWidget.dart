@@ -11,9 +11,9 @@ class TimeshiftEditorWidget extends HookConsumerWidget {
   final VoidCallback? onComplete;
 
   const TimeshiftEditorWidget({
-    Key? key,
+    super.key,
     this.onComplete,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -172,10 +172,10 @@ class TimeshiftEditorWidget extends HookConsumerWidget {
 
                 TextButton(
                   onPressed: () => updateActiveValue(0),
-                  child: const Text('Reset', style: TextStyle(fontSize: 13)),
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.deepPurpleAccent,
                   ),
+                  child: const Text('Reset', style: TextStyle(fontSize: 13)),
                 ),
               ],
             ),

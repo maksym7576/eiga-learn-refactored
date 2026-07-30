@@ -18,7 +18,7 @@ class JimakuEntryTile extends StatelessWidget {
       margin: const EdgeInsets.only(left: 6),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.deepPurpleAccent.withOpacity(0.1),
+        color: Colors.deepPurpleAccent.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
@@ -36,7 +36,7 @@ class JimakuEntryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorButtonBorder = isActive
         ? Colors.deepPurpleAccent
-        : Colors.deepPurpleAccent.withOpacity(0.3);
+        : Colors.deepPurpleAccent.withValues(alpha: 0.3);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -54,7 +54,7 @@ class JimakuEntryTile extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -81,7 +81,7 @@ class JimakuEntryTile extends StatelessWidget {
                           entry.japaneseName!,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.black.withOpacity(0.5),
+                            color: Colors.black.withValues(alpha: 0.5),
                           ),
                         ),
                       ),

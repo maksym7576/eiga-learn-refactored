@@ -1,0 +1,5 @@
+- [x] Fix typo in `japaneseTotalPrompt.dart`
+- [x] Add normalization logic in `geminiStreamingService.dart`
+- [x] Add normalization logic in `PhraseResponseHandler.dart`
+- [x] Update `phraseTranslatedWidget.dart` for backward compatibility
+- [x] Verify changes

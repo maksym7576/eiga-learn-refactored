@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
 import 'package:flick_video_player/flick_video_player.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:video_player/video_player.dart';
@@ -18,7 +17,7 @@ class VideoPlayerWidget extends ConsumerStatefulWidget {
   const VideoPlayerWidget({
     super.key,
     this.minHeight = 150,
-    this.maxHeight = null,
+    this.maxHeight,
   });
 
   @override
@@ -232,7 +231,7 @@ class _VideoPlayerWidgetState extends ConsumerState<VideoPlayerWidget> {
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.4),
+            color: Colors.white.withValues(alpha: 0.4),
             borderRadius: BorderRadius.circular(30),
           ),
           child: Icon(

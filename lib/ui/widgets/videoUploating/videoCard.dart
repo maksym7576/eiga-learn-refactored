@@ -3,11 +3,9 @@ import 'dart:io';
 import 'package:eiga/backend/data/models/videoObject.dart';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:http/http.dart';
 
 class VideoCard extends ConsumerWidget {
   final VideoObject video;
@@ -24,7 +22,7 @@ class VideoCard extends ConsumerWidget {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 12,
               offset: Offset(0, 4),
             ),
@@ -49,7 +47,7 @@ class VideoCard extends ConsumerWidget {
                   child: Container(
                     padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.85),
+                      color: Colors.white.withValues(alpha: 0.85),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,7 +61,7 @@ class VideoCard extends ConsumerWidget {
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  color: Colors.deepPurpleAccent.withOpacity(0.9),
+                                  color: Colors.deepPurpleAccent.withValues(alpha: 0.9),
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -72,7 +70,7 @@ class VideoCard extends ConsumerWidget {
                             Text(
                               _formatDate(video.createdAt),
                               style: TextStyle(
-                                color: Colors.deepPurpleAccent.withOpacity(0.7),
+                                color: Colors.deepPurpleAccent.withValues(alpha: 0.7),
                                 fontSize: 11,
                               ),
                             ),
@@ -83,7 +81,7 @@ class VideoCard extends ConsumerWidget {
                           children: [
                             _LanguageChip(video.originalLanguage ?? ''),
                             const SizedBox(width: 1),
-                            Icon(Icons.arrow_forward, color: Colors.deepPurpleAccent.withOpacity(0.7), size: 14),
+                            Icon(Icons.arrow_forward, color: Colors.deepPurpleAccent.withValues(alpha: 0.7), size: 14),
                             const SizedBox(width: 1),
                             _LanguageChip(video.translatedLanguage ?? ''),
                           ],
@@ -97,7 +95,7 @@ class VideoCard extends ConsumerWidget {
                   right: 5,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.85),
+                      color: Colors.white.withValues(alpha: 0.85),
                       shape: BoxShape.circle,
                     ),
                     child: PopupMenuButton(
@@ -155,7 +153,7 @@ class VideoCard extends ConsumerWidget {
           loadingBuilder: (context, child, progress) {
             if (progress == null) return child;
             return Container(
-              color: Colors.deepPurpleAccent.withOpacity(0.1),
+              color: Colors.deepPurpleAccent.withValues(alpha: 0.1),
               child: const Center(child: CircularProgressIndicator()),
             );
           },
@@ -184,10 +182,10 @@ class VideoCard extends ConsumerWidget {
   Widget _buildLocalThumbnailOrPlaceholder() {
 
     return Container(
-      color: Colors.deepPurpleAccent.withOpacity(0.1),
+      color: Colors.deepPurpleAccent.withValues(alpha: 0.1),
       child: Align(
         alignment: const Alignment(0, -0.3),
-        child: Icon(Icons.play_circle_fill, size: 56, color: Colors.deepPurpleAccent.withOpacity(0.7)),
+        child: Icon(Icons.play_circle_fill, size: 56, color: Colors.deepPurpleAccent.withValues(alpha: 0.7)),
       ),
     );
   }
@@ -204,13 +202,13 @@ class VideoCard extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.deepPurpleAccent.withOpacity(0.12),
+        color: Colors.deepPurpleAccent.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         text.isEmpty ? '-' : text,
         style: TextStyle(
-          color: Colors.deepPurpleAccent.withOpacity(0.9),
+          color: Colors.deepPurpleAccent.withValues(alpha: 0.9),
           fontWeight: FontWeight.w500,
           fontSize: 10,
         ),

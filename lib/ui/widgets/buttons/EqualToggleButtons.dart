@@ -60,7 +60,7 @@ class EqualToggleButtons<T> extends StatelessWidget {
     final isActive = item == activeItem;
     final colorButtonBorder = isActive
         ? activeBorderColor
-        : activeBorderColor.withOpacity(0.5);
+        : activeBorderColor.withValues(alpha: 0.5);
     final colorButtonInside = isActive
         ? (activeFillColor ?? Colors.grey.shade100)
         : inactiveFillColor;
@@ -80,7 +80,7 @@ class EqualToggleButtons<T> extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),

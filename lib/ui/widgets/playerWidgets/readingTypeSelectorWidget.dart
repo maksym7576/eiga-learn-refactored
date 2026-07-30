@@ -19,7 +19,7 @@ class _ReadingTypeSelectorWidgetState
   Widget _buildToggleButton(String title, ReadingType type) {
     final isActive = _activeType == type;
     final colorButtonBorder =
-    isActive ? Colors.deepPurpleAccent : Colors.deepPurpleAccent.withOpacity(0.5);
+    isActive ? Colors.deepPurpleAccent : Colors.deepPurpleAccent.withValues(alpha: 0.5);
     final colorButtonInside = isActive ? Colors.grey.shade100 : Colors.white;
 
     return Expanded(
@@ -39,7 +39,7 @@ class _ReadingTypeSelectorWidgetState
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.06),
+                color: Colors.black.withValues(alpha: 0.06),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -102,7 +102,7 @@ class _ReadingTypeSelectorWidgetState
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: Colors.deepPurpleAccent.withOpacity(0.4),
+                            color: Colors.deepPurpleAccent.withValues(alpha: 0.4),
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -240,7 +240,7 @@ class _ReadingTypeSelectorWidgetState
                 .updateAdditionalOption(option);
           },
         );
-      }).toList(),
+      }),
     ];
   }
 }

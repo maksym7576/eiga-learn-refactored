@@ -33,7 +33,7 @@ class VideoUploadingStyles {
         borderSide: BorderSide(color: accentColor, width: 2),
       ),
       enabledBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: primaryColor.withOpacity(0.4)),
+        borderSide: BorderSide(color: primaryColor.withValues(alpha: 0.4)),
       ),
     );
   }

@@ -119,7 +119,7 @@ class JimakuSubtitleSource implements SearchSource<JimakuDataDTO, FileJimakuDTO>
                     selected: includeAdult,
                     showCheckmark: false,
                     avatar: includeAdult ? const Icon(Icons.explicit, size: 18) : null,
-                    selectedColor: Colors.redAccent.withOpacity(0.15),
+                    selectedColor: Colors.redAccent.withValues(alpha: 0.15),
                     onSelected: (val) => updateFilter('includeAdult', val),
                   ),
                   FilterChip(
@@ -127,7 +127,7 @@ class JimakuSubtitleSource implements SearchSource<JimakuDataDTO, FileJimakuDTO>
                     selected: includeUnverified,
                     showCheckmark: false,
                     avatar: includeUnverified ? const Icon(Icons.warning_amber_rounded, size: 18) : null,
-                    selectedColor: Colors.deepPurpleAccent.withOpacity(0.15),
+                    selectedColor: Colors.deepPurpleAccent.withValues(alpha: 0.15),
                     onSelected: (val) => updateFilter('includeUnverified', val),
                   ),
                 ],

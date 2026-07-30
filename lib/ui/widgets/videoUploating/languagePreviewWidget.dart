@@ -1,6 +1,5 @@
 import 'package:eiga/config/depacker/depackerLanguageConfig.dart';
 import 'package:eiga/ui/widgets/videoUploating/languageWidget.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -20,7 +19,7 @@ class _LanguagesWidgetState extends ConsumerState<LanguagePreviewWidget> {
     final isActive = _activeTypeNow == type;
     final colorButtonBorder = isActive
         ? Colors.deepPurpleAccent
-        : Colors.deepPurpleAccent.withOpacity(0.5);
+        : Colors.deepPurpleAccent.withValues(alpha: 0.5);
     final colorButtonInside = isActive ? Colors.grey.shade100 : Colors.white;
 
     return Expanded(
@@ -40,7 +39,7 @@ class _LanguagesWidgetState extends ConsumerState<LanguagePreviewWidget> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.06),
+                color: Colors.black.withValues(alpha: 0.06),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -97,7 +96,7 @@ class _LanguagesWidgetState extends ConsumerState<LanguagePreviewWidget> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: Colors.deepPurpleAccent.withOpacity(0.4),
+                        color: Colors.deepPurpleAccent.withValues(alpha: 0.4),
                       ),
                     ),
                     const SizedBox(height: 6),
