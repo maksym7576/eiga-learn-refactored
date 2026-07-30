@@ -88,12 +88,9 @@ class _PhraseDepWidgetState extends State<PhraseDepWidget> {
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                               color: Colors.deepPurple.withValues(alpha: 0.4),
-                              fontFeatures: const [
-                                FontFeature.tabularFigures(),
-                              ],
                             ),
                           ),
-                          SizedBox(width: 1),
+                          const SizedBox(width: 1),
                           Icon(
                             Icons.arrow_right_alt,
                             size: 11,
@@ -105,9 +102,6 @@ class _PhraseDepWidgetState extends State<PhraseDepWidget> {
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                               color: Colors.deepPurple.withValues(alpha: 0.4),
-                              fontFeatures: const [
-                                FontFeature.tabularFigures(),
-                              ],
                             ),
                           ),
                         ],

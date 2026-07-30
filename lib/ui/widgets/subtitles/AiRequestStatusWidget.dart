@@ -20,20 +20,42 @@ class AiRequestStatusWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final result = ref.watch(aiRequestResultProvider);
 
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 200),
-      transitionBuilder: (child, anim) => SizeTransition(
-        sizeFactor: anim,
-        child: FadeTransition(opacity: anim, child: child),
-      ),
-      child: (result == null || result.isOk)
-          ? const SizedBox.shrink(key: ValueKey('ai-status-empty'))
-          : _StatusBanner(
-        key: ValueKey('ai-status-${result.phase}'),
-        result: result,
-        onDismiss: () => ref.read(aiRequestResultProvider.notifier).state = null,
-        onAction: onAction == null ? null : () => onAction!(result),
-      ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (result != null && !result.isOk) ...[
+          const SizedBox(height: 16),
+          const Text(
+            'AI Request Status',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: Colors.deepPurpleAccent,
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          transitionBuilder: (child, anim) => FadeTransition(
+            opacity: anim,
+            child: SizeTransition(
+              sizeFactor: anim,
+              axisAlignment: -1.0,
+              child: RepaintBoundary(child: child),
+            ),
+          ),
+          child: (result == null || result.isOk)
+              ? const SizedBox.shrink(key: ValueKey('ai-status-empty'))
+              : _StatusBanner(
+            key: ValueKey('ai-status-${result.phase}'),
+            result: result,
+            onDismiss: () => ref.read(aiRequestResultProvider.notifier).state = null,
+            onAction: onAction == null ? null : () => onAction!(result),
+          ),
+        ),
+        if (result != null && !result.isOk) const SizedBox(height: 20),
+      ],
     );
   }
 }
@@ -66,8 +88,8 @@ class _StatusBanner extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: accent.withOpacity(0.10),
-        border: Border.all(color: accent.withOpacity(0.35)),
+        color: accent.withValues(alpha: 0.10),
+        border: Border.all(color: accent.withValues(alpha: 0.35)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -82,25 +104,32 @@ class _StatusBanner extends StatelessWidget {
                 Text(
                   error.title,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: accent,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(error.message, style: Theme.of(context).textTheme.bodyMedium),
+                Text(
+                  error.message,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurface.withValues(alpha: 0.9),
+                  ),
+                ),
                 const SizedBox(height: 4),
                 Text(
                   error.instruction,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontStyle: FontStyle.italic,
-                    color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.8),
+                    color: scheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
                 if (result.failedPhraseIds.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Text(
-                    'Фрази: ${result.failedPhraseIds.join(", ")}',
-                    style: Theme.of(context).textTheme.bodySmall,
+                    'IDs: ${result.failedPhraseIds.join(", ")}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurface.withValues(alpha: 0.5),
+                    ),
                   ),
                 ],
                 if (onAction != null) ...[
@@ -109,7 +138,12 @@ class _StatusBanner extends StatelessWidget {
                     alignment: Alignment.centerLeft,
                     child: TextButton(
                       onPressed: onAction,
-                      style: TextButton.styleFrom(foregroundColor: accent, padding: EdgeInsets.zero),
+                      style: TextButton.styleFrom(
+                        foregroundColor: accent,
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(0, 30),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
                       child: const Text('Виправити'),
                     ),
                   ),
@@ -122,6 +156,8 @@ class _StatusBanner extends StatelessWidget {
             onPressed: onDismiss,
             tooltip: 'Закрити',
             visualDensity: VisualDensity.compact,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
           ),
         ],
       ),
@@ -136,18 +172,27 @@ void showAiRequestResultSnackBar(BuildContext context, AiRequestResult result) {
   if (error == null) return;
 
   final isWarning = result.phase == AiRequestPhase.partialSuccess;
+  final scheme = Theme.of(context).colorScheme;
 
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
-      backgroundColor: isWarning ? Colors.orange.shade700 : Theme.of(context).colorScheme.error,
+      backgroundColor: isWarning ? Colors.orange.shade800 : scheme.error,
       duration: const Duration(seconds: 5),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(error.title, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+          Text(
+            error.title,
+            style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
+          ),
           const SizedBox(height: 2),
-          Text(error.message, style: const TextStyle(color: Colors.white)),
+          Text(
+            error.message,
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
+          ),
         ],
       ),
     ),

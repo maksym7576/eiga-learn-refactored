@@ -39,6 +39,7 @@ class TimeshiftEditorWidget extends HookConsumerWidget {
       final isNegative = d.isNegative;
       final absD = d.abs();
       final sign = isNegative ? '-' : '+';
+      if (d.inMilliseconds == 0) return '0.0s';
       return '$sign ${absD.inHours}h ${absD.inMinutes % 60}m ${absD.inSeconds % 60}s ${absD.inMilliseconds % 1000}ms';
     }
 
@@ -98,144 +99,224 @@ class TimeshiftEditorWidget extends HookConsumerWidget {
       }
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Flexible(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.all(20.0),
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 8),
+          const Text(
+            'Edit Subtitle Time',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: Colors.deepPurpleAccent,
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          _buildGroup(
+            title: 'Offset Preview',
+            subtitle: 'The total time your subtitles will be shifted.',
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Text(
+                formatDuration(totalDuration),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.deepPurpleAccent,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          _buildGroup(
+            title: 'Adjustment Controls',
+            subtitle: 'Select unit and slide to adjust the shift.',
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  formatDuration(totalDuration),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _UnitButton('Hours', TimeUnit.hours, activeUnit),
+                        const SizedBox(width: 8),
+                        _UnitButton('Minutes', TimeUnit.minutes, activeUnit),
+                        const SizedBox(width: 8),
+                        _UnitButton('Seconds', TimeUnit.seconds, activeUnit),
+                        const SizedBox(width: 8),
+                        _UnitButton('MS', TimeUnit.milliseconds, activeUnit),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Row(mainAxisAlignment: MainAxisAlignment.center,
-
-                      children: [
-                        _buildUnitChip('Hours', TimeUnit.hours, activeUnit),
-                        const SizedBox(width: 6),
-                        _buildUnitChip('Minutes', TimeUnit.minutes, activeUnit),
-                      ],
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildUnitChip('Seconds', TimeUnit.seconds, activeUnit),
-                        const SizedBox(width: 6),
-                        _buildUnitChip('MS', TimeUnit.milliseconds, activeUnit),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 28),
-
-                Text(
-                  '${activeUnit.value.name}: ${getActiveValue().toInt()}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 14, color: Colors.black54),
-                ),
-                const SizedBox(height: 12),
-
+                
                 SliderTheme(
                   data: SliderTheme.of(context).copyWith(
-                    trackHeight: 4,
-                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 9),
-                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
+                    trackHeight: 6,
+                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
+                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
                     activeTrackColor: Colors.deepPurpleAccent,
-                    inactiveTrackColor: Colors.deepPurple[100],
+                    inactiveTrackColor: Colors.deepPurpleAccent.withValues(alpha: 0.1),
                     thumbColor: Colors.deepPurpleAccent,
+                    valueIndicatorColor: Colors.deepPurpleAccent,
+                    valueIndicatorTextStyle: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
-                  child: Slider(
-                    value: getActiveValue(),
-                    min: getMinLimit(),
-                    max: getMaxLimit(),
-                    divisions: (getMaxLimit() - getMinLimit()).toInt(),
-                    label: getActiveValue().toInt().toString(),
-                    onChanged: updateActiveValue,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Slider(
+                      value: getActiveValue(),
+                      min: getMinLimit(),
+                      max: getMaxLimit(),
+                      divisions: (getMaxLimit() - getMinLimit()).toInt(),
+                      label: getActiveValue().toInt().toString(),
+                      onChanged: updateActiveValue,
+                    ),
                   ),
                 ),
-
-                const SizedBox(height: 12),
-
+                
+                Text(
+                  'Current ${activeUnit.value.name}: ${getActiveValue().toInt()}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black.withValues(alpha: 0.5),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 TextButton(
                   onPressed: () => updateActiveValue(0),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.deepPurpleAccent,
-                  ),
-                  child: const Text('Reset', style: TextStyle(fontSize: 13)),
+                  child: const Text('Reset this unit', style: TextStyle(fontWeight: FontWeight.w700)),
                 ),
+                const SizedBox(height: 8),
               ],
             ),
           ),
-        ),
 
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton(
-                onPressed: isLoading.value ? null : () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton(
+          const SizedBox(height: 32),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
                 onPressed: isLoading.value ? null : applyTimeshift,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurpleAccent,
                   foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 ),
                 child: isLoading.value
-                    ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-                    : const Text('Apply'),
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Apply Changes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
               ),
-            ],
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 40),
+        ],
+      ),
     );
   }
 
-  Widget _buildUnitChip(String label, TimeUnit unit, ValueNotifier<TimeUnit> activeUnitState) {
-    final isSelected = activeUnitState.value == unit;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (_) => activeUnitState.value = unit,
-      selectedColor: Colors.deepPurple[100],
-      backgroundColor: Colors.grey[100],
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(
-          color: isSelected ? Colors.deepPurpleAccent : Colors.transparent,
-        ),
+  Widget _buildGroup({
+    required String title,
+    required String subtitle,
+    required Widget child,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 8, bottom: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black.withValues(alpha: 0.4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.deepPurpleAccent.withValues(alpha: 0.08),
+                width: 1.5,
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: child,
+            ),
+          ),
+        ],
       ),
-      labelStyle: TextStyle(
-        color: isSelected ? Colors.deepPurpleAccent : Colors.black87,
-        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+    );
+  }
+}
+
+class _UnitButton extends StatelessWidget {
+  final String label;
+  final TimeUnit unit;
+  final ValueNotifier<TimeUnit> activeUnit;
+
+  const _UnitButton(this.label, this.unit, this.activeUnit);
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = activeUnit.value == unit;
+    final accent = Colors.deepPurpleAccent;
+
+    return GestureDetector(
+      onTap: () => activeUnit.value = unit,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? accent : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? accent : accent.withValues(alpha: 0.2),
+            width: 1.5,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: isSelected ? Colors.white : Colors.black87,
+          ),
+        ),
       ),
     );
   }

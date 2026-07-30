@@ -1,0 +1,6 @@
+- [x] Research professional color palettes for language learning
+- [x] Create implementation plan for "Modern Slate & Indigo" theme
+- [x] Update color constants in `PhraseListStyles`
+- [x] Refine component decorations and text styles for the new palette
+- [x] Update `PhraseCardWidget` state-aware colors
+- [x] Verify visual harmony and readability

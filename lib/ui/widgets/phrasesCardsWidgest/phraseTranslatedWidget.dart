@@ -171,19 +171,16 @@ class _WordsSection extends StatelessWidget {
     return Wrap(
       spacing: PhraseListStyles.wordSpacing,
       runSpacing: PhraseListStyles.wordRunSpacing,
+      crossAxisAlignment: WrapCrossAlignment.end, // Вирівнювання по низу для японського тексту
       children: allWords.map((word) {
         final mainText = getVersionText(word, mainOption).trim();
         final additionalText = getVersionText(word, additionalOption).trim();
-
-        // Визначаємо, чи текст поміститься в один рядок
-        final shouldWrap = mainText.length > 12 || additionalText.length > 12;
 
         return _WordItem(
           isSelected: selectedBlockId == word.blockId,
           cleanedMainWord: mainText,
           cleanedAdditionalWord: additionalText,
           onTap: () => onToggleSelection(word.blockId),
-          shouldReduceFont: shouldWrap,
         );
       }).toList(),
     );
@@ -195,30 +192,13 @@ class _WordItem extends StatelessWidget {
   final String cleanedMainWord;
   final String cleanedAdditionalWord;
   final VoidCallback onTap;
-  final bool shouldReduceFont;
 
   const _WordItem({
     required this.isSelected,
     required this.cleanedMainWord,
     required this.cleanedAdditionalWord,
     required this.onTap,
-    this.shouldReduceFont = false,
   });
-
-  double _calculateOptimalFontSize(String text, double defaultSize, int maxLines) {
-    // Якщо текст короткий, використовуємо стандартний розмір
-    if (text.length <= 8) {
-      return defaultSize;
-    }
-
-    // Якщо текст середній, трошки зменшуємо
-    if (text.length <= 15) {
-      return defaultSize * 0.9;
-    }
-
-    // Якщо текст довгий, зменшуємо більше
-    return defaultSize * 0.75;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -231,39 +211,24 @@ class _WordItem extends StatelessWidget {
       isAdditional: false,
     );
 
-    final additionalDefaultSize = additionalStyle.fontSize ?? 12;
-    final mainDefaultSize = mainStyle.fontSize ?? 14;
-
-    final additionalFontSize = shouldReduceFont
-        ? _calculateOptimalFontSize(cleanedAdditionalWord, additionalDefaultSize, 2)
-        : additionalDefaultSize;
-
-    final mainFontSize = shouldReduceFont
-        ? _calculateOptimalFontSize(cleanedMainWord, mainDefaultSize, 2)
-        : mainDefaultSize;
-
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: PhraseListStyles.durationWordAnimation,
-        curve: PhraseListStyles.curveWord,
-        padding: const EdgeInsets.all(PhraseListStyles.wordPadding),
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: PhraseListStyles.wordPadding),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // Фурігана (Ruby) - показуємо лише якщо є текст
             Text(
               cleanedAdditionalWord,
-              softWrap: true,
-              maxLines: shouldReduceFont ? 2 : null,
-              overflow: TextOverflow.ellipsis,
-              style: additionalStyle.copyWith(fontSize: additionalFontSize),
+              style: additionalStyle,
             ),
+            // Основне слово
             Text(
               cleanedMainWord,
-              softWrap: true,
-              maxLines: shouldReduceFont ? 2 : null,
-              overflow: TextOverflow.ellipsis,
-              style: mainStyle.copyWith(fontSize: mainFontSize),
+              style: mainStyle,
             ),
           ],
         ),
@@ -285,24 +250,25 @@ class _BlocksSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text.rich(
-      TextSpan(
-        children: blocksList.map((block) {
-          final blockText = block.blockTranslation?.trim() ?? '';
-          return TextSpan(
-            text: '$blockText\u2009',
-            style: PhraseListStyles.getBlockTextStyle(
-              isSelected: selectedBlockId == block.id,
-            ).copyWith(
-              fontSize: (PhraseListStyles.getBlockTextStyle(isSelected: selectedBlockId == block.id).fontSize ?? 14) * 0.9,
-            ),
-            recognizer: TapGestureRecognizer()..onTap = () => onToggleSelection(block.id),
-          );
-        }).toList(),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      child: Text.rich(
+        TextSpan(
+          children: blocksList.map((block) {
+            final blockText = block.blockTranslation?.trim() ?? '';
+            return TextSpan(
+              text: '$blockText\u2009',
+              style: PhraseListStyles.getBlockTextStyle(
+                isSelected: selectedBlockId == block.id,
+              ),
+              recognizer: TapGestureRecognizer()..onTap = () => onToggleSelection(block.id),
+            );
+          }).toList(),
+        ),
+        softWrap: true,
+        overflow: TextOverflow.visible,
+        textAlign: TextAlign.start,
       ),
-      softWrap: true,
-      overflow: TextOverflow.visible,
-      textAlign: TextAlign.start,
     );
   }
 }

@@ -1,47 +1,56 @@
 import 'package:flutter/material.dart';
 
 class PhraseListStyles {
-  // ========== Colors — фіолетово-бірюзова тема ==========
-  // Фон карток
-  static const Color surfaceInactive = Color(0xFFFCFBFF); // майже білий, ледь помітний фіолетовий відтінок
-  static const Color surfaceActive   = Color(0xFFFFFFFF); // чисто білий — для активного
-  static const Color surfaceFinished = Color(0xFFF5F2FB); // трохи світліший лавандовий, все ще близько до білого
+  // ========== Colors — Modern Slate & Indigo (Universal Professional) ==========
+  // Backgrounds
+  static const Color surfaceInactive = Color(0xFFF8FAFC); // Slate 50 - Neutral future
+  static const Color surfaceActive   = Color(0xFFEEF2FF); // Indigo 50 - Soft highlight for current
+  static const Color surfaceFinished = Color(0xFFF1F5F9); // Slate 100 - Muted past
 
-  static const Color primaryColor = Color(0xFF4A2C82); // насичений фіолетовий
-  static const Color accentColor  = Color(0xFF00BFA5); // бірюзовий — для рамки активної картки
+  static const Color primaryColor = Color(0xFF4338CA); // Indigo 700 - Deep, professional indigo
+  static const Color accentColor  = Color(0xFF10B981); // Emerald 500 - Refined success/active indicator
+  
+  static const Color timeColumnBackground = Color(0xFFE2E8F0); // Slate 200 - Clearly defined column
+  static const Color timeColumnActiveBackground = Color(0xFFC7D2FE); // Indigo 200 - Highlighted active time
 
-  // Текст фрази (PhraseNotTranslatedWidget)
-  static const Color textColorDark     = Color(0xFF2E1A47); // темно-фіолетовий — за замовчуванням
-  static const Color textColorActive   = Color(0xFF1A0033); // майже чорно-фіолетовий — коли активне
-  static const Color textColorInactive = Color(0xFFB8A9D4); // світлий фіолетовий, без сірого відтінку
-  static const Color textColorFinished = Color(0xFFD1C4E8); // майже пастельний лавандовий — завершене
+  // Typography
+  static const Color textColorDark     = Color(0xFF1E293B); // Slate 800 - High legibility
+  static const Color textColorActive   = Color(0xFF111827); // Slate 900 - Max contrast for active
+  static const Color textColorInactive = Color(0xFF64748B); // Slate 500 - Upcoming context
+  static const Color textColorFinished = Color(0xFF94A3B8); // Slate 400 - Muted past text
+
+  // Text Selection / Interaction
+  static const Color wordColorSelected   = Color(0xFF4338CA); // Same as primary for consistency
+  static const Color wordColorUnselectedOnLight = Color(0xFF334155); // Slate 700
+  static const Color wordColorUnselectedOnDark  = Color(0xFF1E293B); // Slate 800
 
   // Текст слів/блоків (WordItem, BlocksSection)
-  static const Color wordColorSelected   = Color(0xFF6A1B9A); // яскравий фіолетовий, жирний — виділене
-  static const Color wordColorUnselectedOnLight = Color(0xFF3D2C52);
-  static const Color wordColorUnselectedOnDark  = Color(0xFF3D2C52);
 
-  // ========== Кольорова палітра для граматичного виділення ==========
-  // Три чітко різні кольори за відтінком (тон + вага), а не лише сірим
-  static const Color highlightWarm = Color(0xFFE64A19); // теплий коралово-оранжевий — категорія 1
-  static const Color highlightGold = Color(0xFFFFB300); // янтарно-золотий — категорія 2
-  static const Color highlightCool = Color(0xFF00ACC1); // холодний бірюзово-блакитний — категорія 3
+  // ========== Grammar Highlights (Balanced Harmony) ==========
+  static const Color highlightWarm = Color(0xFFF43F5E); // Rose 500
+  static const Color highlightGold = Color(0xFFF59E0B); // Amber 500
+  static const Color highlightCool = Color(0xFF0EA5E9); // Sky 500
 
   // ========== Opacity ==========
   static const double opacityLabel = 0.75;
   static const double opacityWord = 0.6;
 
+  // ========== Timeline Layout (Professional Layout) ==========
+  static const double timeColumnWidth = 40.0; // Трохи збільшено, щоб одиниці (m, s) не переносились
+  static const double cardMinHeight = 60.0;
+
   // ========== Card Spacing ==========
-  static const double cardPaddingVertical = 8;
+  static const double cardPaddingVertical = 6;
   static const double cardPaddingHorizontal = 10;
-  static const double cardMarginVertical = 4;
+  static const double cardMarginVertical = 2; // Менші відступи між рядками шкали
   static const double cardMarginHorizontal = 8;
   static const double cardBorderRadius = 8;
 
   // ========== Word/Block Spacing ==========
-  static const double wordSpacing = 1.0;
-  static const double wordRunSpacing = 5.0;
-  static const double wordPadding = 2;
+  static const double wordSpacing = 0.0;
+  static const double wordSpacingStandard = 6.0;
+  static const double wordRunSpacing = 2.0;
+  static const double wordPadding = 0.0;
   static const double blockSectionSpacing = 4;
   static const double containerPadding = 6.0;
   static const double contentSpacing = 3;
@@ -52,11 +61,14 @@ class PhraseListStyles {
   static const double labelBorderRadius = 4;
 
   // ========== Font Sizes ==========
-  static const double fontSizeTime = 16;
-  static const double fontSizeLabel = 10;
-  static const double fontSizeAdditionalWord = 12;
-  static const double fontSizeMainWord = 18;
-  static const double fontSizeBlock = 18;
+  static const double fontSizeTime = 13;
+  static const double fontSizeTimePrimary = 18;   // Хвилини (в центрі)
+  static const double fontSizeTimeSecondary = 12; // Секунди (знизу)
+  static const double fontSizeTimeTertiary = 9;   // Години (зверху)
+  static const double fontSizeLabel = 9;
+  static const double fontSizeAdditionalWord = 10; // Фурігана
+  static const double fontSizeMainWord = 18;      // Компактний японський текст
+  static const double fontSizeBlock = 14;         // Компактний переклад
 
   // ========== Icon Sizes ==========
   static const double iconSizeArrow = 16;
@@ -92,14 +104,34 @@ class PhraseListStyles {
     return BoxDecoration(
       color: getCardBackgroundColor(isFinished: isFinished, isActive: isActive),
       borderRadius: BorderRadius.circular(cardBorderRadius),
-      border: isActive ? Border.all(color: accentColor, width: 2) : null,
+      boxShadow: isActive ? [
+        BoxShadow(
+          color: primaryColor.withValues(alpha: 0.15),
+          blurRadius: 16,
+          spreadRadius: 2,
+          offset: const Offset(0, 4),
+        )
+      ] : (isFinished ? null : [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.04),
+          blurRadius: 6,
+          offset: const Offset(0, 2),
+        )
+      ]),
+      border: Border.all(
+        color: isActive 
+          ? primaryColor.withValues(alpha: 0.3) 
+          : (isFinished ? Colors.transparent : Colors.black.withValues(alpha: 0.05)),
+        width: isActive ? 2 : 1,
+      ),
     );
   }
 
   static TextStyle getTimeTextStyle() => const TextStyle(
     color: primaryColor,
-    fontWeight: FontWeight.w700,
-    fontSize: fontSizeTime,
+    fontWeight: FontWeight.w600,
+    fontSize: 10,
+    fontFeatures: [FontFeature.tabularFigures()],
   );
 
   static TextStyle getLabelTextStyle() => const TextStyle(
@@ -115,10 +147,12 @@ class PhraseListStyles {
     fontSize: isAdditional ? fontSizeAdditionalWord : fontSizeMainWord,
     color: isSelected
         ? wordColorSelected
-        : (cardIsActive ? wordColorUnselectedOnDark : wordColorUnselectedOnLight),
+        : (cardIsActive ? textColorActive : textColorDark),
     fontWeight: isSelected ? FontWeight.w900 : FontWeight.w500,
     decoration: isSelected ? TextDecoration.underline : null,
-    decorationThickness: 1.5,
+    decorationColor: accentColor,
+    decorationThickness: 2.0,
+    height: 1.2,
   );
 
   static TextStyle getBlockTextStyle({
@@ -127,11 +161,10 @@ class PhraseListStyles {
   }) => TextStyle(
     color: isSelected
         ? wordColorSelected
-        : (cardIsActive ? wordColorUnselectedOnDark : wordColorUnselectedOnLight),
-    fontWeight: isSelected ? FontWeight.w900 : FontWeight.w500,
+        : (cardIsActive ? textColorActive.withValues(alpha: 0.9) : textColorDark.withValues(alpha: 0.8)),
+    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
     fontSize: fontSizeBlock,
-    decoration: isSelected ? TextDecoration.underline : null,
-    decorationThickness: 1.5,
+    fontStyle: FontStyle.italic,
   );
 
   /// Стиль для тексту фрази
@@ -139,7 +172,9 @@ class PhraseListStyles {
     color: isActive
         ? textColorActive
         : (isFinished ? textColorFinished : textColorDark),
-    fontWeight: FontWeight.w700,
+    fontWeight: FontWeight.w600,
+    fontSize: fontSizeMainWord,
+    height: 1.2,
   );
 
   static Border getLabelBorder() => Border.all(color: primaryColor.withValues(alpha: opacityLabel));

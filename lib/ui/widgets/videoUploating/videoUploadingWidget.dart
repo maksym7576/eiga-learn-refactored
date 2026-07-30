@@ -184,7 +184,10 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
           ),
           const SizedBox(height: 7),
           const AnilistPreviewWidget(),
-          if (srtPatch != null && lanProv.original.isNotEmpty) const PhrasesDepPreviewWidget(),
+          if (srtPatch != null && lanProv.original.isNotEmpty)
+            PhrasesDepPreviewWidget(
+              onSearch: () => _pickJimakuSrt(context, ref),
+            ),
           const SizedBox(height: 16),
           VideoFormActionButtons(
             hasAnyData: hasAnyData,

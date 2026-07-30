@@ -4,10 +4,12 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 class ReadingTypeLanguageConfig {
   final String language;
   final List<String> options;
+  final List<String> spacingOptions;
 
   const ReadingTypeLanguageConfig({
     required this.language,
     required this.options,
+    this.spacingOptions = const [],
   });
 }
 
@@ -16,6 +18,7 @@ class ReadingTypeLanguageConfigRegistry {
     'japanese': ReadingTypeLanguageConfig (
       language: 'japanese',
       options: ['original', 'kana', 'romaji'],
+      spacingOptions: ['romaji'],
     ),
   };
 

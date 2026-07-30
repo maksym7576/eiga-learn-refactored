@@ -5,10 +5,9 @@ import 'package:eiga/ui/widgets/phrasesDepacked/phraseDepWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../dialogs/AppDialog.dart';
-
 class PhrasesDepPreviewWidget extends ConsumerStatefulWidget {
-  const PhrasesDepPreviewWidget({super.key});
+  final VoidCallback? onSearch;
+  const PhrasesDepPreviewWidget({super.key, this.onSearch});
 
   @override
   ConsumerState<PhrasesDepPreviewWidget> createState() =>
@@ -85,30 +84,46 @@ class _PhrasesDepPreviewWidgetState
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      padding: const EdgeInsets.fromLTRB(16, 12, 12, 8),
+      child: Row(
         children: [
-          const Text(
-            'Preview',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: Colors.deepPurpleAccent,
-              letterSpacing: 1.1,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Phrases Preview',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.deepPurpleAccent,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _isLoading
+                      ? 'Loading...'
+                      : '${_phrasesList.length} phrases found',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.deepPurpleAccent.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            _isLoading
-                ? 'Loading phrases...'
-                : '${_phrasesList.length} phrase${_phrasesList.length == 1 ? '' : 's'} found',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: Colors.deepPurpleAccent.withValues(alpha: 0.45),
+          if (widget.onSearch != null)
+            IconButton(
+              onPressed: widget.onSearch,
+              icon: const Icon(Icons.search, color: Colors.deepPurpleAccent),
+              tooltip: 'Search subtitles',
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.deepPurpleAccent.withValues(alpha: 0.1),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -143,48 +158,71 @@ class _PhrasesDepPreviewWidgetState
   }
 
   void _showAllPhrases(BuildContext context) {
-    AppDialog.show(
+    showModalBottomSheet(
       context: context,
-      barrierLabel: "PhraseLabel",
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.98,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(24),
+              topRight: Radius.circular(24),
+            ),
+          ),
+          child: Column(
             children: [
-              const Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 6),
-                  child: Text(
-                    'All Phrases',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.deepPurpleAccent,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.black12,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: const Padding(
-                  padding: EdgeInsets.only(right: 16),
-                  child: Icon(Icons.close, size: 27, color: Colors.black87),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(left: 48),
+                      child: Text(
+                        'All Phrases',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.deepPurpleAccent,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, size: 28),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ),
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: _phrasesList.length,
+                  itemBuilder: (context, index) =>
+                      PhraseDepWidget(phraseObject: _phrasesList[index]),
                 ),
               ),
             ],
           ),
-          Expanded(
-            child: ListView.builder(
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              itemCount: _phrasesList.length,
-              itemBuilder: (context, index) =>
-                  PhraseDepWidget(phraseObject: _phrasesList[index]),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -193,47 +231,36 @@ class _PhrasesDepPreviewWidgetState
     List<PhraseObject> tookPhrases = _phrasesList.take(_previewCount).toList();
     return Column(
       children: [
-        AnimatedSlide(
-          offset: Offset.zero,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutCubic,
-          child: Column(
-            children: [
-              ListView(
-                physics: const NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                children: [
-                  ...tookPhrases.map((phrase) {
-                    return PhraseDepWidget(phraseObject: phrase);
-                  }),
-                ],
-              ),
-              GestureDetector(
-                onTap: () => _showAllPhrases(context),
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(40, 0, 40, 10),
-                child: Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(top: 8),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.deepPurpleAccent.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.deepPurpleAccent.withValues(alpha: 0.4)),
-                  ),
-                  child: Text(
-                    'See more',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.deepPurpleAccent,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
-              ),
+        ListView(
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          padding: EdgeInsets.zero,
+          children: [
+            ...tookPhrases.map((phrase) {
+              return PhraseDepWidget(phraseObject: phrase);
+            }),
+          ],
         ),
-            ],
+        Padding(
+          padding: const EdgeInsets.fromLTRB(40, 0, 40, 10),
+          child: Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.deepPurpleAccent.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.deepPurpleAccent.withValues(alpha: 0.4)),
+            ),
+            child: const Text(
+              'See more',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.deepPurpleAccent,
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+              ),
+            ),
           ),
         ),
       ],
@@ -268,14 +295,18 @@ class _PhrasesDepPreviewWidgetState
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildHeader(),
-            if (_isLoading) _buildLoader(),
-            if (!_isLoading && _phrasesList.isEmpty) _buildEmpty(),
-            if (!_isLoading && _phrasesList.isNotEmpty) _buildList(context),
-          ],
+        child: GestureDetector(
+          onTap: () => _showAllPhrases(context),
+          behavior: HitTestBehavior.opaque,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildHeader(),
+              if (_isLoading) _buildLoader(),
+              if (!_isLoading && _phrasesList.isEmpty) _buildEmpty(),
+              if (!_isLoading && _phrasesList.isNotEmpty) _buildList(context),
+            ],
+          ),
         ),
       ),
     );

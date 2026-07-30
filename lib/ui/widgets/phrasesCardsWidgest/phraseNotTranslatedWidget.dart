@@ -14,10 +14,13 @@ class PhraseNotTranslatedWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      phraseObject.originalPhrase ?? '',
-      style: PhraseListStyles.getPhraseTextStyle(isActive: isActive),
-      textAlign: TextAlign.left,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0), // Додаємо вертикальний відступ для вирівнювання з висотою фурігани
+      child: Text(
+        phraseObject.originalPhrase ?? '',
+        style: PhraseListStyles.getPhraseTextStyle(isActive: isActive),
+        textAlign: TextAlign.left,
+      ),
     );
   }
 }

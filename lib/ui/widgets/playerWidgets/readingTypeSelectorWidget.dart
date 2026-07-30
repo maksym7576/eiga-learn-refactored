@@ -1,291 +1,192 @@
 import 'package:eiga/config/depacker/readingTypeLanguageConfig.dart';
+import 'package:eiga/providers/readingTypeProvider.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-enum ReadingType { mainOption, additionalOption }
-
-class ReadingTypeSelectorWidget extends ConsumerStatefulWidget {
+class ReadingTypeSelectorWidget extends ConsumerWidget {
   const ReadingTypeSelectorWidget({super.key});
 
   @override
-  ConsumerState<ReadingTypeSelectorWidget> createState() =>
-      _ReadingTypeSelectorWidgetState();
-}
-
-class _ReadingTypeSelectorWidgetState
-    extends ConsumerState<ReadingTypeSelectorWidget> {
-  ReadingType _activeType = ReadingType.mainOption;
-
-  Widget _buildToggleButton(String title, ReadingType type) {
-    final isActive = _activeType == type;
-    final colorButtonBorder =
-    isActive ? Colors.deepPurpleAccent : Colors.deepPurpleAccent.withValues(alpha: 0.5);
-    final colorButtonInside = isActive ? Colors.grey.shade100 : Colors.white;
-
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() {
-          _activeType = type;
-        }),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: colorButtonInside,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: colorButtonBorder,
-              width: isActive ? 2.5 : 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(readingTypeNotifierProvider);
 
     return state.when(
-      data: (data) {
-        final List<String> options = data.config.options;
+      data: (data) => _buildContent(context, ref, data),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) => Center(child: Text('Error: $err')),
+    );
+  }
 
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
+  Widget _buildContent(BuildContext context, WidgetRef ref, ReadingTypeProvider data) {
+    final options = data.config.options;
+
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 8),
+          const Text(
+            'Subtitle Display',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: Colors.deepPurpleAccent,
             ),
           ),
-          child: Column(
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Reading Settings',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.deepPurpleAccent,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          'Customize your reading',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.deepPurpleAccent.withValues(alpha: 0.4),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                      ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 16, top: 8),
-                      child: Icon(Icons.close, size: 27, color: Colors.black87),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Toggle Buttons
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
-                  children: [
-                    _buildToggleButton('Main Option', ReadingType.mainOption),
-                    const SizedBox(width: 10),
-                    _buildToggleButton(
-                        'Additional', ReadingType.additionalOption),
-                  ],
+          const SizedBox(height: 24),
+          _buildGroup(
+            context: context,
+            title: 'Primary Subtitle',
+            subtitle: 'This will be the main text shown.',
+            child: Column(
+              children: options.map((opt) {
+                return _ReadingOptionTile(
+                  label: opt,
+                  isSelected: data.mainOption == opt,
+                  onTap: () => ref.read(readingTypeNotifierProvider.notifier).updateMainOption(opt),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildGroup(
+            context: context,
+            title: 'Secondary Subtitle',
+            subtitle: 'Optional text shown above the primary.',
+            child: Column(
+              children: [
+                _ReadingOptionTile(
+                  label: 'None',
+                  isSelected: data.additionalOptions == null,
+                  onTap: () => ref.read(readingTypeNotifierProvider.notifier).updateAdditionalOption(null),
                 ),
-              ),
-              const SizedBox(height: 12),
-
-              // Content
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  children: [
-                    if (_activeType == ReadingType.mainOption) ...[
-                      ..._buildMainOptions(options, data, ref),
-                    ] else ...[
-                      ..._buildAdditionalOptions(options, data, ref),
-                    ],
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
-            ],
+                ...options.map((opt) {
+                  return _ReadingOptionTile(
+                    label: opt,
+                    isSelected: data.additionalOptions == opt,
+                    onTap: () => ref.read(readingTypeNotifierProvider.notifier).updateAdditionalOption(opt),
+                  );
+                }),
+              ],
+            ),
           ),
-        );
-      },
-      error: (error, stackTrace) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline,
-                color: Colors.red[400],
-                size: 48,
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Failed to load settings',
-                style: TextStyle(fontSize: 16),
-              ),
-            ],
-          ),
-        ),
-      ),
-      loading: () => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
-        child: const Center(
-          child: CircularProgressIndicator(
-            color: Colors.deepPurpleAccent,
-          ),
-        ),
+          const SizedBox(height: 32),
+        ],
       ),
     );
   }
 
-  List<Widget> _buildMainOptions(
-      List<String> options, dynamic data, WidgetRef ref) {
-    return options.map((option) {
-      final isSelected = option == data.mainOption;
-      return _OptionTile(
-        title: option,
-        isSelected: isSelected,
-        onChanged: (value) {
-          if (value ?? false) {
-            ref.read(readingTypeNotifierProvider.notifier).updateMainOption(option);
-
-            if (option == data.additionalOptions) {
-              ref.read(readingTypeNotifierProvider.notifier).updateAdditionalOption(null);
-            }
-          }
-        },
-      );
-    }).toList();
-  }
-
-  List<Widget> _buildAdditionalOptions(
-      List<String> options, dynamic data, WidgetRef ref) {
-    return [
-      _OptionTile(
-        title: 'None',
-        isSelected: data.additionalOptions == null,
-        onChanged: (_) {
-          ref.read(readingTypeNotifierProvider.notifier).updateAdditionalOption(null);
-        },
+  Widget _buildGroup({
+    required BuildContext context,
+    required String title,
+    required String subtitle,
+    required Widget child,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 8, bottom: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black87,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black.withValues(alpha: 0.4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.deepPurpleAccent.withValues(alpha: 0.08),
+                width: 1.5,
+              ),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: child,
+            ),
+          ),
+        ],
       ),
-      ...options.map((option) {
-        final isSelected = option == data.additionalOptions;
-        final isDisabled = option == data.mainOption;
-
-        return _OptionTile(
-          title: option,
-          isSelected: isSelected,
-          isDisabled: isDisabled,
-          onChanged: isDisabled
-              ? null
-              : (_) {
-            ref.read(readingTypeNotifierProvider.notifier)
-                .updateAdditionalOption(option);
-          },
-        );
-      }),
-    ];
+    );
   }
 }
 
-class _OptionTile extends StatelessWidget {
-  final String title;
+class _ReadingOptionTile extends StatelessWidget {
+  final String label;
   final bool isSelected;
-  final bool isDisabled;
-  final ValueChanged<bool?>? onChanged;
+  final VoidCallback onTap;
 
-  const _OptionTile({
-    required this.title,
+  const _ReadingOptionTile({
+    required this.label,
     required this.isSelected,
-    this.isDisabled = false,
-    this.onChanged,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: isDisabled ? null : () => onChanged?.call(true),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          child: Row(
-            children: [
-              Radio<bool>(
-                value: true,
-                groupValue: isSelected ? true : false,
-                onChanged: isDisabled ? null : onChanged,
-                activeColor: Colors.deepPurpleAccent,
+    final accent = Colors.deepPurpleAccent;
+    
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: isSelected ? accent.withValues(alpha: 0.04) : Colors.transparent,
+          border: Border(
+            bottom: BorderSide(
+              color: Colors.black.withValues(alpha: 0.03),
+              width: 1,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected ? accent : Colors.black87,
+                  letterSpacing: 0.5,
+                ),
               ),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isDisabled ? Colors.grey[400] : Colors.black87,
+            ),
+            if (isSelected)
+              Icon(Icons.check_circle, color: accent, size: 22)
+            else
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    width: 2,
                   ),
                 ),
               ),
-            ],
-          ),
+          ],
         ),
       ),
     );
