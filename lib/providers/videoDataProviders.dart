@@ -39,6 +39,8 @@ class AutoScrollNotifier extends StateNotifier<bool> {
 
 final playerSeekProvider = StateProvider<Duration?>((ref) => null);
 
+final videoSplitRatioProvider = StateProvider<double>((ref) => 0.5);
+
 final currentVideoProvider = FutureProvider<VideoObject?>((ref) async {
   final videoId = ref.watch(playerIdProvider);
 

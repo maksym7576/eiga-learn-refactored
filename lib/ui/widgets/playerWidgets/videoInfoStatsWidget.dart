@@ -10,76 +10,58 @@ class VideoInfoStatsWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final videoId = ref.watch(playerIdProvider);
-    if (videoId == null) return const SizedBox.shrink();
+    if (videoId == null) {
+      return const SizedBox.shrink();
+    }
 
     final phrasesAsync = ref.watch(phraseListProvider(videoId));
 
     return phrasesAsync.when(
       data: (phrases) {
-        final total = phrases.length;
-        final done = phrases.where((p) => p.isTranslated).length;
-        final prog = phrases.where((p) => p.isTranslating).length;
-        final left = total - done - prog;
+        final totalCount = phrases.length;
+        final translatedCount =
+            phrases.where((phrase) => phrase.isTranslated).length;
+        final translatingCount =
+            phrases.where((phrase) => phrase.isTranslating).length;
+        final notTranslatedCount =
+            totalCount - translatedCount - translatingCount;
 
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _CompactStat(
-              icon: Icons.functions, 
-              value: total.toString(), 
-              color: Colors.deepPurpleAccent
-            ),
+            _statItem(Icons.list, Colors.grey, totalCount.toString()),
             const SizedBox(width: 8),
-            _CompactStat(
-              icon: Icons.check_circle_outline, 
-              value: done.toString(), 
-              color: Colors.green
-            ),
+            _statItem(Icons.check_circle_outline, Colors.green, translatedCount.toString()),
             const SizedBox(width: 8),
-            _CompactStat(
-              icon: Icons.sync, 
-              value: prog.toString(), 
-              color: Colors.orange
-            ),
+            _statItem(Icons.sync, Colors.orange, translatingCount.toString()),
             const SizedBox(width: 8),
-            _CompactStat(
-              icon: Icons.hourglass_empty, 
-              value: left.toString(), 
-              color: Colors.blueGrey
-            ),
+            _statItem(Icons.hourglass_empty, Colors.blue, notTranslatedCount.toString()),
           ],
         );
       },
-      error: (_, __) => const Icon(Icons.error_outline, size: 16, color: Colors.red),
-      loading: () => const CupertinoActivityIndicator(radius: 8),
+      error: (error, stack) => const Text(
+        'Error loading stats',
+        style: TextStyle(fontSize: 11, color: Colors.redAccent),
+      ),
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 8),
+        child: CupertinoActivityIndicator(radius: 8),
+      ),
     );
   }
-}
 
-class _CompactStat extends StatelessWidget {
-  final IconData icon;
-  final String value;
-  final Color color;
-
-  const _CompactStat({
-    required this.icon,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _statItem(IconData icon, Color color, String value) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 12, color: color.withValues(alpha: 0.7)),
-        const SizedBox(width: 2),
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 4),
         Text(
           value,
           style: TextStyle(
-            fontSize: 12,
             fontWeight: FontWeight.bold,
-            color: color.withValues(alpha: 0.9),
+            fontSize: 13,
+            color: color,
           ),
         ),
       ],

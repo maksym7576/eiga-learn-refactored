@@ -3,6 +3,7 @@ import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
 import 'package:flick_video_player/flick_video_player.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
@@ -13,11 +14,13 @@ final isDraggingProvider = StateProvider<bool>((ref) => false);
 class VideoPlayerWidget extends ConsumerStatefulWidget {
   final double? minHeight;
   final double? maxHeight;
+  final bool isLandscapeSplit;
 
   const VideoPlayerWidget({
     super.key,
     this.minHeight = 150,
     this.maxHeight,
+    this.isLandscapeSplit = false,
   });
 
   @override
@@ -85,6 +88,11 @@ class _VideoPlayerWidgetState extends ConsumerState<VideoPlayerWidget> {
     flickManager?.flickVideoManager?.videoPlayerController
         ?.removeListener(_onControllerUpdate);
     flickManager?.dispose();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     super.dispose();
   }
 
@@ -125,6 +133,73 @@ class _VideoPlayerWidgetState extends ConsumerState<VideoPlayerWidget> {
         .aspectRatio;
     final double aspectRatio = videoRatio > 0 ? videoRatio : 16 / 9;
 
+    final videoPlayerPart = Container(
+      height: widget.isLandscapeSplit ? double.infinity : videoHeight,
+      width: widget.isLandscapeSplit ? double.infinity : null,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.deepPurple.shade900,
+            Colors.black,
+          ],
+        ),
+      ),
+      child: Center(
+        child: AspectRatio(
+          aspectRatio: aspectRatio,
+          child: FlickVideoPlayer(
+            flickManager: flickManager!,
+            systemUIOverlay: const [], // Приховує системні елементи під час програвання
+            preferredDeviceOrientation: const [
+              DeviceOrientation.portraitUp,
+              DeviceOrientation.landscapeLeft,
+              DeviceOrientation.landscapeRight,
+            ],
+            flickVideoWithControls: FlickVideoWithControls(
+              controls: Stack(
+                children: [
+                  if (!isLocked) FlickPortraitControls(),
+                  _buildLockButton(
+                    ref,
+                    isLocked,
+                    top: 10,
+                    right: 12,
+                    size: 12,
+                  ),
+                ],
+              ),
+            ),
+            flickVideoWithControlsFullscreen: FlickVideoWithControls(
+              videoFit: BoxFit.contain,
+              controls: Consumer(
+                builder: (context, ref, child) {
+                  final isLocked = ref.watch(isLockedVideoProvider);
+                  return Stack(
+                    children: [
+                      if (!isLocked) const FlickLandscapeControls(),
+                      _buildLockButton(
+                        ref,
+                        isLocked,
+                        top: 10,
+                        right: 30,
+                        size: 25,
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    if (widget.isLandscapeSplit) {
+      return videoPlayerPart;
+    }
+
     return Column(
       children: [
         // Відеоплеєр
@@ -136,50 +211,7 @@ class _VideoPlayerWidgetState extends ConsumerState<VideoPlayerWidget> {
           onVerticalDragEnd: (_) {
             ref.read(isDraggingProvider.notifier).state = false;
           },
-          child: Container(
-            height: videoHeight,
-            color: Colors.deepPurpleAccent,
-            child: AspectRatio(
-              aspectRatio: aspectRatio,
-              child: FlickVideoPlayer(
-                flickManager: flickManager!,
-                flickVideoWithControls: FlickVideoWithControls(
-                  controls: Stack(
-                    children: [
-                      if (!isLocked) FlickPortraitControls(),
-                      _buildLockButton(
-                        ref,
-                        isLocked,
-                        top: 10,
-                        right: 12,
-                        size: 12,
-                      ),
-                    ],
-                  ),
-                ),
-                flickVideoWithControlsFullscreen: FlickVideoWithControls(
-                  videoFit: BoxFit.contain,
-                  controls: Consumer(
-                    builder: (context, ref, child) {
-                      final isLocked = ref.watch(isLockedVideoProvider);
-                      return Stack(
-                        children: [
-                          if (!isLocked) const FlickLandscapeControls(),
-                          _buildLockButton(
-                            ref,
-                            isLocked,
-                            top: 10,
-                            right: 30,
-                            size: 25,
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ),
-          ),
+          child: videoPlayerPart,
         ),
         // Розділювач для рисайзу
         MouseRegion(

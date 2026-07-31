@@ -53,72 +53,78 @@ class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
           ),
         ),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Row(
-            children: [
-              // Subtitle Toggle
-              _CompactActionChip(
-                onTap: () => ref.read(autoScrollProvider.notifier).toggle(),
-                icon: subtitlesEnabled ? Icons.subtitles : Icons.subtitles_off,
-                label: subtitlesEnabled ? 'ON' : 'OFF',
-                isActive: subtitlesEnabled,
+      child: Row(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  children: [
+                    const SizedBox(width: 8), // Додано відступ зліва
+                    // Subtitle Toggle
+                    _CompactActionChip(
+                      onTap: () => ref.read(autoScrollProvider.notifier).toggle(),
+                      icon: subtitlesEnabled ? Icons.subtitles : Icons.subtitles_off,
+                      label: subtitlesEnabled ? 'ON' : 'OFF',
+                      isActive: subtitlesEnabled,
+                    ),
+                    const SizedBox(width: 16),
+                    
+                    // Video Stats (Compact)
+                    const VideoInfoStatsWidget(),
+                  ],
+                ),
               ),
-              const SizedBox(width: 16),
-              
-              // Video Stats (Compact)
-              const VideoInfoStatsWidget(),
-              
-              const SizedBox(width: 8),
-              
-              // More Settings Menu
-              PopupMenuButton<int>(
-                icon: const Icon(Icons.more_vert, size: 22, color: Colors.deepPurpleAccent),
-                padding: EdgeInsets.zero,
-                onSelected: (value) {
-                  if (value == 1) _showTimeEditDialog(context);
-                  if (value == 2) _showReadingTypeDialog(context);
-                  if (value == 3) _showAiStatusDialog(context);
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 2,
-                    child: Row(
-                      children: [
-                        Icon(Icons.menu_book, size: 20, color: Colors.deepPurpleAccent),
-                        SizedBox(width: 12),
-                        Text('Reading Settings', style: TextStyle(fontSize: 14)),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 3,
-                    child: Row(
-                      children: [
-                        Icon(Icons.auto_awesome, size: 20, color: Colors.deepPurpleAccent),
-                        SizedBox(width: 12),
-                        Text('AI Status', style: TextStyle(fontSize: 14)),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuDivider(),
-                  const PopupMenuItem(
-                    value: 1,
-                    child: Row(
-                      children: [
-                        Icon(Icons.edit_calendar, size: 20, color: Colors.black54),
-                        SizedBox(width: 12),
-                        Text('Edit Subtitle Time', style: TextStyle(fontSize: 14)),
-                      ],
-                    ),
-                  ),
-                ],
+            ),
+          ),
+          
+          // More Settings Menu - Fixed on the right
+          PopupMenuButton<int>(
+            icon: const Icon(Icons.more_vert, size: 22, color: Colors.deepPurpleAccent),
+            padding: EdgeInsets.zero,
+            onSelected: (value) {
+              if (value == 1) _showTimeEditDialog(context);
+              if (value == 2) _showReadingTypeDialog(context);
+              if (value == 3) _showAiStatusDialog(context);
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 2,
+                child: Row(
+                  children: [
+                    Icon(Icons.menu_book, size: 20, color: Colors.deepPurpleAccent),
+                    SizedBox(width: 12),
+                    Text('Reading Settings', style: TextStyle(fontSize: 14)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 3,
+                child: Row(
+                  children: [
+                    Icon(Icons.auto_awesome, size: 20, color: Colors.deepPurpleAccent),
+                    SizedBox(width: 12),
+                    Text('AI Status', style: TextStyle(fontSize: 14)),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem(
+                value: 1,
+                child: Row(
+                  children: [
+                    Icon(Icons.edit_calendar, size: 20, color: Colors.black54),
+                    SizedBox(width: 12),
+                    Text('Edit Subtitle Time', style: TextStyle(fontSize: 14)),
+                  ],
+                ),
               ),
             ],
           ),
-        ),
+          const SizedBox(width: 4),
+        ],
       ),
     );
   }
