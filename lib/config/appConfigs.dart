@@ -22,5 +22,8 @@ class AppConfigs {
 
   int get getNumberOfPhrases => _prefs.getInt(_keyNumberOfPhrases) ?? 40;
 
-
+  Future<void> resetToDefault() async {
+    await _prefs.remove(_keySecondsAhead);
+    await _prefs.remove(_keyNumberOfPhrases);
+  }
 }
