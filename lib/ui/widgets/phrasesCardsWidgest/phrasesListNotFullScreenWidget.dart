@@ -1,5 +1,6 @@
 import 'package:eiga/providers/phraseListProvider.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
+import 'package:eiga/providers/FlickManagerState.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -114,8 +115,18 @@ class _PhraseListNotFullScreenWidgetState
             isActive: index == activeIndex,
             isFinished: finishedIndexes.contains(index),
             onTap: () {
-              ref.read(playerSeekProvider.notifier).state =
-                  _toDuration(phrase.startTime!);
+              if (index == activeIndex) {
+                final manager = ref.read(flickManagerProvider).flickManager;
+                final isPlaying = manager?.flickVideoManager?.isPlaying ?? false;
+                if (isPlaying) {
+                  manager?.flickControlManager?.pause();
+                } else {
+                  manager?.flickControlManager?.play();
+                }
+              } else {
+                ref.read(playerSeekProvider.notifier).state =
+                    _toDuration(phrase.startTime!);
+              }
             },
           );
         },
