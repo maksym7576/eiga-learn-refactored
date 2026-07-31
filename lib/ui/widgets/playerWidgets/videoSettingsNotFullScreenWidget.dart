@@ -9,8 +9,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../dialogs/AppBottomSheet.dart';
 import '../subtitles/AiRequestStatusWidget.dart';
 
-/// Центрalізована палітра іконок для панелі — щоб кожен колір мав сенс,
-/// а не був випадковим Material shade.
 class _IconPalette {
   static const Color subtitles = Color(0xFF4338CA); // Indigo 700
   static const Color reading = Color(0xFFF59E0B); // Amber 500
