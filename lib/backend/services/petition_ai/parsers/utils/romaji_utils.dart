@@ -47,4 +47,11 @@ class RomajiUtils {
     if (text.isEmpty) return false;
     return text.trim() == '"' || text.trim() == "'";
   }
+
+  static bool isOnlyPunctuation(String text) {
+    if (text.isEmpty) return false;
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return false;
+    return !RegExp(r'[a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]').hasMatch(trimmed);
+  }
 }

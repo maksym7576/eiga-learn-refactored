@@ -260,14 +260,43 @@ class _FullScreenWordsSection extends StatelessWidget {
           lastWord = mainText;
         }
 
+        final bool isOnlyPunc = RomajiUtils.isOnlyPunctuation(mainText);
+        final bool sticksToPrevious = index > 0 && 
+            allWords[index - 1].blockId == word.blockId && 
+            !hasLeadingSpace;
+        
+        bool sticksToNext = false;
+        if (index < allWords.length - 1) {
+          final nextWord = allWords[index + 1];
+          final nextMainText = getVersionText(nextWord, mainOption).trim();
+          if (nextWord.blockId == word.blockId && nextMainText.isNotEmpty) {
+             final nextIsOpening = RomajiUtils.isOpeningPunctuation(nextMainText);
+             final nextIsClosing = RomajiUtils.isClosingPunctuation(nextMainText);
+             bool nextHasLeadingSpace = false;
+             if (needsSpacing) {
+                if (nextIsClosing) {
+                   nextHasLeadingSpace = false;
+                } else if (nextIsOpening) {
+                   nextHasLeadingSpace = !RomajiUtils.isOpeningPunctuation(mainText);
+                } else {
+                   nextHasLeadingSpace = !RomajiUtils.isOpeningPunctuation(mainText) && 
+                      !(RomajiUtils.isNeutralPunctuation(mainText) && isQuoteOpen);
+                }
+             }
+             sticksToNext = !nextHasLeadingSpace;
+          }
+        }
+
         return _FullScreenWordItem(
           mainWord: mainText,
-          additionalWord: additionalText,
+          additionalWord: isOnlyPunc ? '' : additionalText,
           isSelected: selectedBlockId == word.blockId,
           onTap: isLocked ? () => onToggleSelection(word.blockId) : null,
           config: config,
           needsSpacing: needsSpacing,
           hasLeadingSpace: hasLeadingSpace,
+          sticksToPrevious: sticksToPrevious,
+          sticksToNext: sticksToNext,
         );
       }).toList(),
     );
@@ -282,6 +311,8 @@ class _FullScreenWordItem extends StatelessWidget {
   final SubtitleConfig? config;
   final bool needsSpacing;
   final bool hasLeadingSpace;
+  final bool sticksToPrevious;
+  final bool sticksToNext;
 
   const _FullScreenWordItem({
     required this.mainWord,
@@ -291,6 +322,8 @@ class _FullScreenWordItem extends StatelessWidget {
     this.config,
     required this.needsSpacing,
     required this.hasLeadingSpace,
+    this.sticksToPrevious = false,
+    this.sticksToNext = false,
   });
 
   @override
@@ -311,13 +344,18 @@ class _FullScreenWordItem extends StatelessWidget {
     final content = AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       margin: EdgeInsets.only(left: leadingSpaceWidth),
-      padding: EdgeInsets.symmetric(
-        horizontal: isSelected ? origSize * 0.2 : 0,
-        vertical: origSize * 0.05,
+      padding: EdgeInsets.only(
+        left: isSelected && !sticksToPrevious ? origSize * 0.2 : 0,
+        right: isSelected && !sticksToNext ? origSize * 0.2 : 0,
+        top: origSize * 0.05,
+        bottom: origSize * 0.05,
       ),
       decoration: BoxDecoration(
         color: isSelected ? Colors.yellowAccent : Colors.transparent,
-        borderRadius: BorderRadius.circular(origSize * 0.25),
+        borderRadius: BorderRadius.horizontal(
+          left: Radius.circular(sticksToPrevious ? 0 : origSize * 0.25),
+          right: Radius.circular(sticksToNext ? 0 : origSize * 0.25),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

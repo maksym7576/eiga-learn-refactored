@@ -248,14 +248,54 @@ class _WordsSection extends StatelessWidget {
           lastWord = mainText;
         }
 
+        final bool isOnlyPunc = RomajiUtils.isOnlyPunctuation(mainText);
+
+        // Logic for seamless capsule:
+        // A word sticks to the previous one if it's the same block AND no space between them.
+        final bool sticksToPrevious = index > 0 && 
+            allWords[index - 1].blockId == word.blockId && 
+            !hasLeadingSpace;
+        
+        // A word sticks to the next one if the NEXT word has the same block and NO leading space.
+        bool sticksToNext = false;
+        if (index < allWords.length - 1) {
+          final nextWord = allWords[index + 1];
+          final nextMainText = getVersionText(nextWord, mainOption).trim();
+          if (nextWord.blockId == word.blockId && nextMainText.isNotEmpty) {
+             // We need to know if the NEXT word would have a leading space.
+             // Let's pre-calculate or use the same logic.
+             final nextIsOpening = RomajiUtils.isOpeningPunctuation(nextMainText);
+             final nextIsClosing = RomajiUtils.isClosingPunctuation(nextMainText);
+             final nextIsNeutral = RomajiUtils.isNeutralPunctuation(nextMainText);
+             
+             bool nextHasLeadingSpace = false;
+             if (needsSpacing) {
+                if (nextIsNeutral) {
+                   // This is slightly complex because isQuoteOpen changes. 
+                   // But for "sticking" we usually care about the current word being opening or next being closing.
+                } else if (nextIsOpening) {
+                   nextHasLeadingSpace = !RomajiUtils.isOpeningPunctuation(mainText);
+                } else if (nextIsClosing) {
+                   nextHasLeadingSpace = false;
+                } else {
+                   nextHasLeadingSpace = !RomajiUtils.isOpeningPunctuation(mainText) && 
+                      !(RomajiUtils.isNeutralPunctuation(mainText) && isQuoteOpen);
+                }
+             }
+             sticksToNext = !nextHasLeadingSpace;
+          }
+        }
+
         return _WordItem(
           isSelected: selectedBlockId == word.blockId,
           cleanedMainWord: mainText,
-          cleanedAdditionalWord: additionalText,
+          cleanedAdditionalWord: isOnlyPunc ? '' : additionalText,
           onTap: () => onToggleSelection(word.blockId),
           config: config,
           needsSpacing: needsSpacing,
           hasLeadingSpace: hasLeadingSpace,
+          sticksToPrevious: sticksToPrevious,
+          sticksToNext: sticksToNext,
         );
       }).toList(),
     );
@@ -270,6 +310,8 @@ class _WordItem extends StatelessWidget {
   final SubtitleConfig? config;
   final bool needsSpacing;
   final bool hasLeadingSpace;
+  final bool sticksToPrevious;
+  final bool sticksToNext;
 
   const _WordItem({
     required this.isSelected,
@@ -279,6 +321,8 @@ class _WordItem extends StatelessWidget {
     this.config,
     required this.needsSpacing,
     required this.hasLeadingSpace,
+    this.sticksToPrevious = false,
+    this.sticksToNext = false,
   });
 
   @override
@@ -313,24 +357,35 @@ class _WordItem extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: Padding(
         padding: EdgeInsets.only(
-          left: leadingSpaceWidth + (isSelected ? origSize * 0.1 : 0),
-          right: isSelected ? origSize * 0.1 : 0,
+          left: leadingSpaceWidth + (isSelected && !sticksToPrevious ? origSize * 0.1 : 0),
+          right: isSelected && !sticksToNext ? origSize * 0.1 : 0,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Фурігана (Ruby) - показуємо лише якщо є текст
-            Text(
-              cleanedAdditionalWord,
-              style: additionalStyle,
-            ),
-            // Основне слово
-            Text(
-              cleanedMainWord,
-              style: mainStyle,
-            ),
-          ],
+        child: Container(
+          decoration: isSelected 
+            ? BoxDecoration(
+                color: PhraseListStyles.getWordTextStyle(isSelected: true, isAdditional: false).color?.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.horizontal(
+                  left: Radius.circular(sticksToPrevious ? 0 : 4),
+                  right: Radius.circular(sticksToNext ? 0 : 4),
+                ),
+              )
+            : null,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Фурігана (Ruby) - показуємо лише якщо є текст
+              Text(
+                cleanedAdditionalWord,
+                style: additionalStyle,
+              ),
+              // Основне слово
+              Text(
+                cleanedMainWord,
+                style: mainStyle,
+              ),
+            ],
+          ),
         ),
       ),
     );
