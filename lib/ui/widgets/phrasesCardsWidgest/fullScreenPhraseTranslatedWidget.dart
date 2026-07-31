@@ -91,6 +91,7 @@ class _FullScreenPhraseTranslatedWidgetState extends ConsumerState<FullScreenPhr
     final additionalOption = readingSettings?.additionalOptions ?? '';
     final isLocked = ref.watch(isLockedVideoProvider);
     final subtitleSettings = ref.watch(subtitleSettingsNotifierProvider).value;
+    final video = ref.watch(currentVideoProvider).value;
 
     return FutureBuilder<PhraseDataDTO>(
       future: _praseDataDTOFuture,
@@ -112,6 +113,7 @@ class _FullScreenPhraseTranslatedWidgetState extends ConsumerState<FullScreenPhr
           getVersionText: _getVersionText,
           isLocked: isLocked,
           config: subtitleSettings?.fullScreen,
+          originalLanguage: video?.originalLanguage,
         );
       },
     );
@@ -128,6 +130,7 @@ class _FullScreenPhraseContent extends StatelessWidget {
   final String Function(WordObject, String) getVersionText;
   final bool isLocked;
   final SubtitleConfig? config;
+  final String? originalLanguage;
 
   const _FullScreenPhraseContent({
     required this.blocks,
@@ -139,6 +142,7 @@ class _FullScreenPhraseContent extends StatelessWidget {
     required this.getVersionText,
     required this.isLocked,
     this.config,
+    this.originalLanguage,
   });
 
   @override
@@ -167,6 +171,7 @@ class _FullScreenPhraseContent extends StatelessWidget {
             getVersionText: getVersionText,
             isLocked: isLocked,
             config: config,
+            originalLanguage: originalLanguage,
           ),
           const SizedBox(height: 8),
           _FullScreenBlocksSection(
@@ -191,6 +196,7 @@ class _FullScreenWordsSection extends StatelessWidget {
   final String Function(WordObject, String) getVersionText;
   final bool isLocked;
   final SubtitleConfig? config;
+  final String? originalLanguage;
 
   const _FullScreenWordsSection({
     required this.allWords,
@@ -201,15 +207,17 @@ class _FullScreenWordsSection extends StatelessWidget {
     required this.getVersionText,
     required this.isLocked,
     this.config,
+    this.originalLanguage,
   });
 
   @override
   Widget build(BuildContext context) {
-    final languageConfig = ReadingTypeLanguageConfigRegistry.getConfing('japanese');
+    final languageConfig = ReadingTypeLanguageConfigRegistry.getConfing(originalLanguage ?? 'japanese');
     final needsSpacing = languageConfig.spacingOptions.contains(mainOption);
+    final origSize = config?.fontSizeOriginal ?? 28.0;
 
     return Wrap(
-      spacing: needsSpacing ? 8 : 0,
+      spacing: needsSpacing ? origSize * 0.1 : 0,
       runSpacing: 4,
       alignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.end,
@@ -263,7 +271,7 @@ class _FullScreenWordItem extends StatelessWidget {
     final content = AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       padding: EdgeInsets.symmetric(
-        horizontal: isSelected ? origSize * 0.2 : (needsSpacing ? origSize * 0.2 : 0),
+        horizontal: isSelected ? origSize * 0.2 : (needsSpacing ? origSize * 0.15 : 0),
         vertical: origSize * 0.05,
       ),
       decoration: BoxDecoration(

@@ -6,6 +6,7 @@ import 'package:eiga/backend/data/models/subtitleSettings.dart';
 import 'package:eiga/config/depacker/readingTypeLanguageConfig.dart';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/subtitle_settings_provider.dart';
+import 'package:eiga/providers/videoDataProviders.dart';
 import 'package:eiga/providers/FlickManagerState.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
@@ -83,6 +84,7 @@ class _PhraseTranslatedWidgetState extends ConsumerState<PhraseTranslatedWidget>
     final mainOption = readingSettings?.mainOption ?? 'original';
     final additionalOption = readingSettings?.additionalOptions ?? '';
     final subtitleSettings = ref.watch(subtitleSettingsNotifierProvider).value;
+    final video = ref.watch(currentVideoProvider).value;
 
     return FutureBuilder<PhraseDataDTO>(
       future: _praseDataDTOFuture,
@@ -109,6 +111,7 @@ class _PhraseTranslatedWidgetState extends ConsumerState<PhraseTranslatedWidget>
           onToggleSelection: _toggleSelection,
           getVersionText: _getVersionText,
           config: subtitleSettings?.portrait,
+          originalLanguage: video?.originalLanguage,
         );
       },
     );
@@ -124,6 +127,7 @@ class _PhraseTranslatedContent extends StatelessWidget {
   final Function(int?) onToggleSelection;
   final String Function(WordObject, String) getVersionText;
   final SubtitleConfig? config;
+  final String? originalLanguage;
 
   const _PhraseTranslatedContent({
     required this.blocks,
@@ -134,6 +138,7 @@ class _PhraseTranslatedContent extends StatelessWidget {
     required this.onToggleSelection,
     required this.getVersionText,
     this.config,
+    this.originalLanguage,
   });
 
   @override
@@ -153,6 +158,7 @@ class _PhraseTranslatedContent extends StatelessWidget {
           onToggleSelection: onToggleSelection,
           getVersionText: getVersionText,
           config: config,
+          originalLanguage: originalLanguage,
         ),
         const SizedBox(height: PhraseListStyles.blockSectionSpacing),
         _BlocksSection(
@@ -174,6 +180,7 @@ class _WordsSection extends StatelessWidget {
   final Function(int?) onToggleSelection;
   final String Function(WordObject, String) getVersionText;
   final SubtitleConfig? config;
+  final String? originalLanguage;
 
   const _WordsSection({
     required this.allWords,
@@ -183,16 +190,18 @@ class _WordsSection extends StatelessWidget {
     required this.onToggleSelection,
     required this.getVersionText,
     this.config,
+    this.originalLanguage,
   });
 
   @override
   Widget build(BuildContext context) {
-    final languageConfig = ReadingTypeLanguageConfigRegistry.getConfing('japanese');
+    final languageConfig = ReadingTypeLanguageConfigRegistry.getConfing(originalLanguage ?? 'japanese');
     final needsSpacing = languageConfig.spacingOptions.contains(mainOption);
+    final origSize = config?.fontSizeOriginal ?? PhraseListStyles.fontSizeMainWord;
 
     return Wrap(
       alignment: WrapAlignment.center,
-      spacing: needsSpacing ? PhraseListStyles.wordSpacingStandard : 0,
+      spacing: needsSpacing ? origSize * 0.1 : 0,
       runSpacing: PhraseListStyles.wordRunSpacing,
       crossAxisAlignment: WrapCrossAlignment.end, // Вирівнювання по низу для японського тексту
       children: allWords.map((word) {
@@ -259,7 +268,7 @@ class _WordItem extends StatelessWidget {
       behavior: HitTestBehavior.opaque,
       child: Padding(
         padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? origSize * 0.05 : (needsSpacing ? origSize * 0.05 : 0),
+          horizontal: isSelected ? origSize * 0.1 : (needsSpacing ? origSize * 0.15 : 0),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -304,8 +313,8 @@ class _BlocksSection extends StatelessWidget {
       child: Text.rich(
         TextSpan(
           children: blocksList.map((block) {
-            final isSelected = selectedBlockId == block.id;
             final blockText = block.blockTranslation?.trim() ?? '';
+            final isSelected = selectedBlockId == block.id;
             return TextSpan(
               text: '$blockText\u2009',
               style: PhraseListStyles.getBlockTextStyle(

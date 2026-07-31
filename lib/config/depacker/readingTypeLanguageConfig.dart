@@ -20,11 +20,17 @@ class ReadingTypeLanguageConfigRegistry {
       options: ['original', 'kana', 'romaji'],
       spacingOptions: ['romaji'],
     ),
+    'english': ReadingTypeLanguageConfig(
+      language: 'english',
+      options: ['original'],
+      spacingOptions: ['original'],
+    ),
   };
 
   static final ReadingTypeLanguageConfig _default = ReadingTypeLanguageConfig(
       language: 'default',
       options: ['original'],
+      spacingOptions: ['original'],
   );
 
   static ReadingTypeLanguageConfig getConfing(String? language) {
