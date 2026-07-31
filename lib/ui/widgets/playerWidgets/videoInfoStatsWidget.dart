@@ -26,39 +26,50 @@ class VideoInfoStatsWidget extends ConsumerWidget {
         final notTranslatedCount =
             totalCount - translatedCount - translatingCount;
 
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _statItem(Icons.list, Colors.grey, totalCount.toString()),
-            _statItem(Icons.check_circle_outline, Colors.green, translatedCount.toString()),
-            _statItem(Icons.sync, Colors.orange, translatingCount.toString()),
-            _statItem(Icons.hourglass_empty, Colors.blue, notTranslatedCount.toString()),
-          ],
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _statItem(Icons.list_alt_rounded, const Color(0xFF64748B), totalCount.toString()),
+                _divider(),
+                _statItem(Icons.check_circle_rounded, const Color(0xFF059669), translatedCount.toString()),
+                _divider(),
+                _statItem(Icons.pending_rounded, const Color(0xFFD97706), translatingCount.toString()),
+                _divider(),
+                _statItem(Icons.hourglass_bottom_rounded, const Color(0xFF0284C7), notTranslatedCount.toString()),
+              ],
+            ),
+          ),
         );
       },
-      error: (error, stack) => const Text(
-        'Error loading stats',
-        style: TextStyle(fontSize: 11, color: Colors.redAccent),
-      ),
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 8),
-        child: CupertinoActivityIndicator(radius: 8),
-      ),
+      error: (error, stack) => const Icon(Icons.error_outline, size: 16, color: Colors.redAccent),
+      loading: () => const Center(child: CupertinoActivityIndicator(radius: 6)),
     );
   }
+
+  Widget _divider() => Container(
+        height: 12,
+        width: 1,
+        margin: const EdgeInsets.symmetric(horizontal: 8),
+        color: const Color(0xFF1E293B).withValues(alpha: 0.1),
+      );
 
   Widget _statItem(IconData icon, Color color, String value) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16, color: color),
+        Icon(icon, size: 14, color: color),
         const SizedBox(width: 4),
         Text(
           value,
           style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            fontSize: 12,
             color: color,
+            fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
       ],

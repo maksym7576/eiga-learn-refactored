@@ -44,8 +44,8 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
           children: [
             VideoPlayerWidget(showDivider: false),
             Positioned(
-              top: 10,
-              left: 10,
+              top: 5,
+              left: 5,
               child: SafeArea(
                 child: CircleAvatar(
                   backgroundColor: Colors.black.withOpacity(0.3),
@@ -60,12 +60,7 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
           ],
         ),
 
-        // Налаштування (під відео)
-        VideoSettingsNotFullScreenWidget(
-          isExpanded: videoHeight > 300, // Адаптивність за висотою
-        ),
-
-        // Розділювач для вертикального рисайзу (під налаштуваннями)
+        // Розділювач для вертикального рисайзу (між плеєром і налаштуваннями)
         GestureDetector(
           onVerticalDragUpdate: (details) {
             final currentHeight = ref.read(videoHeightProvider);
@@ -97,6 +92,9 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
           ),
         ),
 
+        // Налаштування (під розділювачем)
+        const VideoSettingsNotFullScreenWidget(),
+
         // Список фраз займає весь залишок місця
         const Expanded(
           child: PhraseListNotFullScreenWidget(),
@@ -110,36 +108,43 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
     final leftWidth = screenWidth * splitRatio;
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch, // Забезпечуємо повну висоту
       children: [
         // Ліва частина: Відео + Налаштування
-        SizedBox(
+        Container(
           width: leftWidth,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.deepPurple.shade900,
+                Colors.black,
+              ],
+            ),
+          ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Плеєр із заокругленими кутами для сучасного вигляду
-              // Обмежуємо висоту відео, щоб завжди залишалось місце для налаштувань
-              Padding(
-                padding: const EdgeInsets.only(top: 16, left: 16, right: 16),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(context).size.height * 0.6,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: VideoPlayerWidget(isLandscapeSplit: true),
+              const SizedBox(height: 16), // Відступ зверху
+              
+              // Плеєр з закругленими кутами та відступами по боках
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Center(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: VideoPlayerWidget(isLandscapeSplit: true),
+                    ),
                   ),
                 ),
               ),
               
-              const SizedBox(height: 12),
-              
-              // Налаштування адаптивно заповнюють простір
-              const Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(left: 16, right: 16, bottom: 8),
-                  child: VideoSettingsNotFullScreenWidget(isExpanded: true),
-                ),
+              const SizedBox(height: 8),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                child: VideoSettingsNotFullScreenWidget(),
               ),
             ],
           ),
@@ -149,22 +154,22 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
         GestureDetector(
           onHorizontalDragUpdate: (details) {
             final newRatio = details.globalPosition.dx / screenWidth;
-            if (newRatio > 0.1 && newRatio < 0.9) { // Більший діапазон
+            if (newRatio > 0.1 && newRatio < 0.9) {
               ref.read(videoSplitRatioProvider.notifier).state = newRatio;
             }
           },
           child: MouseRegion(
             cursor: SystemMouseCursors.resizeColumn,
             child: Container(
-              width: 10,
-              color: Colors.deepPurple[100],
+              width: 8,
+              color: Colors.black.withOpacity(0.5),
               child: Center(
                 child: Container(
-                  width: 3,
+                  width: 2,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.deepPurple[300],
-                    borderRadius: BorderRadius.circular(2),
+                    color: Colors.white.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(1),
                   ),
                 ),
               ),

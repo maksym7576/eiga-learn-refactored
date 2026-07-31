@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:eiga/providers/videoDataProviders.dart';
 import 'package:eiga/ui/widgets/playerWidgets/readingTypeSelectorWidget.dart';
 import 'package:eiga/ui/widgets/playerWidgets/timerShiftEditorWidget.dart';
@@ -8,13 +9,23 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../dialogs/AppBottomSheet.dart';
 import '../subtitles/AiRequestStatusWidget.dart';
 
+/// Центрalізована палітра іконок для панелі — щоб кожен колір мав сенс,
+/// а не був випадковим Material shade.
+class _IconPalette {
+  static const Color subtitles = Color(0xFF4338CA); // Indigo 700
+  static const Color reading = Color(0xFFF59E0B); // Amber 500
+  static const Color aiInsights = Color(0xFF0EA5E9); // Sky 500
+  static const Color sync = Color(0xFF94A3B8); // Slate 400
+}
+
 class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
-  final bool isExpanded;
-  
   const VideoSettingsNotFullScreenWidget({
     super.key,
-    this.isExpanded = false,
   });
+
+  static const double _fullWidth = 320;
+  static const double _minWidth = 140;
+  static const double _minScale = 0.72;
 
   void _showTimeEditDialog(BuildContext context) {
     AppBottomSheet.show(
@@ -42,201 +53,183 @@ class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
     );
   }
 
+  double _scaleForWidth(double width) {
+    if (width >= _fullWidth) return 1.0;
+    if (width <= _minWidth) return _minScale;
+    final t = (width - _minWidth) / (_fullWidth - _minWidth);
+    return _minScale + (1.0 - _minScale) * t;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final subtitlesEnabled = ref.watch(autoScrollProvider);
 
-    return Container(
-      width: double.infinity,
-      constraints: isExpanded ? null : const BoxConstraints(maxHeight: 60),
-      decoration: BoxDecoration(
-        color: Colors.grey.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: isExpanded 
-            ? _buildExpandedLayout(context, ref, subtitlesEnabled)
-            : LayoutBuilder(
-                builder: (context, constraints) => _buildCompactLayout(
-                  context, 
-                  ref, 
-                  subtitlesEnabled, 
-                  constraints.maxWidth,
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final scale = _scaleForWidth(constraints.maxWidth);
+
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              width: double.infinity,
+              constraints: const BoxConstraints(maxHeight: 50),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF4338CA).withValues(alpha: 0.15)),
               ),
-      ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                child: _buildCompactLayout(context, ref, subtitlesEnabled, scale),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildCompactLayout(BuildContext context, WidgetRef ref, bool subtitlesEnabled, double width) {
-    final isWide = width > 450;
-    final isVeryWide = width > 600;
-
+  Widget _buildCompactLayout(
+      BuildContext context,
+      WidgetRef ref,
+      bool subtitlesEnabled,
+      double scale,
+      ) {
     return Row(
       children: [
-        // Subtitle Toggle
         _CompactActionChip(
           onTap: () => ref.read(autoScrollProvider.notifier).toggle(),
-          icon: subtitlesEnabled ? Icons.subtitles : Icons.subtitles_off,
-          label: subtitlesEnabled ? 'Subtitles' : 'OFF',
+          icon: subtitlesEnabled
+              ? Icons.closed_caption_rounded
+              : Icons.closed_caption_disabled_rounded,
+          label: subtitlesEnabled ? 'CC ON' : 'CC OFF',
           isActive: subtitlesEnabled,
-          color: Colors.deepPurpleAccent,
+          scale: scale,
+          color: _IconPalette.subtitles,
         ),
-        
-        const SizedBox(width: 12),
-        
-        // AI Status (Pull out if wide)
-        if (isWide) ...[
-          _CompactActionChip(
-            onTap: () => _showAiStatusDialog(context),
-            icon: Icons.auto_awesome,
-            label: 'AI',
-            isActive: false,
-            color: Colors.blueAccent,
-          ),
-          const SizedBox(width: 12),
-        ],
 
-        // Reading Settings (Pull out if very wide)
-        if (isVeryWide) ...[
-          _CompactActionChip(
-            onTap: () => _showReadingTypeDialog(context),
-            icon: Icons.menu_book,
-            label: 'Reading',
-            isActive: false,
-            color: Colors.orangeAccent,
-          ),
-          const SizedBox(width: 12),
-        ],
+        SizedBox(width: 8 * scale),
 
-        // Video Stats (Compact)
-        const Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: VideoInfoStatsWidget(),
+        Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: const VideoInfoStatsWidget(),
           ),
         ),
-        
-        const SizedBox(width: 8),
-        
-        // More Settings Menu
-        PopupMenuButton<int>(
-          icon: Icon(Icons.more_horiz, size: 24, color: Colors.grey[700]),
-          padding: EdgeInsets.zero,
+
+        SizedBox(width: 4 * scale),
+
+        _MoreSettingsButton(
+          scale: scale,
           onSelected: (value) {
             if (value == 1) _showTimeEditDialog(context);
             if (value == 2) _showReadingTypeDialog(context);
             if (value == 3) _showAiStatusDialog(context);
           },
-          itemBuilder: (context) => [
-            if (!isVeryWide)
-              const PopupMenuItem(
-                value: 2,
-                child: Row(
-                  children: [
-                    Icon(Icons.menu_book, size: 20, color: Colors.deepPurpleAccent),
-                    SizedBox(width: 12),
-                    Text('Reading Settings', style: TextStyle(fontSize: 14)),
-                  ],
-                ),
-              ),
-            if (!isWide)
-              const PopupMenuItem(
-                value: 3,
-                child: Row(
-                  children: [
-                    Icon(Icons.auto_awesome, size: 20, color: Colors.deepPurpleAccent),
-                    SizedBox(width: 12),
-                    Text('AI Status', style: TextStyle(fontSize: 14)),
-                  ],
-                ),
-              ),
-            const PopupMenuDivider(),
-            const PopupMenuItem(
-              value: 1,
-              child: Row(
-                children: [
-                  Icon(Icons.edit_calendar, size: 20, color: Colors.black54),
-                  SizedBox(width: 12),
-                  Text('Edit Subtitle Time', style: TextStyle(fontSize: 14)),
-                ],
-              ),
-            ),
-          ],
         ),
       ],
     );
   }
+}
 
-  Widget _buildExpandedLayout(BuildContext context, WidgetRef ref, bool subtitlesEnabled) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
+/// Кнопка "більше налаштувань" — власна кругла скляна капсула замість
+/// голої іконки, щоб вона читалась як окремий, тапабельний елемент,
+/// а не як прикраса поруч зі списком статистики.
+class _MoreSettingsButton extends StatelessWidget {
+  final double scale;
+  final ValueChanged<int> onSelected;
+
+  const _MoreSettingsButton({
+    required this.scale,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<int>(
+      tooltip: 'More settings',
+      offset: const Offset(0, 44),
+      color: const Color(0xFF1B1D26),
+      surfaceTintColor: Colors.transparent,
+      elevation: 12,
+      shadowColor: Colors.black.withValues(alpha: 0.4),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      padding: EdgeInsets.zero,
+      onSelected: onSelected,
+      itemBuilder: (context) => [
+        _menuItem(
+          value: 2,
+          icon: Icons.menu_book_rounded,
+          color: _IconPalette.reading,
+          label: 'Reading settings',
+        ),
+        _menuItem(
+          value: 3,
+          icon: Icons.psychology_alt_rounded,
+          color: _IconPalette.aiInsights,
+          label: 'AI insights',
+        ),
+        const PopupMenuDivider(height: 9),
+        _menuItem(
+          value: 1,
+          icon: Icons.history_toggle_off_rounded,
+          color: _IconPalette.sync,
+          label: 'Sync subtitles',
+        ),
+      ],
+      child: Container(
+        width: 34 * scale,
+        height: 34 * scale,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.black.withValues(alpha: 0.04),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+        ),
+        child: Icon(
+          Icons.tune_rounded,
+          size: 18 * scale,
+          color: const Color(0xFF1E293B).withValues(alpha: 0.8),
+        ),
+      ),
+    );
+  }
+
+  PopupMenuItem<int> _menuItem({
+    required int value,
+    required IconData icon,
+    required Color color,
+    required String label,
+  }) {
+    return PopupMenuItem(
+      value: value,
+      height: 44,
+      child: Row(
         children: [
-          // Рядок 1: Основні перемикачі
-          Row(
-            children: [
-              Expanded(
-                child: _CompactActionChip(
-                  onTap: () => ref.read(autoScrollProvider.notifier).toggle(),
-                  icon: subtitlesEnabled ? Icons.subtitles : Icons.subtitles_off,
-                  label: subtitlesEnabled ? 'Subtitles ON' : 'Subtitles OFF',
-                  isActive: subtitlesEnabled,
-                  color: Colors.deepPurpleAccent,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _CompactActionChip(
-                  onTap: () => _showReadingTypeDialog(context),
-                  icon: Icons.menu_book,
-                  label: 'Reading Mode',
-                  isActive: false,
-                  color: Colors.orangeAccent,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          
-          // Рядок 2: Додаткові інструменти
-          Row(
-            children: [
-              Expanded(
-                child: _CompactActionChip(
-                  onTap: () => _showAiStatusDialog(context),
-                  icon: Icons.auto_awesome,
-                  label: 'AI Insights',
-                  isActive: false,
-                  color: Colors.blueAccent,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _CompactActionChip(
-                  onTap: () => _showTimeEditDialog(context),
-                  icon: Icons.edit_calendar,
-                  label: 'Adjust Time',
-                  isActive: false,
-                  color: Colors.blueGrey,
-                ),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Статистика на всю ширину
+          // Іконка-бейдж: м'який кольоровий фон замість голої іконки —
+          // сучасний патерн (iOS Settings / Notion), краще читається в списку.
           Container(
-            padding: const EdgeInsets.all(12),
+            width: 30,
+            height: 30,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.black12),
+              color: color.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(9),
             ),
-            child: const VideoInfoStatsWidget(),
+            child: Icon(icon, size: 17, color: color),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.white,
+            ),
           ),
         ],
       ),
@@ -249,6 +242,7 @@ class _CompactActionChip extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool isActive;
+  final double scale;
   final Color color;
 
   const _CompactActionChip({
@@ -256,6 +250,7 @@ class _CompactActionChip extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.isActive,
+    required this.scale,
     required this.color,
   });
 
@@ -265,41 +260,53 @@ class _CompactActionChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        curve: Curves.easeOut,
+        padding: EdgeInsets.symmetric(
+          horizontal: (10 * scale).clamp(6, 12),
+          vertical: 6 * scale,
+        ),
         decoration: BoxDecoration(
-          color: isActive ? color : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: isActive
+              ? color
+              : Colors.black.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isActive ? color : Colors.grey[300]!,
-            width: 1,
+            color: isActive ? color : Colors.black.withValues(alpha: 0.08),
+            width: 1.2,
           ),
-          boxShadow: [
-            if (isActive)
-              BoxShadow(
-                color: color.withValues(alpha: 0.3),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-          ],
+          // Легке світіння тільки в активному стані — дає іконці "вагу"
+          // без того, щоб панель виглядала перевантаженою.
+          boxShadow: isActive
+              ? [
+            BoxShadow(
+              color: color.withValues(alpha: 0.3),
+              blurRadius: 12,
+              spreadRadius: 0,
+            ),
+          ]
+              : null,
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min, // Дозволяємо кнопці займати мінімум місця, якщо вона не в Expanded
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              size: 16,
-              color: isActive ? Colors.white : Colors.grey[700],
+              size: 18 * scale,
+              color: isActive ? Colors.white : const Color(0xFF1E293B).withValues(alpha: 0.65),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Flexible(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isActive ? Colors.white : Colors.grey[800],
-                  fontWeight: FontWeight.w600,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 11 * scale,
+                    color: isActive ? Colors.white : const Color(0xFF1E293B).withValues(alpha: 0.75),
+                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+                    letterSpacing: 0.3,
+                  ),
                 ),
               ),
             ),
