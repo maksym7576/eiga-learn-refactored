@@ -1,6 +1,7 @@
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import 'package:eiga/backend/data/dto/JimakuDataDTO.dart';
+import 'package:eiga/backend/data/dto/JimakuFileOrGroupDTO.dart';
 
 class SearchSourceKeys {
   static const String jimaku = 'jimaku';
@@ -40,10 +41,10 @@ extension JimakuProviders on WidgetRef {
   JimakuDataDTO? watchJimakuSelectedEntry() =>
       watch(selectedEntryProvider(SearchSourceKeys.jimaku)) as JimakuDataDTO?;
 
-  List<FileJimakuDTO> watchJimakuFiles() => watch(
+  List<JimakuFileOrGroupDTO> watchJimakuFiles() => watch(
     filesProvider(SearchSourceKeys.jimaku),
-  ).cast<FileJimakuDTO>();
+  ).cast<JimakuFileOrGroupDTO>();
 
-  FileJimakuDTO? watchJimakuSelectedResult() =>
-      watch(selectedResultProvider(SearchSourceKeys.jimaku)) as FileJimakuDTO?;
+  JimakuFileOrGroupDTO? watchJimakuSelectedResult() =>
+      watch(selectedResultProvider(SearchSourceKeys.jimaku)) as JimakuFileOrGroupDTO?;
 }

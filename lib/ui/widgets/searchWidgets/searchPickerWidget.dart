@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:ui';
 import 'package:eiga/ui/widgets/searchWidgets/searchSourceAbstract.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -24,6 +26,7 @@ class _SearchPickerWidgetState<TEntry, TFile>
     extends ConsumerState<SearchPickerWidget<TEntry, TFile>> {
   final _controller = TextEditingController();
   late final String _key = widget.source.key;
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -34,6 +37,18 @@ class _SearchPickerWidgetState<TEntry, TFile>
       if (current.isEmpty) {
         ref.read(searchFiltersProvider(_key).notifier).state =
             Map.of(widget.source.defaultFilters);
+      }
+    });
+
+    _controller.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 600), () {
+      final query = _controller.text.trim();
+      if (query.length >= 3) {
+        _search();
       }
     });
   }
@@ -310,30 +325,50 @@ class _SearchPickerWidgetState<TEntry, TFile>
     final isLoadingFiles = ref.watch(isLoadingFilesProvider(_key));
     final isResolving = ref.watch(isResolvingProvider(_key));
 
-    // "друга сторінка" показується тільки якщо джерело двоетапне і щось обрано
     final showDetails = widget.source.hasFileStage && selectedEntry != null;
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.75,
-      minChildSize: 0.4,
-      maxChildSize: 0.95,
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.96,
       expand: false,
       builder: (context, scrollController) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
-            ),
+        return ClipRRect(
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(32),
+            topRight: Radius.circular(32),
           ),
-          child: Column(
-            children: [
-              const SizedBox(height: 6),
-              _buildHeader(showDetails, selectedEntry),
-              const SizedBox(height: 4),
-              Expanded(
-                child: AnimatedSwitcher(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.85),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(32),
+                  topRight: Radius.circular(32),
+                ),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  width: 1.5,
+                ),
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  // Handle for dragging
+                  Container(
+                    width: 40,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildHeader(showDetails, selectedEntry),
+                  const SizedBox(height: 4),
+                  Expanded(
+                    child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 220),
                   transitionBuilder: (child, animation) => FadeTransition(
                     opacity: animation,
@@ -390,6 +425,8 @@ class _SearchPickerWidgetState<TEntry, TFile>
               ),
             ],
           ),
+        ),
+          )
         );
       },
     );

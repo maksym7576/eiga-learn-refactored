@@ -1,4 +1,4 @@
-import 'package:eiga/backend/data/dto/AIModelSettingsDTO.dart';
+import 'package:eiga/backend/data/dto/AiModelSettingsDTO.dart';
 import 'package:eiga/config/modelsUrl/AIModelsURLData.dart';
 import 'package:eiga/ui/widgets/appBarWidgets/modelWidget.dart';
 import 'package:eiga/ui/widgets/buttons/EqualToggleButtons.dart';
@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../config/modelsUrl/TranslationPipelineStep.dart';
-import '../../../providers/AiModelsStateProvuder.dart';
+import '../../../providers/ai_models_state_provider.dart';
 
 class ModelPreviewWidget extends ConsumerStatefulWidget {
   final TranslationPipelineStep initialStep;

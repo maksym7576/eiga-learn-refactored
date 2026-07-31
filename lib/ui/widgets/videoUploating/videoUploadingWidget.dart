@@ -1,4 +1,5 @@
 import 'package:eiga/backend/data/dto/JimakuDataDTO.dart';
+import 'package:eiga/backend/data/dto/JimakuFileOrGroupDTO.dart';
 import 'package:eiga/backend/data/models/videoObject.dart';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoComponentsProvider.dart';
@@ -46,13 +47,14 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (_) => SearchPickerWidget<JimakuDataDTO, FileJimakuDTO>(
+      builder: (_) => SearchPickerWidget<JimakuDataDTO, JimakuFileOrGroupDTO>(
         source: JimakuSubtitleSource(),
         onResolved: (path) {
           ref.read(srtPathProvider.notifier).state = path;
 
           final entry = ref.read(selectedEntryProvider(SearchSourceKeys.jimaku)) as JimakuDataDTO?;
-          final file = ref.read(selectedResultProvider(SearchSourceKeys.jimaku)) as FileJimakuDTO?;
+          final item = ref.read(selectedResultProvider(SearchSourceKeys.jimaku)) as JimakuFileOrGroupDTO?;
+          final file = item?.file;
 
           ref.read(jimakuEntryFinalProvider.notifier).state = entry;
           ref.read(jimakuFileFinalProvider.notifier).state = file;

@@ -1,3 +1,5 @@
+import 'package:eiga/backend/data/dto/JimakuFileOrGroupDTO.dart';
+import 'package:eiga/backend/services/utils/jimaku_clustering_util.dart';
 import 'package:eiga/providers/searchProvider.dart';
 import 'package:eiga/ui/widgets/searchWidgets/JimakuSearch/JimakuEntryTile.dart';
 import 'package:eiga/ui/widgets/searchWidgets/JimakuSearch/JimakuFileTile.dart';
@@ -10,7 +12,7 @@ import '../../../../backend/services/JimakuService.dart';
 import '../../../../providers/servicesProviders.dart';
 import '../searchSourceAbstract.dart';
 
-class JimakuSubtitleSource implements SearchSource<JimakuDataDTO, FileJimakuDTO> {
+class JimakuSubtitleSource implements SearchSource<JimakuDataDTO, JimakuFileOrGroupDTO> {
   @override
   String get key => SearchSourceKeys.jimaku;
 
@@ -30,6 +32,10 @@ class JimakuSubtitleSource implements SearchSource<JimakuDataDTO, FileJimakuDTO>
     'includeUnverified': true,
   };
 
+  // Track expanded groups and raw files locally
+  final Set<String> _expandedGroups = {};
+  List<FileJimakuDTO> _rawFilesCache = [];
+
   Future<JimakuService> _service(WidgetRef ref) {
     return ref.read(jimakuServiceProvider.future);
   }
@@ -37,6 +43,8 @@ class JimakuSubtitleSource implements SearchSource<JimakuDataDTO, FileJimakuDTO>
   @override
   Future<List<JimakuDataDTO>> search(
       String query, Map<String, dynamic> filters, WidgetRef ref) async {
+    _expandedGroups.clear(); 
+    _rawFilesCache = [];
     final service = await _service(ref);
     final results = await service.searchJumakuObjects(
       query: query,
@@ -54,21 +62,61 @@ class JimakuSubtitleSource implements SearchSource<JimakuDataDTO, FileJimakuDTO>
   }
 
   @override
-  Future<List<FileJimakuDTO>> getFiles(
+  Future<List<JimakuFileOrGroupDTO>> getFiles(
       JimakuDataDTO entry, Map<String, dynamic> filters, WidgetRef ref) async {
     final service = await _service(ref);
-    return service.getFiles(entry.id);
+    _rawFilesCache = await service.getFiles(entry.id);
+    
+    final groups = JimakuClusteringUtil.groupFiles(_rawFilesCache);
+    return _flattenGroups(groups);
+  }
+
+  void _toggleGroup(String name, WidgetRef ref) {
+    if (_expandedGroups.contains(name)) {
+      _expandedGroups.remove(name);
+    } else {
+      _expandedGroups.add(name);
+    }
+    
+    final groups = JimakuClusteringUtil.groupFiles(_rawFilesCache);
+    final flattened = _flattenGroups(groups);
+    ref.read(filesProvider(key).notifier).state = flattened;
+  }
+
+  List<JimakuFileOrGroupDTO> _flattenGroups(List<JimakuGroup> groups) {
+    final List<JimakuFileOrGroupDTO> result = [];
+    for (var group in groups) {
+      final bool isExpanded = _expandedGroups.contains(group.name);
+      
+      if (group.files.length == 1) {
+        result.add(JimakuFileOrGroupDTO(file: group.files.first));
+        continue;
+      }
+
+      result.add(JimakuFileOrGroupDTO(group: group..isExpanded = isExpanded));
+      
+      if (isExpanded) {
+        for (var file in group.files) {
+          result.add(JimakuFileOrGroupDTO(file: file));
+        }
+      }
+    }
+    return result;
   }
 
   @override
   Future<String> resolve(dynamic selected, WidgetRef ref) async {
-    final file = selected as FileJimakuDTO;
+    final item = selected as JimakuFileOrGroupDTO;
+    if (item.isGroup) throw Exception('Cannot resolve a group');
+    
+    final file = item.file!;
     final service = await _service(ref);
     return service.downloadAndCacheFile(file.url, preferredName: file.name);
   }
 
   @override
   Widget buildFilterBar(BuildContext context, WidgetRef ref) {
+    // ... existing filter bar logic ...
     final filters = ref.watch(searchFiltersProvider(key));
     final animeOnly = filters['animeOnly'] as bool? ?? true;
     final includeAdult = filters['includeAdult'] as bool? ?? false;
@@ -145,16 +193,105 @@ class JimakuSubtitleSource implements SearchSource<JimakuDataDTO, FileJimakuDTO>
   }
 
   @override
-  Widget buildFileCard(FileJimakuDTO file, bool isActive, VoidCallback onTap) {
-    return JimakuFileTile(file: file, isActive: isActive, onTap: onTap);
+  Widget buildFileCard(JimakuFileOrGroupDTO item, bool isActive, VoidCallback onTap) {
+    if (item.isGroup) {
+      final group = item.group!;
+      return Consumer(
+        builder: (context, ref, child) {
+          return _JimakuGroupTile(
+            group: group,
+            onTap: () => _toggleGroup(group.name, ref),
+          );
+        },
+      );
+    }
+    
+    // It's a file. 
+    final bool isSubItem = _expandedGroups.contains(JimakuClusteringUtil.groupFiles([item.file!]).first.name) 
+        || _expandedGroups.any((g) => item.file!.name.contains(g));
+
+    return JimakuFileTile(
+      file: item.file!,
+      isActive: isActive,
+      onTap: onTap,
+      isSubItem: isSubItem,
+    );
   }
 
   @override
   String entryId(JimakuDataDTO entry) => entry.id.toString();
 
   @override
-  String fileId(FileJimakuDTO file) => file.url;
+  String fileId(JimakuFileOrGroupDTO item) => item.id;
 
   @override
   String entryLabel(JimakuDataDTO entry) => entry.displayTitle;
+}
+
+class _JimakuGroupTile extends StatelessWidget {
+  final JimakuGroup group;
+  final VoidCallback onTap;
+
+  const _JimakuGroupTile({required this.group, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.deepPurpleAccent.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: Colors.deepPurpleAccent.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                group.isExpanded ? Icons.folder_open : Icons.folder,
+                color: Colors.deepPurpleAccent,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  group.name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.deepPurpleAccent.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${group.files.length} files',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.deepPurpleAccent,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                group.isExpanded ? Icons.expand_less : Icons.expand_more,
+                color: Colors.deepPurpleAccent,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

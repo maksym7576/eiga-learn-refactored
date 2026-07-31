@@ -1,4 +1,4 @@
-import 'package:eiga/backend/data/dto/AIModelSettingsDTO.dart';
+import 'package:eiga/backend/data/dto/AiModelSettingsDTO.dart';
 import 'package:eiga/config/modelsUrl/AIModelsURLData.dart';
 import 'package:flutter/material.dart';
 
