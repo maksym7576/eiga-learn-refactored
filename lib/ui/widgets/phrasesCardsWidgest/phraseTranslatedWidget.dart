@@ -142,7 +142,7 @@ class _PhraseTranslatedContent extends StatelessWidget {
       ..sort((a, b) => a.translatedPositionIndex.first.compareTo(b.translatedPositionIndex.first));
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
         _WordsSection(
@@ -187,8 +187,12 @@ class _WordsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final languageConfig = ReadingTypeLanguageConfigRegistry.getConfing('japanese');
+    final needsSpacing = languageConfig.spacingOptions.contains(mainOption);
+
     return Wrap(
-      spacing: PhraseListStyles.wordSpacing,
+      alignment: WrapAlignment.center,
+      spacing: needsSpacing ? PhraseListStyles.wordSpacingStandard : 0,
       runSpacing: PhraseListStyles.wordRunSpacing,
       crossAxisAlignment: WrapCrossAlignment.end, // Вирівнювання по низу для японського тексту
       children: allWords.map((word) {
@@ -201,6 +205,7 @@ class _WordsSection extends StatelessWidget {
           cleanedAdditionalWord: additionalText,
           onTap: () => onToggleSelection(word.blockId),
           config: config,
+          needsSpacing: needsSpacing,
         );
       }).toList(),
     );
@@ -213,6 +218,7 @@ class _WordItem extends StatelessWidget {
   final String cleanedAdditionalWord;
   final VoidCallback onTap;
   final SubtitleConfig? config;
+  final bool needsSpacing;
 
   const _WordItem({
     required this.isSelected,
@@ -220,32 +226,41 @@ class _WordItem extends StatelessWidget {
     required this.cleanedAdditionalWord,
     required this.onTap,
     this.config,
+    required this.needsSpacing,
   });
 
   @override
   Widget build(BuildContext context) {
+    final origSize = config?.fontSizeOriginal ?? PhraseListStyles.fontSizeMainWord;
+    final addSize = config?.fontSizeAdditional ?? PhraseListStyles.fontSizeAdditionalWord;
+
     final additionalStyle = PhraseListStyles.getWordTextStyle(
       isSelected: isSelected,
       isAdditional: true,
     ).copyWith(
-      fontSize: (config?.fontSizeAdditional ?? PhraseListStyles.fontSizeAdditionalWord) * (config?.globalScale ?? 1.0),
+      fontSize: addSize,
       fontWeight: config?.isBoldAdditional == true ? FontWeight.bold : null,
       fontStyle: config?.isItalicAdditional == true ? FontStyle.italic : null,
+      height: 1.1,
     );
     final mainStyle = PhraseListStyles.getWordTextStyle(
       isSelected: isSelected,
       isAdditional: false,
     ).copyWith(
-      fontSize: (config?.fontSizeOriginal ?? PhraseListStyles.fontSizeMainWord) * (config?.globalScale ?? 1.0),
+      fontSize: origSize,
       fontWeight: config?.isBoldOriginal == true ? FontWeight.bold : null,
       fontStyle: config?.isItalicOriginal == true ? FontStyle.italic : null,
+      height: 1.1,
+      letterSpacing: needsSpacing ? null : 0,
     );
 
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: PhraseListStyles.wordPadding),
+        padding: EdgeInsets.symmetric(
+          horizontal: isSelected ? origSize * 0.05 : (needsSpacing ? origSize * 0.05 : 0),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -282,6 +297,8 @@ class _BlocksSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final transSize = config?.fontSizeTranslation ?? PhraseListStyles.fontSizeBlock;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4.0),
       child: Text.rich(
@@ -294,7 +311,7 @@ class _BlocksSection extends StatelessWidget {
               style: PhraseListStyles.getBlockTextStyle(
                 isSelected: isSelected,
               ).copyWith(
-                fontSize: (config?.fontSizeTranslation ?? PhraseListStyles.fontSizeBlock) * (config?.globalScale ?? 1.0),
+                fontSize: transSize,
                 fontWeight: config?.isBoldTranslation == true ? FontWeight.bold : (isSelected ? FontWeight.bold : null),
                 fontStyle: config?.isItalicTranslation == true ? FontStyle.italic : null,
               ),
@@ -304,7 +321,7 @@ class _BlocksSection extends StatelessWidget {
         ),
         softWrap: true,
         overflow: TextOverflow.visible,
-        textAlign: TextAlign.start,
+        textAlign: TextAlign.center,
       ),
     );
   }

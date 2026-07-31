@@ -151,7 +151,7 @@ class _FullScreenPhraseContent extends StatelessWidget {
       decoration: BoxDecoration(
         color: config?.backgroundEnabled == true 
             ? Color(config!.backgroundColor) 
-            : Colors.black.withOpacity(0.4),
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -205,8 +205,11 @@ class _FullScreenWordsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final languageConfig = ReadingTypeLanguageConfigRegistry.getConfing('japanese');
+    final needsSpacing = languageConfig.spacingOptions.contains(mainOption);
+
     return Wrap(
-      spacing: 8,
+      spacing: needsSpacing ? 8 : 0,
       runSpacing: 4,
       alignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.end,
@@ -220,6 +223,7 @@ class _FullScreenWordsSection extends StatelessWidget {
           isSelected: selectedBlockId == word.blockId,
           onTap: isLocked ? () => onToggleSelection(word.blockId) : null,
           config: config,
+          needsSpacing: needsSpacing,
         );
       }).toList(),
     );
@@ -232,6 +236,7 @@ class _FullScreenWordItem extends StatelessWidget {
   final bool isSelected;
   final VoidCallback? onTap;
   final SubtitleConfig? config;
+  final bool needsSpacing;
 
   const _FullScreenWordItem({
     required this.mainWord,
@@ -239,23 +244,31 @@ class _FullScreenWordItem extends StatelessWidget {
     required this.isSelected,
     this.onTap,
     this.config,
+    required this.needsSpacing,
   });
 
   @override
   Widget build(BuildContext context) {
-    const shadow = [
-      Shadow(offset: Offset(-1.5, -1.5), color: Colors.black),
-      Shadow(offset: Offset(1.5, -1.5), color: Colors.black),
-      Shadow(offset: Offset(1.5, 1.5), color: Colors.black),
-      Shadow(offset: Offset(-1.5, 1.5), color: Colors.black),
+    final origSize = config?.fontSizeOriginal ?? 28.0;
+    final addSize = config?.fontSizeAdditional ?? 16.0;
+    
+    final shadowOffset = origSize * 0.05;
+    final shadow = [
+      Shadow(offset: Offset(-shadowOffset, -shadowOffset), color: Colors.black),
+      Shadow(offset: Offset(shadowOffset, -shadowOffset), color: Colors.black),
+      Shadow(offset: Offset(shadowOffset, shadowOffset), color: Colors.black),
+      Shadow(offset: Offset(-shadowOffset, shadowOffset), color: Colors.black),
     ];
 
     final content = AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: EdgeInsets.symmetric(
+        horizontal: isSelected ? origSize * 0.2 : (needsSpacing ? origSize * 0.2 : 0),
+        vertical: origSize * 0.05,
+      ),
       decoration: BoxDecoration(
         color: isSelected ? Colors.yellowAccent : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(origSize * 0.25),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -265,21 +278,24 @@ class _FullScreenWordItem extends StatelessWidget {
             Text(
               additionalWord,
               style: TextStyle(
-                fontSize: (config?.fontSizeAdditional ?? 16) * (config?.globalScale ?? 1.0),
+                fontSize: addSize,
                 color: isSelected ? Colors.black : Colors.white,
                 fontWeight: config?.isBoldAdditional == true ? FontWeight.bold : FontWeight.w500,
                 fontStyle: config?.isItalicAdditional == true ? FontStyle.italic : FontStyle.normal,
                 shadows: isSelected ? null : shadow,
+                height: 1.1,
               ),
             ),
           Text(
             mainWord,
             style: TextStyle(
-              fontSize: (config?.fontSizeOriginal ?? 28) * (config?.globalScale ?? 1.0),
+              fontSize: origSize,
               color: isSelected ? Colors.black : Colors.white,
               fontWeight: config?.isBoldOriginal == true ? FontWeight.bold : FontWeight.bold,
               fontStyle: config?.isItalicOriginal == true ? FontStyle.italic : FontStyle.normal,
               shadows: isSelected ? null : shadow,
+              height: 1.1,
+              letterSpacing: needsSpacing ? null : 0,
             ),
           ),
         ],
@@ -315,17 +331,20 @@ class _FullScreenBlocksSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const shadowBase = [
-      Shadow(offset: Offset(-1, -1), color: Colors.black),
-      Shadow(offset: Offset(1, -1), color: Colors.black),
-      Shadow(offset: Offset(1, 1), color: Colors.black),
-      Shadow(offset: Offset(-1, 1), color: Colors.black),
+    final transSize = config?.fontSizeTranslation ?? 20.0;
+    final shadowOffset = transSize * 0.05;
+    
+    final shadowBase = [
+      Shadow(offset: Offset(-shadowOffset, -shadowOffset), color: Colors.black),
+      Shadow(offset: Offset(shadowOffset, -shadowOffset), color: Colors.black),
+      Shadow(offset: Offset(shadowOffset, shadowOffset), color: Colors.black),
+      Shadow(offset: Offset(-shadowOffset, shadowOffset), color: Colors.black),
     ];
 
     return Wrap(
       alignment: WrapAlignment.center,
-      spacing: 4,
-      runSpacing: 4,
+      spacing: transSize * 0.1,
+      runSpacing: transSize * 0.1,
       children: blocksList.map((block) {
         final isSelected = selectedBlockId == block.id;
         final blockText = block.blockTranslation?.trim() ?? '';
@@ -334,15 +353,15 @@ class _FullScreenBlocksSection extends StatelessWidget {
           onTap: isLocked ? () => onToggleSelection(block.id) : null,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            padding: EdgeInsets.symmetric(horizontal: transSize * 0.15, vertical: transSize * 0.05),
             decoration: BoxDecoration(
               color: isSelected ? Colors.yellowAccent : Colors.transparent,
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(transSize * 0.3),
             ),
             child: Text(
               blockText,
               style: TextStyle(
-                fontSize: (config?.fontSizeTranslation ?? 20) * (config?.globalScale ?? 1.0),
+                fontSize: transSize,
                 color: isSelected ? Colors.black : Colors.yellowAccent,
                 fontStyle: (config?.isItalicTranslation ?? true) ? FontStyle.italic : FontStyle.normal,
                 fontWeight: (config?.isBoldTranslation ?? false || isSelected) ? FontWeight.bold : FontWeight.normal,

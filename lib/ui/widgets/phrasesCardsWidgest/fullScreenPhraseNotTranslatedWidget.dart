@@ -17,11 +17,15 @@ class FullScreenPhraseNotTranslatedWidget extends ConsumerWidget {
     final subtitleSettings = ref.watch(subtitleSettingsNotifierProvider).value;
     final config = subtitleSettings?.fullScreen;
 
-    const shadow = [
-      Shadow(offset: Offset(-1.5, -1.5), color: Colors.black),
-      Shadow(offset: Offset(1.5, -1.5), color: Colors.black),
-      Shadow(offset: Offset(1.5, 1.5), color: Colors.black),
-      Shadow(offset: Offset(-1.5, 1.5), color: Colors.black),
+    final origSize = config?.fontSizeOriginal ?? 28.0;
+    final addSize = config?.fontSizeAdditional ?? 16.0;
+    
+    final shadowOffset = origSize * 0.05;
+    final shadow = [
+      Shadow(offset: Offset(-shadowOffset, -shadowOffset), color: Colors.black),
+      Shadow(offset: Offset(shadowOffset, -shadowOffset), color: Colors.black),
+      Shadow(offset: Offset(shadowOffset, shadowOffset), color: Colors.black),
+      Shadow(offset: Offset(-shadowOffset, shadowOffset), color: Colors.black),
     ];
 
     return Container(
@@ -29,7 +33,7 @@ class FullScreenPhraseNotTranslatedWidget extends ConsumerWidget {
       decoration: BoxDecoration(
         color: config?.backgroundEnabled == true 
             ? Color(config!.backgroundColor) 
-            : Colors.black.withOpacity(0.4),
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -39,7 +43,7 @@ class FullScreenPhraseNotTranslatedWidget extends ConsumerWidget {
             phraseObject.originalPhrase ?? '',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: (config?.fontSizeOriginal ?? 28) * (config?.globalScale ?? 1.0),
+              fontSize: origSize,
               color: Colors.white,
               fontWeight: config?.isBoldOriginal == true ? FontWeight.bold : FontWeight.bold,
               fontStyle: config?.isItalicOriginal == true ? FontStyle.italic : FontStyle.normal,
@@ -50,10 +54,10 @@ class FullScreenPhraseNotTranslatedWidget extends ConsumerWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
+              SizedBox(
+                width: addSize * 1.0,
+                height: addSize * 1.0,
+                child: const CircularProgressIndicator(
                   strokeWidth: 2,
                   color: Colors.yellowAccent,
                 ),
@@ -62,10 +66,10 @@ class FullScreenPhraseNotTranslatedWidget extends ConsumerWidget {
               Text(
                 phraseObject.isTranslating ? 'Перекладаємо...' : 'Не перекладено',
                 style: TextStyle(
-                  fontSize: (config?.fontSizeAdditional ?? 16) * (config?.globalScale ?? 1.0),
+                  fontSize: addSize,
                   color: Colors.yellowAccent,
                   fontStyle: config?.isItalicAdditional == true ? FontStyle.italic : FontStyle.italic,
-                  shadows: const [Shadow(offset: Offset(1, 1), color: Colors.black)],
+                  shadows: [Shadow(offset: Offset(shadowOffset, shadowOffset), color: Colors.black)],
                 ),
               ),
             ],
