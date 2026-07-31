@@ -5,6 +5,7 @@ import 'package:flick_video_player/flick_video_player.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../providers/FlickManagerState.dart';
@@ -227,20 +228,68 @@ class VideoPlayerWidget extends ConsumerWidget {
                     ),
                   ),
 
-                // 3. Lock button - Always on top and always clickable
-                if (isLocked || showControls)
-                  _buildLockButton(
-                    ref,
-                    isLocked,
-                    top: 10,
-                    right: isFullscreen ? 30 : 12,
-                    size: isFullscreen ? 25 : 12,
+                // 3. Navigation and Status Buttons
+                if (isLocked || showControls || !isFullscreen)
+                  Stack(
+                    children: [
+                      // Back Button - Top Left
+                      if (!isLocked)
+                        _buildBackButton(
+                          context,
+                          top: isFullscreen ? 20 : 10,
+                          left: isFullscreen ? 30 : 12,
+                          size: isFullscreen ? 25 : 22,
+                        ),
+                      // Lock Button - Top Right
+                      _buildLockButton(
+                        ref,
+                        isLocked,
+                        top: isFullscreen ? 20 : 10,
+                        right: isFullscreen ? 30 : 12,
+                        size: isFullscreen ? 25 : 22,
+                      ),
+                    ],
                   ),
               ],
             );
           },
         );
       },
+    );
+  }
+
+  Widget _buildBackButton(
+    BuildContext context, {
+    required double top,
+    required double left,
+    required double size,
+  }) {
+    return Positioned(
+      top: top,
+      left: left,
+      child: GestureDetector(
+        onTap: () {
+          // Force exit fullscreen if active before popping
+          final flickManager = ProviderScope.containerOf(context).read(flickManagerProvider).flickManager;
+          if (flickManager?.flickControlManager?.isFullscreen == true) {
+            flickManager?.flickControlManager?.exitFullscreen();
+          }
+          GoRouter.of(context).go('/main');
+        },
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.4),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white10, width: 1),
+          ),
+          child: Icon(
+            Icons.arrow_back_rounded,
+            color: Colors.white,
+            size: size,
+          ),
+        ),
+      ),
     );
   }
 
@@ -254,28 +303,23 @@ class VideoPlayerWidget extends ConsumerWidget {
     return Positioned(
       top: top,
       right: right,
-      child: SafeArea(
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapDown: (details) {
-            debugPrint('[LOCK] Button TapDown');
-          },
-          onTap: () {
-            debugPrint('[LOCK] Toggling lock. Current: $isLocked');
-            ref.read(isLockedVideoProvider.notifier).update((state) => !state);
-          },
-          child: Container(
-            padding: const EdgeInsets.all(12), // Increase tap area
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: Colors.white24, width: 1),
-            ),
-            child: Icon(
-              isLocked ? Icons.lock : Icons.lock_open,
-              color: isLocked ? Colors.yellowAccent : Colors.white,
-              size: size,
-            ),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          debugPrint('[LOCK] Toggling lock. Current: $isLocked');
+          ref.read(isLockedVideoProvider.notifier).update((state) => !state);
+        },
+        child: Container(
+          padding: const EdgeInsets.all(10), // Increase tap area
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.4),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white10, width: 1),
+          ),
+          child: Icon(
+            isLocked ? Icons.lock : Icons.lock_open,
+            color: isLocked ? Colors.yellowAccent : Colors.white,
+            size: size,
           ),
         ),
       ),

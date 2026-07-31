@@ -36,29 +36,10 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
 
   Widget _buildPortraitLayout(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final videoHeight = ref.watch(videoHeightProvider);
 
     return Column(
       children: [
-        Stack(
-          children: [
-            VideoPlayerWidget(showDivider: false),
-            Positioned(
-              top: 5,
-              left: 5,
-              child: SafeArea(
-                child: CircleAvatar(
-                  backgroundColor: Colors.black.withOpacity(0.3),
-                  child: IconButton(
-                    onPressed: () => context.go('/main'),
-                    icon: const Icon(Icons.arrow_back),
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+        VideoPlayerWidget(showDivider: false),
 
         // Розділювач для вертикального рисайзу (між плеєром і налаштуваннями)
         GestureDetector(
