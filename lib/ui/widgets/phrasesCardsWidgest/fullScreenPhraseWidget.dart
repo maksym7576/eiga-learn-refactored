@@ -1,6 +1,7 @@
 import 'package:eiga/backend/data/models/phraseObject.dart';
 import 'package:eiga/providers/phraseListProvider.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
+import 'package:eiga/providers/subtitle_settings_provider.dart';
 import 'package:eiga/providers/FlickManagerState.dart';
 import 'package:flutter/material.dart';
 import 'package:eiga/ui/widgets/phrasesCardsWidgest/fullScreenPhraseNotTranslatedWidget.dart';
@@ -30,6 +31,8 @@ class FullScreenPhraseWidget extends ConsumerWidget {
 
     final currentTime = ref.watch(playerTimeProvider);
     final phraseAsync = ref.watch(phraseListProvider(id));
+    final subtitleSettings = ref.watch(subtitleSettingsNotifierProvider).value;
+    final config = subtitleSettings?.fullScreen;
 
     return phraseAsync.when(
       data: (phrases) {
@@ -52,25 +55,33 @@ class FullScreenPhraseWidget extends ConsumerWidget {
                 phraseObject: activePhrase,
               );
 
-        return Align(
-          alignment: Alignment.bottomCenter,
-          child: Padding(
-            padding: EdgeInsets.only(bottom: bottomPadding),
-            child: GestureDetector(
-              onTap: () {
-                final manager = ref.read(flickManagerProvider).flickManager;
-                final isPlaying = manager?.flickVideoManager?.isPlaying ?? false;
-                if (isPlaying) {
-                  manager?.flickControlManager?.pause();
-                } else {
-                  manager?.flickControlManager?.play();
-                }
-              },
-              onTapDown: (_) {},
-              behavior: HitTestBehavior.opaque,
-              child: subtitleWidget,
-            ),
-          ),
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final double offset = config?.groupOffset ?? 0.1;
+            // groupOffset: 0.0 is bottom, 1.0 is top. 
+            // We use Align with a calculated bottom padding or similar.
+            
+            return Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: EdgeInsets.only(bottom: offset * constraints.maxHeight),
+                child: GestureDetector(
+                  onTap: () {
+                    final manager = ref.read(flickManagerProvider).flickManager;
+                    final isPlaying = manager?.flickVideoManager?.isPlaying ?? false;
+                    if (isPlaying) {
+                      manager?.flickControlManager?.pause();
+                    } else {
+                      manager?.flickControlManager?.play();
+                    }
+                  },
+                  onTapDown: (_) {},
+                  behavior: HitTestBehavior.opaque,
+                  child: subtitleWidget,
+                ),
+              ),
+            );
+          },
         );
       },
       error: (_, __) => const SizedBox.shrink(),

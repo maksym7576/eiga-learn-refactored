@@ -2,9 +2,11 @@ import 'package:eiga/backend/data/dto/PhraseDataDTO.dart';
 import 'package:eiga/backend/data/models/blockObject.dart';
 import 'package:eiga/backend/data/models/phraseObject.dart';
 import 'package:eiga/backend/data/models/wordObject.dart';
+import 'package:eiga/backend/data/models/subtitleSettings.dart';
 import 'package:eiga/config/depacker/readingTypeLanguageConfig.dart';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
+import 'package:eiga/providers/subtitle_settings_provider.dart';
 import 'package:eiga/providers/FlickManagerState.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
@@ -88,6 +90,7 @@ class _FullScreenPhraseTranslatedWidgetState extends ConsumerState<FullScreenPhr
     final mainOption = readingSettings?.mainOption ?? 'original';
     final additionalOption = readingSettings?.additionalOptions ?? '';
     final isLocked = ref.watch(isLockedVideoProvider);
+    final subtitleSettings = ref.watch(subtitleSettingsNotifierProvider).value;
 
     return FutureBuilder<PhraseDataDTO>(
       future: _praseDataDTOFuture,
@@ -108,6 +111,7 @@ class _FullScreenPhraseTranslatedWidgetState extends ConsumerState<FullScreenPhr
           onToggleSelection: _toggleSelection,
           getVersionText: _getVersionText,
           isLocked: isLocked,
+          config: subtitleSettings?.fullScreen,
         );
       },
     );
@@ -123,6 +127,7 @@ class _FullScreenPhraseContent extends StatelessWidget {
   final Function(int?) onToggleSelection;
   final String Function(WordObject, String) getVersionText;
   final bool isLocked;
+  final SubtitleConfig? config;
 
   const _FullScreenPhraseContent({
     required this.blocks,
@@ -133,6 +138,7 @@ class _FullScreenPhraseContent extends StatelessWidget {
     required this.onToggleSelection,
     required this.getVersionText,
     required this.isLocked,
+    this.config,
   });
 
   @override
@@ -143,7 +149,9 @@ class _FullScreenPhraseContent extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.4),
+        color: config?.backgroundEnabled == true 
+            ? Color(config!.backgroundColor) 
+            : Colors.black.withOpacity(0.4),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -158,6 +166,7 @@ class _FullScreenPhraseContent extends StatelessWidget {
             onToggleSelection: onToggleSelection,
             getVersionText: getVersionText,
             isLocked: isLocked,
+            config: config,
           ),
           const SizedBox(height: 8),
           _FullScreenBlocksSection(
@@ -165,6 +174,7 @@ class _FullScreenPhraseContent extends StatelessWidget {
             selectedBlockId: selectedBlockId,
             onToggleSelection: onToggleSelection,
             isLocked: isLocked,
+            config: config,
           ),
         ],
       ),
@@ -180,6 +190,7 @@ class _FullScreenWordsSection extends StatelessWidget {
   final Function(int?) onToggleSelection;
   final String Function(WordObject, String) getVersionText;
   final bool isLocked;
+  final SubtitleConfig? config;
 
   const _FullScreenWordsSection({
     required this.allWords,
@@ -189,6 +200,7 @@ class _FullScreenWordsSection extends StatelessWidget {
     required this.onToggleSelection,
     required this.getVersionText,
     required this.isLocked,
+    this.config,
   });
 
   @override
@@ -207,6 +219,7 @@ class _FullScreenWordsSection extends StatelessWidget {
           additionalWord: additionalText,
           isSelected: selectedBlockId == word.blockId,
           onTap: isLocked ? () => onToggleSelection(word.blockId) : null,
+          config: config,
         );
       }).toList(),
     );
@@ -218,49 +231,59 @@ class _FullScreenWordItem extends StatelessWidget {
   final String additionalWord;
   final bool isSelected;
   final VoidCallback? onTap;
+  final SubtitleConfig? config;
 
   const _FullScreenWordItem({
     required this.mainWord,
     required this.additionalWord,
     required this.isSelected,
     this.onTap,
+    this.config,
   });
 
   @override
   Widget build(BuildContext context) {
-    final shadow = [
-      Shadow(offset: const Offset(-1.5, -1.5), color: isSelected ? Colors.yellow : Colors.black),
-      Shadow(offset: const Offset(1.5, -1.5), color: isSelected ? Colors.yellow : Colors.black),
-      Shadow(offset: const Offset(1.5, 1.5), color: isSelected ? Colors.yellow : Colors.black),
-      Shadow(offset: const Offset(-1.5, 1.5), color: isSelected ? Colors.yellow : Colors.black),
+    const shadow = [
+      Shadow(offset: Offset(-1.5, -1.5), color: Colors.black),
+      Shadow(offset: Offset(1.5, -1.5), color: Colors.black),
+      Shadow(offset: Offset(1.5, 1.5), color: Colors.black),
+      Shadow(offset: Offset(-1.5, 1.5), color: Colors.black),
     ];
 
-    final content = Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        if (additionalWord.isNotEmpty)
+    final content = AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: isSelected ? Colors.yellowAccent : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (additionalWord.isNotEmpty)
+            Text(
+              additionalWord,
+              style: TextStyle(
+                fontSize: (config?.fontSizeAdditional ?? 16) * (config?.globalScale ?? 1.0),
+                color: isSelected ? Colors.black : Colors.white,
+                fontWeight: config?.isBoldAdditional == true ? FontWeight.bold : FontWeight.w500,
+                fontStyle: config?.isItalicAdditional == true ? FontStyle.italic : FontStyle.normal,
+                shadows: isSelected ? null : shadow,
+              ),
+            ),
           Text(
-            additionalWord,
+            mainWord,
             style: TextStyle(
-              fontSize: 16,
-              color: isSelected ? Colors.yellowAccent : Colors.white,
-              fontWeight: FontWeight.w500,
-              shadows: shadow,
+              fontSize: (config?.fontSizeOriginal ?? 28) * (config?.globalScale ?? 1.0),
+              color: isSelected ? Colors.black : Colors.white,
+              fontWeight: config?.isBoldOriginal == true ? FontWeight.bold : FontWeight.bold,
+              fontStyle: config?.isItalicOriginal == true ? FontStyle.italic : FontStyle.normal,
+              shadows: isSelected ? null : shadow,
             ),
           ),
-        Text(
-          mainWord,
-          style: TextStyle(
-            fontSize: 28,
-            color: isSelected ? Colors.yellowAccent : Colors.white,
-            fontWeight: FontWeight.bold,
-            shadows: shadow,
-            decoration: isSelected ? TextDecoration.underline : null,
-            decorationColor: Colors.yellowAccent,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
 
     if (onTap != null) {
@@ -280,12 +303,14 @@ class _FullScreenBlocksSection extends StatelessWidget {
   final int? selectedBlockId;
   final Function(int?) onToggleSelection;
   final bool isLocked;
+  final SubtitleConfig? config;
 
   const _FullScreenBlocksSection({
     required this.blocksList,
     required this.selectedBlockId,
     required this.onToggleSelection,
     required this.isLocked,
+    this.config,
   });
 
   @override
@@ -297,34 +322,36 @@ class _FullScreenBlocksSection extends StatelessWidget {
       Shadow(offset: Offset(-1, 1), color: Colors.black),
     ];
 
-    const shadowSelected = [
-      Shadow(offset: Offset(-1, -1), color: Colors.yellow),
-      Shadow(offset: Offset(1, -1), color: Colors.yellow),
-      Shadow(offset: Offset(1, 1), color: Colors.yellow),
-      Shadow(offset: Offset(-1, 1), color: Colors.yellow),
-    ];
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 4,
+      runSpacing: 4,
+      children: blocksList.map((block) {
+        final isSelected = selectedBlockId == block.id;
+        final blockText = block.blockTranslation?.trim() ?? '';
 
-    return Text.rich(
-      TextSpan(
-        children: blocksList.map((block) {
-          final isSelected = selectedBlockId == block.id;
-          final blockText = block.blockTranslation?.trim() ?? '';
-          return TextSpan(
-            text: '$blockText ',
-            style: TextStyle(
-              fontSize: 20,
-              color: isSelected ? Colors.white : Colors.yellowAccent,
-              fontStyle: FontStyle.italic,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              shadows: isSelected ? shadowSelected : shadowBase,
+        return GestureDetector(
+          onTap: isLocked ? () => onToggleSelection(block.id) : null,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.yellowAccent : Colors.transparent,
+              borderRadius: BorderRadius.circular(6),
             ),
-            recognizer: isLocked 
-              ? (TapGestureRecognizer()..onTap = () => onToggleSelection(block.id)) 
-              : null,
-          );
-        }).toList(),
-      ),
-      textAlign: TextAlign.center,
+            child: Text(
+              blockText,
+              style: TextStyle(
+                fontSize: (config?.fontSizeTranslation ?? 20) * (config?.globalScale ?? 1.0),
+                color: isSelected ? Colors.black : Colors.yellowAccent,
+                fontStyle: (config?.isItalicTranslation ?? true) ? FontStyle.italic : FontStyle.normal,
+                fontWeight: (config?.isBoldTranslation ?? false || isSelected) ? FontWeight.bold : FontWeight.normal,
+                shadows: isSelected ? null : shadowBase,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }

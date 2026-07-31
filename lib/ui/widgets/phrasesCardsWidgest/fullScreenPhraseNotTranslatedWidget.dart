@@ -1,8 +1,10 @@
 import 'package:eiga/backend/data/models/phraseObject.dart';
+import 'package:eiga/providers/subtitle_settings_provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class FullScreenPhraseNotTranslatedWidget extends StatelessWidget {
+class FullScreenPhraseNotTranslatedWidget extends ConsumerWidget {
   final PhraseObject phraseObject;
 
   const FullScreenPhraseNotTranslatedWidget({
@@ -11,7 +13,10 @@ class FullScreenPhraseNotTranslatedWidget extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final subtitleSettings = ref.watch(subtitleSettingsNotifierProvider).value;
+    final config = subtitleSettings?.fullScreen;
+
     const shadow = [
       Shadow(offset: Offset(-1.5, -1.5), color: Colors.black),
       Shadow(offset: Offset(1.5, -1.5), color: Colors.black),
@@ -22,7 +27,9 @@ class FullScreenPhraseNotTranslatedWidget extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.4),
+        color: config?.backgroundEnabled == true 
+            ? Color(config!.backgroundColor) 
+            : Colors.black.withOpacity(0.4),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -31,10 +38,11 @@ class FullScreenPhraseNotTranslatedWidget extends StatelessWidget {
           Text(
             phraseObject.originalPhrase ?? '',
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 28,
+            style: TextStyle(
+              fontSize: (config?.fontSizeOriginal ?? 28) * (config?.globalScale ?? 1.0),
               color: Colors.white,
-              fontWeight: FontWeight.bold,
+              fontWeight: config?.isBoldOriginal == true ? FontWeight.bold : FontWeight.bold,
+              fontStyle: config?.isItalicOriginal == true ? FontStyle.italic : FontStyle.normal,
               shadows: shadow,
             ),
           ),
@@ -52,12 +60,12 @@ class FullScreenPhraseNotTranslatedWidget extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                phraseObject.isTranslating ? 'Translating...' : 'Not translated',
-                style: const TextStyle(
-                  fontSize: 16,
+                phraseObject.isTranslating ? 'Перекладаємо...' : 'Не перекладено',
+                style: TextStyle(
+                  fontSize: (config?.fontSizeAdditional ?? 16) * (config?.globalScale ?? 1.0),
                   color: Colors.yellowAccent,
-                  fontStyle: FontStyle.italic,
-                  shadows: [Shadow(offset: Offset(1, 1), color: Colors.black)],
+                  fontStyle: config?.isItalicAdditional == true ? FontStyle.italic : FontStyle.italic,
+                  shadows: const [Shadow(offset: Offset(1, 1), color: Colors.black)],
                 ),
               ),
             ],

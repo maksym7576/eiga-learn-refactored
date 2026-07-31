@@ -2,8 +2,10 @@ import 'package:eiga/backend/data/dto/PhraseDataDTO.dart';
 import 'package:eiga/backend/data/models/blockObject.dart';
 import 'package:eiga/backend/data/models/phraseObject.dart';
 import 'package:eiga/backend/data/models/wordObject.dart';
+import 'package:eiga/backend/data/models/subtitleSettings.dart';
 import 'package:eiga/config/depacker/readingTypeLanguageConfig.dart';
 import 'package:eiga/providers/servicesProviders.dart';
+import 'package:eiga/providers/subtitle_settings_provider.dart';
 import 'package:eiga/providers/FlickManagerState.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
@@ -80,6 +82,7 @@ class _PhraseTranslatedWidgetState extends ConsumerState<PhraseTranslatedWidget>
     final readingSettings = ref.watch(readingTypeNotifierProvider).value;
     final mainOption = readingSettings?.mainOption ?? 'original';
     final additionalOption = readingSettings?.additionalOptions ?? '';
+    final subtitleSettings = ref.watch(subtitleSettingsNotifierProvider).value;
 
     return FutureBuilder<PhraseDataDTO>(
       future: _praseDataDTOFuture,
@@ -105,6 +108,7 @@ class _PhraseTranslatedWidgetState extends ConsumerState<PhraseTranslatedWidget>
           selectedBlockId: _selectedBlockId,
           onToggleSelection: _toggleSelection,
           getVersionText: _getVersionText,
+          config: subtitleSettings?.portrait,
         );
       },
     );
@@ -119,6 +123,7 @@ class _PhraseTranslatedContent extends StatelessWidget {
   final int? selectedBlockId;
   final Function(int?) onToggleSelection;
   final String Function(WordObject, String) getVersionText;
+  final SubtitleConfig? config;
 
   const _PhraseTranslatedContent({
     required this.blocks,
@@ -128,6 +133,7 @@ class _PhraseTranslatedContent extends StatelessWidget {
     required this.selectedBlockId,
     required this.onToggleSelection,
     required this.getVersionText,
+    this.config,
   });
 
   @override
@@ -146,12 +152,14 @@ class _PhraseTranslatedContent extends StatelessWidget {
           selectedBlockId: selectedBlockId,
           onToggleSelection: onToggleSelection,
           getVersionText: getVersionText,
+          config: config,
         ),
         const SizedBox(height: PhraseListStyles.blockSectionSpacing),
         _BlocksSection(
           blocksList: blocksList,
           selectedBlockId: selectedBlockId,
           onToggleSelection: onToggleSelection,
+          config: config,
         ),
       ],
     );
@@ -165,6 +173,7 @@ class _WordsSection extends StatelessWidget {
   final int? selectedBlockId;
   final Function(int?) onToggleSelection;
   final String Function(WordObject, String) getVersionText;
+  final SubtitleConfig? config;
 
   const _WordsSection({
     required this.allWords,
@@ -173,6 +182,7 @@ class _WordsSection extends StatelessWidget {
     required this.selectedBlockId,
     required this.onToggleSelection,
     required this.getVersionText,
+    this.config,
   });
 
   @override
@@ -190,6 +200,7 @@ class _WordsSection extends StatelessWidget {
           cleanedMainWord: mainText,
           cleanedAdditionalWord: additionalText,
           onTap: () => onToggleSelection(word.blockId),
+          config: config,
         );
       }).toList(),
     );
@@ -201,12 +212,14 @@ class _WordItem extends StatelessWidget {
   final String cleanedMainWord;
   final String cleanedAdditionalWord;
   final VoidCallback onTap;
+  final SubtitleConfig? config;
 
   const _WordItem({
     required this.isSelected,
     required this.cleanedMainWord,
     required this.cleanedAdditionalWord,
     required this.onTap,
+    this.config,
   });
 
   @override
@@ -214,10 +227,18 @@ class _WordItem extends StatelessWidget {
     final additionalStyle = PhraseListStyles.getWordTextStyle(
       isSelected: isSelected,
       isAdditional: true,
+    ).copyWith(
+      fontSize: (config?.fontSizeAdditional ?? PhraseListStyles.fontSizeAdditionalWord) * (config?.globalScale ?? 1.0),
+      fontWeight: config?.isBoldAdditional == true ? FontWeight.bold : null,
+      fontStyle: config?.isItalicAdditional == true ? FontStyle.italic : null,
     );
     final mainStyle = PhraseListStyles.getWordTextStyle(
       isSelected: isSelected,
       isAdditional: false,
+    ).copyWith(
+      fontSize: (config?.fontSizeOriginal ?? PhraseListStyles.fontSizeMainWord) * (config?.globalScale ?? 1.0),
+      fontWeight: config?.isBoldOriginal == true ? FontWeight.bold : null,
+      fontStyle: config?.isItalicOriginal == true ? FontStyle.italic : null,
     );
 
     return GestureDetector(
@@ -250,11 +271,13 @@ class _BlocksSection extends StatelessWidget {
   final List<BlockObject> blocksList;
   final int? selectedBlockId;
   final Function(int?) onToggleSelection;
+  final SubtitleConfig? config;
 
   const _BlocksSection({
     required this.blocksList,
     required this.selectedBlockId,
     required this.onToggleSelection,
+    this.config,
   });
 
   @override
@@ -264,11 +287,16 @@ class _BlocksSection extends StatelessWidget {
       child: Text.rich(
         TextSpan(
           children: blocksList.map((block) {
+            final isSelected = selectedBlockId == block.id;
             final blockText = block.blockTranslation?.trim() ?? '';
             return TextSpan(
               text: '$blockText\u2009',
               style: PhraseListStyles.getBlockTextStyle(
-                isSelected: selectedBlockId == block.id,
+                isSelected: isSelected,
+              ).copyWith(
+                fontSize: (config?.fontSizeTranslation ?? PhraseListStyles.fontSizeBlock) * (config?.globalScale ?? 1.0),
+                fontWeight: config?.isBoldTranslation == true ? FontWeight.bold : (isSelected ? FontWeight.bold : null),
+                fontStyle: config?.isItalicTranslation == true ? FontStyle.italic : null,
               ),
               recognizer: TapGestureRecognizer()..onTap = () => onToggleSelection(block.id),
             );

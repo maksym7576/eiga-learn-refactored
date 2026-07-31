@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:eiga/providers/videoDataProviders.dart';
 import 'package:eiga/ui/widgets/playerWidgets/readingTypeSelectorWidget.dart';
+import 'package:eiga/ui/widgets/playerWidgets/subtitleSelectorWidget.dart';
 import 'package:eiga/ui/widgets/playerWidgets/timerShiftEditorWidget.dart';
 import 'package:eiga/ui/widgets/playerWidgets/videoInfoStatsWidget.dart';
 import 'package:flutter/material.dart';
@@ -48,6 +49,14 @@ class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
       context: context,
       heightFactor: 0.85,
       child: const ReadingTypeSelectorWidget(),
+    );
+  }
+
+  void _showSubtitleSettingsDialog(BuildContext context) {
+    AppBottomSheet.show(
+      context: context,
+      heightFactor: 0.85,
+      child: const SubtitleSelectorWidget(),
     );
   }
 
@@ -126,6 +135,7 @@ class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
             if (value == 1) _showTimeEditDialog(context);
             if (value == 2) _showReadingTypeDialog(context);
             if (value == 3) _showAiStatusDialog(context);
+            if (value == 4) _showSubtitleSettingsDialog(context);
           },
         ),
       ],
@@ -166,6 +176,12 @@ class _MoreSettingsButton extends StatelessWidget {
           icon: Icons.menu_book_rounded,
           color: _IconPalette.reading,
           label: 'Reading settings',
+        ),
+        _menuItem(
+          value: 4,
+          icon: Icons.subtitles_rounded,
+          color: _IconPalette.subtitles,
+          label: 'Subtitle display',
         ),
         _menuItem(
           value: 3,
