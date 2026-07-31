@@ -27,14 +27,11 @@ class VideoInfoStatsWidget extends ConsumerWidget {
             totalCount - translatedCount - translatingCount;
 
         return Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _statItem(Icons.list, Colors.grey, totalCount.toString()),
-            const SizedBox(width: 8),
             _statItem(Icons.check_circle_outline, Colors.green, translatedCount.toString()),
-            const SizedBox(width: 8),
             _statItem(Icons.sync, Colors.orange, translatingCount.toString()),
-            const SizedBox(width: 8),
             _statItem(Icons.hourglass_empty, Colors.blue, notTranslatedCount.toString()),
           ],
         );

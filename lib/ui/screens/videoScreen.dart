@@ -22,48 +22,80 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
     final splitRatio = ref.watch(videoSplitRatioProvider);
     final isFullscreen = ref.watch(isFullScreenProvider);
 
-    return Scaffold(
-      body: OrientationBuilder(
-        builder: (context, orientation) {
-          // Якщо ми в повноекранному режимі, форсуємо ландшафтний макет, 
-          // щоб уникнути стрибків інтерфейсу під оверлеєм плеєра.
-          final effectiveOrientation = isFullscreen ? Orientation.landscape : orientation;
+    final orientation = MediaQuery.of(context).orientation;
+    // Якщо ми в повноекранному режимі, форсуємо ландшафтний макет, 
+    // щоб уникнути стрибків інтерфейсу під оверлеєм плеєра.
+    final effectiveOrientation = isFullscreen ? Orientation.landscape : orientation;
 
-          if (effectiveOrientation == Orientation.landscape) {
-            return _buildLandscapeLayout(context, splitRatio);
-          } else {
-            return _buildPortraitLayout(context);
-          }
-        },
-      ),
+    return Scaffold(
+      body: effectiveOrientation == Orientation.landscape
+          ? _buildLandscapeLayout(context, splitRatio)
+          : _buildPortraitLayout(context),
     );
   }
 
   Widget _buildPortraitLayout(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final videoHeight = ref.watch(videoHeightProvider);
+
     return Column(
       children: [
-        const SizedBox(height: 30), // Відступ зверху
-
-        // Плеєр з кнопкою назад
         Stack(
           children: [
-            VideoPlayerWidget(isLandscapeSplit: false),
+            VideoPlayerWidget(showDivider: false),
             Positioned(
-              top: 0,
-              left: 0,
+              top: 10,
+              left: 10,
               child: SafeArea(
-                child: IconButton(
-                  onPressed: () => context.go('/main'),
-                  icon: const Icon(Icons.arrow_back),
-                  color: Colors.white,
+                child: CircleAvatar(
+                  backgroundColor: Colors.black.withOpacity(0.3),
+                  child: IconButton(
+                    onPressed: () => context.go('/main'),
+                    icon: const Icon(Icons.arrow_back),
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
           ],
         ),
 
-        // Налаштування
-        const VideoSettingsNotFullScreenWidget(),
+        // Налаштування (під відео)
+        VideoSettingsNotFullScreenWidget(
+          isExpanded: videoHeight > 300, // Адаптивність за висотою
+        ),
+
+        // Розділювач для вертикального рисайзу (під налаштуваннями)
+        GestureDetector(
+          onVerticalDragUpdate: (details) {
+            final currentHeight = ref.read(videoHeightProvider);
+            double newHeight = currentHeight + details.delta.dy;
+            
+            // Обмеження: мінімум 150, максимум 70% екрана
+            if (newHeight < 150) newHeight = 150;
+            if (newHeight > screenHeight * 0.7) newHeight = screenHeight * 0.7;
+            
+            ref.read(videoHeightProvider.notifier).state = newHeight;
+          },
+          child: MouseRegion(
+            cursor: SystemMouseCursors.resizeRow,
+            child: Container(
+              height: 12,
+              width: double.infinity,
+              color: Colors.deepPurple[50],
+              child: Center(
+                child: Container(
+                  width: 50,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurple[200],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
 
         // Список фраз займає весь залишок місця
         const Expanded(
@@ -85,14 +117,30 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Відео займає стільки місця, скільки диктує AspectRatio
-              VideoPlayerWidget(isLandscapeSplit: true),
+              // Плеєр із заокругленими кутами для сучасного вигляду
+              // Обмежуємо висоту відео, щоб завжди залишалось місце для налаштувань
+              Padding(
+                padding: const EdgeInsets.only(top: 16, left: 16, right: 16),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.6,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: VideoPlayerWidget(isLandscapeSplit: true),
+                  ),
+                ),
+              ),
               
-              // Налаштування одразу під відео
-              const VideoSettingsNotFullScreenWidget(),
+              const SizedBox(height: 12),
               
-              // Заповнюємо залишок місця знизу, щоб налаштування не висіли в повітрі
-              const Spacer(),
+              // Налаштування адаптивно заповнюють простір
+              const Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(left: 16, right: 16, bottom: 8),
+                  child: VideoSettingsNotFullScreenWidget(isExpanded: true),
+                ),
+              ),
             ],
           ),
         ),

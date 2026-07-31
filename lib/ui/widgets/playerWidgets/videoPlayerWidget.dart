@@ -19,6 +19,7 @@ class VideoPlayerWidget extends ConsumerWidget {
   final double? minHeight;
   final double? maxHeight;
   final bool isLandscapeSplit;
+  final bool showDivider;
 
   // Стабільний ключ, який зберігається однаковим і в portrait, і в
   // landscape гілці дерева — це додатковий страхувальний трос, щоб
@@ -29,6 +30,7 @@ class VideoPlayerWidget extends ConsumerWidget {
     this.minHeight = 150,
     this.maxHeight,
     this.isLandscapeSplit = false,
+    this.showDivider = true,
   }) : super(key: _stableKey);
 
   void _handleDragUpdate(WidgetRef ref, double screenHeight, DragUpdateDetails details) {
@@ -154,7 +156,7 @@ class VideoPlayerWidget extends ConsumerWidget {
       ),
     );
 
-    if (isLandscapeSplit) {
+    if (isLandscapeSplit || !showDivider) {
       return videoPlayerPart;
     }
 
