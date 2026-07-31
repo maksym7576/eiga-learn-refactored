@@ -1,13 +1,13 @@
 import 'dart:async';
 
-import 'package:eiga/backend/data/dto/AIModelSettingsDTO.dart';
+import 'package:eiga/backend/data/dto/AiModelSettingsDTO.dart';
 import 'package:eiga/ui/widgets/appBarWidgets/modelsPreviewWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../config/modelsUrl/TranslationPipelineStep.dart';
-import '../../../providers/AiModelsStateProvuder.dart';
+import '../../../providers/ai_models_state_provider.dart';
 import '../dialogs/AppBottomSheet.dart';
 
 class AppBarWidget extends ConsumerStatefulWidget implements PreferredSizeWidget {

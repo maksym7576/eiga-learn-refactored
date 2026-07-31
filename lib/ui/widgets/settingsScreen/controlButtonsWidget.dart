@@ -1,6 +1,7 @@
 import 'package:eiga/config/secureStorage.dart';
 import 'package:eiga/providers/localStoragesProviders.dart';
 import 'package:eiga/ui/widgets/settingsScreen/appConfigsSelectorWidget.dart';
+import 'package:eiga/ui/widgets/settingsScreen/aiModelsSettingsWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -290,11 +291,11 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
           dialogBuilder: (context) => const AppConfigsSelectorWidget(),
         ),
         const SizedBox(height: 5),
-        // _settingsButton(
-        //   context,
-        //   title: 'AI Models',
-        //   dialogBuilder: (context) => const AiModelsSettingsWidget(),
-        // ),
+        _settingsButton(
+          context,
+          title: 'AI Models',
+          dialogBuilder: (context) => const AiModelsSettingsWidget(),
+        ),
       ],
     );
   }

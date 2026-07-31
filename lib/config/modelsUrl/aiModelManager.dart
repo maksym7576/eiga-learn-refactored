@@ -1,4 +1,4 @@
-import 'package:eiga/backend/data/dto/AIModelSettingsDTO.dart';
+import 'package:eiga/backend/data/dto/AiModelSettingsDTO.dart';
 import 'package:eiga/config/modelsUrl/AIModelsURLData.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -40,6 +40,14 @@ class AiModelManager {
   Future<AiModelEntry> getActiveModel(String tag) async {
     final name = await getActiveModelName(tag);
     return _entryOf(name);
+  }
+
+  Future<String> getCurrentModelName() async {
+    return await getActiveModelName('active');
+  }
+
+  Future<void> setCurrentModel(String name) async {
+    await setActiveModel(tag: 'active', modelName: name);
   }
 
   Future<void> setActiveModel({required String tag, required String modelName}) async {

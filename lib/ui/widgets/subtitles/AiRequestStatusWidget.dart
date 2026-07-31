@@ -4,6 +4,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../backend/exeption/AiUserFacingError.dart';
 import '../../../providers/AiRequestPhase.dart';
+import '../settingsScreen/aiModelsSettingsWidget.dart';
 
 final aiRequestResultProvider = StateProvider<AiRequestResult?>((ref) => null);
 
@@ -23,18 +24,17 @@ class AiRequestStatusWidget extends ConsumerWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (result != null && !result.isOk) ...[
-          const SizedBox(height: 16),
-          const Text(
-            'AI Request Status',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: Colors.deepPurpleAccent,
-            ),
+        const SizedBox(height: 16),
+        const Text(
+          'AI Insights',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+            color: Colors.deepPurpleAccent,
+            letterSpacing: 0.5,
           ),
-          const SizedBox(height: 8),
-        ],
+        ),
+        const SizedBox(height: 16),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 250),
           transitionBuilder: (child, anim) => FadeTransition(
@@ -54,7 +54,11 @@ class AiRequestStatusWidget extends ConsumerWidget {
             onAction: onAction == null ? null : () => onAction!(result),
           ),
         ),
-        if (result != null && !result.isOk) const SizedBox(height: 20),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: AiModelsSettingsWidget(),
+        ),
+        const SizedBox(height: 20),
       ],
     );
   }

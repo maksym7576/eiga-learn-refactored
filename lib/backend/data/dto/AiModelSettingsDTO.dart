@@ -46,6 +46,13 @@ class AiModelSettingsDTO {
     this.lastUpdated,
   });
 
+  get usageColor {
+    final ratio = used / currentMaxLimit;
+    if (ratio > 0.9) return 0xFFEF4444; // Red 500
+    if (ratio > 0.7) return 0xFFF59E0B; // Amber 500
+    return 0xFF10B981; // Emerald 500
+  }
+
   AiModelSettingsDTO copyWith({
     String? name,
     String? url,
