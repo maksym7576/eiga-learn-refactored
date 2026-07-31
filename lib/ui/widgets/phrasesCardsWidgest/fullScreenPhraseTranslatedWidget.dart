@@ -5,6 +5,7 @@ import 'package:eiga/backend/data/models/wordObject.dart';
 import 'package:eiga/config/depacker/readingTypeLanguageConfig.dart';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
+import 'package:eiga/providers/FlickManagerState.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -58,7 +59,15 @@ class _FullScreenPhraseTranslatedWidgetState extends ConsumerState<FullScreenPhr
 
   void _toggleSelection(int? blockId) {
     if (blockId == null) return;
-    setState(() => _selectedBlockId = (_selectedBlockId == blockId) ? null : blockId);
+    setState(() {
+      _selectedBlockId = (_selectedBlockId == blockId) ? null : blockId;
+      final controlManager = ref.read(flickManagerProvider).flickManager?.flickControlManager;
+      if (_selectedBlockId != null) {
+        controlManager?.pause();
+      } else {
+        controlManager?.play();
+      }
+    });
   }
 
   String _getVersionText(WordObject word, String key) {

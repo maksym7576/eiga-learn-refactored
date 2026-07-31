@@ -1,6 +1,7 @@
 import 'package:eiga/backend/data/models/phraseObject.dart';
 import 'package:eiga/providers/phraseListProvider.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
+import 'package:eiga/providers/FlickManagerState.dart';
 import 'package:flutter/material.dart';
 import 'package:eiga/ui/widgets/phrasesCardsWidgest/fullScreenPhraseNotTranslatedWidget.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -56,7 +57,15 @@ class FullScreenPhraseWidget extends ConsumerWidget {
           child: Padding(
             padding: EdgeInsets.only(bottom: bottomPadding),
             child: GestureDetector(
-              onTap: () {},
+              onTap: () {
+                final manager = ref.read(flickManagerProvider).flickManager;
+                final isPlaying = manager?.flickVideoManager?.isPlaying ?? false;
+                if (isPlaying) {
+                  manager?.flickControlManager?.pause();
+                } else {
+                  manager?.flickControlManager?.play();
+                }
+              },
               onTapDown: (_) {},
               behavior: HitTestBehavior.opaque,
               child: subtitleWidget,
