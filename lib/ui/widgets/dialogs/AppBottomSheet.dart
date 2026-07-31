@@ -132,7 +132,7 @@ class _DraggableSheetBodyState extends State<_DraggableSheetBody>
         width: double.infinity,
         decoration: BoxDecoration(
           color: widget.backgroundColor ??
-              (widget.isDark ? Colors.grey[900] : Colors.white),
+              (widget.isDark ? Colors.grey[900] : Colors.deepPurple[50]),
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),

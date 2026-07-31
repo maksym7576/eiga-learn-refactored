@@ -94,37 +94,22 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
         // Ліва частина: Відео + Налаштування
         Container(
           width: leftWidth,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.deepPurple.shade900,
-                Colors.black,
-              ],
-            ),
-          ),
+          color: Colors.deepPurple[50],
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 16), // Відступ зверху
-              
-              // Плеєр з закругленими кутами та відступами по боках
+              // Плеєр з закругленими кутами
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Center(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: VideoPlayerWidget(isLandscapeSplit: true),
-                    ),
+                child: Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: VideoPlayerWidget(isLandscapeSplit: true),
                   ),
                 ),
               ),
               
-              const SizedBox(height: 8),
               const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 child: VideoSettingsNotFullScreenWidget(),
               ),
             ],
@@ -142,15 +127,15 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
           child: MouseRegion(
             cursor: SystemMouseCursors.resizeColumn,
             child: Container(
-              width: 8,
-              color: Colors.black.withOpacity(0.5),
+              width: 12,
+              color: Colors.deepPurple[50],
               child: Center(
                 child: Container(
-                  width: 2,
-                  height: 40,
+                  width: 4,
+                  height: 50,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(1),
+                    color: Colors.deepPurple[200],
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),

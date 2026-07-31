@@ -368,7 +368,7 @@ class _SubtitleSelectorWidgetState extends ConsumerState<SubtitleSelectorWidget>
             ),
           ),
           Container(
-            decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.deepPurpleAccent.withValues(alpha: 0.08), width: 1.5)),
+            decoration: BoxDecoration(color: Colors.deepPurple.shade50.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.deepPurpleAccent.withValues(alpha: 0.08), width: 1.5)),
             child: ClipRRect(borderRadius: BorderRadius.circular(20), child: child),
           ),
         ],

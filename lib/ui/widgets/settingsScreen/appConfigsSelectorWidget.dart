@@ -152,7 +152,7 @@ class AppConfigsSelectorWidget extends ConsumerWidget {
           ),
           Container(
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
+              color: Colors.deepPurple.shade50.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: Colors.deepPurpleAccent.withValues(alpha: 0.08),

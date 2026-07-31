@@ -83,9 +83,9 @@ class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
               width: double.infinity,
               constraints: const BoxConstraints(maxHeight: 50),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.3),
+                color: Colors.deepPurpleAccent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF4338CA).withValues(alpha: 0.15)),
+                border: Border.all(color: Colors.deepPurpleAccent.withValues(alpha: 0.2)),
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -160,13 +160,13 @@ class _MoreSettingsButton extends StatelessWidget {
     return PopupMenuButton<int>(
       tooltip: 'More settings',
       offset: const Offset(0, 44),
-      color: const Color(0xFF1B1D26),
+      color: Colors.deepPurple[50],
       surfaceTintColor: Colors.transparent,
       elevation: 12,
-      shadowColor: Colors.black.withValues(alpha: 0.4),
+      shadowColor: Colors.black.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+        side: BorderSide(color: Colors.deepPurpleAccent.withValues(alpha: 0.1)),
       ),
       padding: EdgeInsets.zero,
       onSelected: onSelected,
@@ -241,8 +241,8 @@ class _MoreSettingsButton extends StatelessWidget {
             label,
             style: const TextStyle(
               fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
             ),
           ),
         ],

@@ -55,11 +55,11 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
                   minWidth: MediaQuery.of(context).size.width * 0.9,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.deepPurple[50],
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       spreadRadius: 5,
                     ),
