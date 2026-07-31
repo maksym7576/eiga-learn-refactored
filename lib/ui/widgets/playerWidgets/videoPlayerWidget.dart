@@ -1,5 +1,6 @@
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
+import 'package:eiga/ui/widgets/phrasesCardsWidgest/fullScreenPhraseWidget.dart';
 import 'package:flick_video_player/flick_video_player.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -78,7 +79,6 @@ class VideoPlayerWidget extends ConsumerWidget {
 
     final flickManager = playerState.flickManager!;
     final flickVideoPlayerKey = ref.watch(flickVideoPlayerKeyProvider);
-    final isFullscreen = ref.watch(isFullScreenProvider);
 
     final double videoRatio = flickManager
         .flickVideoManager!
@@ -107,7 +107,6 @@ class VideoPlayerWidget extends ConsumerWidget {
             key: flickVideoPlayerKey,
             flickManager: flickManager,
             systemUIOverlay: const [],
-            // Дозволяємо системний автоповорот, коли не в повноекранному режимі
             preferredDeviceOrientation: const [
               DeviceOrientation.portraitUp,
               DeviceOrientation.landscapeLeft,
@@ -118,38 +117,11 @@ class VideoPlayerWidget extends ConsumerWidget {
               DeviceOrientation.landscapeRight,
             ],
             flickVideoWithControls: FlickVideoWithControls(
-              controls: Stack(
-                children: [
-                  if (!isLocked) FlickPortraitControls(),
-                  _buildLockButton(
-                    ref,
-                    isLocked,
-                    top: 10,
-                    right: 12,
-                    size: 12,
-                  ),
-                ],
-              ),
+              controls: _buildControlsOverlay(ref, flickManager, false),
             ),
             flickVideoWithControlsFullscreen: FlickVideoWithControls(
               videoFit: BoxFit.contain,
-              controls: Consumer(
-                builder: (context, ref, child) {
-                  final isLocked = ref.watch(isLockedVideoProvider);
-                  return Stack(
-                    children: [
-                      if (!isLocked) const FlickLandscapeControls(),
-                      _buildLockButton(
-                        ref,
-                        isLocked,
-                        top: 10,
-                        right: 30,
-                        size: 25,
-                      ),
-                    ],
-                  );
-                },
-              ),
+              controls: _buildControlsOverlay(ref, flickManager, true),
             ),
           ),
         ),
@@ -206,6 +178,72 @@ class VideoPlayerWidget extends ConsumerWidget {
     );
   }
 
+  Widget _buildControlsOverlay(WidgetRef ref, FlickManager flickManager, bool isFullscreen) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final isLocked = ref.watch(isLockedVideoProvider);
+        
+        return ListenableBuilder(
+          listenable: flickManager.flickDisplayManager!,
+          builder: (context, child) {
+            final showControls = flickManager.flickDisplayManager!.showPlayerControls;
+
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                // 1. Standard controls or Lock Blocker
+                if (isLocked)
+                  Positioned.fill(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {},
+                      onTapDown: (_) {},
+                      onDoubleTap: () {},
+                      onLongPress: () {},
+                      onVerticalDragStart: (_) {},
+                      onHorizontalDragStart: (_) {},
+                      child: Container(
+                        color: Colors.transparent,
+                      ),
+                    ),
+                  )
+                else
+                  Positioned.fill(
+                    child: isFullscreen ? FlickLandscapeControls() : FlickPortraitControls(),
+                  ),
+
+                // 2. Subtitles - Interactive only when locked. ONLY in fullscreen.
+                if (isFullscreen && (isLocked || showControls))
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    top: 60, // Avoid overlapping top area (lock button)
+                    child: IgnorePointer(
+                      ignoring: !isLocked,
+                      child: FullScreenPhraseWidget(
+                        bottomPadding: isFullscreen ? 60.0 : 20.0,
+                      ),
+                    ),
+                  ),
+
+                // 3. Lock button - Always on top and always clickable
+                if (isLocked || showControls)
+                  _buildLockButton(
+                    ref,
+                    isLocked,
+                    top: 10,
+                    right: isFullscreen ? 30 : 12,
+                    size: isFullscreen ? 25 : 12,
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildLockButton(
       WidgetRef ref,
       bool isLocked, {
@@ -216,21 +254,28 @@ class VideoPlayerWidget extends ConsumerWidget {
     return Positioned(
       top: top,
       right: right,
-      child: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: () {
-          ref.read(isLockedVideoProvider.notifier).update((state) => !state);
-        },
-        child: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.4),
-            borderRadius: BorderRadius.circular(30),
-          ),
-          child: Icon(
-            isLocked ? Icons.lock : Icons.lock_open,
-            color: Colors.white,
-            size: size,
+      child: SafeArea(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapDown: (details) {
+            debugPrint('[LOCK] Button TapDown');
+          },
+          onTap: () {
+            debugPrint('[LOCK] Toggling lock. Current: $isLocked');
+            ref.read(isLockedVideoProvider.notifier).update((state) => !state);
+          },
+          child: Container(
+            padding: const EdgeInsets.all(12), // Increase tap area
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: Colors.white24, width: 1),
+            ),
+            child: Icon(
+              isLocked ? Icons.lock : Icons.lock_open,
+              color: isLocked ? Colors.yellowAccent : Colors.white,
+              size: size,
+            ),
           ),
         ),
       ),
