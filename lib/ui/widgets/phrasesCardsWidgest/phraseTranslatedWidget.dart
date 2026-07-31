@@ -3,6 +3,7 @@ import 'package:eiga/backend/data/models/blockObject.dart';
 import 'package:eiga/backend/data/models/phraseObject.dart';
 import 'package:eiga/backend/data/models/wordObject.dart';
 import 'package:eiga/backend/data/models/subtitleSettings.dart';
+import 'package:eiga/backend/services/petition_ai/parsers/utils/romaji_utils.dart';
 import 'package:eiga/config/depacker/readingTypeLanguageConfig.dart';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/subtitle_settings_provider.dart';
@@ -199,14 +200,53 @@ class _WordsSection extends StatelessWidget {
     final needsSpacing = languageConfig.spacingOptions.contains(mainOption);
     final origSize = config?.fontSizeOriginal ?? PhraseListStyles.fontSizeMainWord;
 
+    bool isQuoteOpen = false;
+    String lastWord = '';
+
     return Wrap(
       alignment: WrapAlignment.center,
-      spacing: needsSpacing ? origSize * 0.1 : 0,
+      spacing: 0, // Динамічний відступ через padding у WordItem
       runSpacing: PhraseListStyles.wordRunSpacing,
-      crossAxisAlignment: WrapCrossAlignment.end, // Вирівнювання по низу для японського тексту
-      children: allWords.map((word) {
+      crossAxisAlignment: WrapCrossAlignment.end,
+      children: allWords.asMap().entries.map((entry) {
+        final index = entry.key;
+        final word = entry.value;
+
         final mainText = getVersionText(word, mainOption).trim();
         final additionalText = getVersionText(word, additionalOption).trim();
+
+        bool hasLeadingSpace = false;
+
+        if (needsSpacing && index > 0 && mainText.isNotEmpty) {
+          final isOpening = RomajiUtils.isOpeningPunctuation(mainText);
+          final isClosing = RomajiUtils.isClosingPunctuation(mainText);
+          final isNeutral = RomajiUtils.isNeutralPunctuation(mainText);
+
+          final lastWasOpening = RomajiUtils.isOpeningPunctuation(lastWord);
+          final lastWasNeutral = RomajiUtils.isNeutralPunctuation(lastWord);
+
+          if (isNeutral) {
+            // Якщо це лапка, і вона зараз "відкриває" — потрібен пробіл
+            // Якщо вона "закриває" — пробіл не потрібен (вона тулиться до слова зліва)
+            if (!isQuoteOpen) {
+              hasLeadingSpace = !lastWasOpening;
+            }
+            isQuoteOpen = !isQuoteOpen;
+          } else if (isOpening) {
+            // Перед дужкою, що відкривається, потрібен пробіл (якщо попереду не інша відкриваюча дужка)
+            hasLeadingSpace = !lastWasOpening;
+          } else if (isClosing) {
+            // Перед комою/крапкою пробіл не потрібен
+            hasLeadingSpace = false;
+          } else {
+            // Звичайне слово: потрібен пробіл, якщо попереду не відкриваюча дужка/лапка
+            hasLeadingSpace = !lastWasOpening && !(lastWasNeutral && isQuoteOpen);
+          }
+        }
+
+        if (mainText.isNotEmpty) {
+          lastWord = mainText;
+        }
 
         return _WordItem(
           isSelected: selectedBlockId == word.blockId,
@@ -215,6 +255,7 @@ class _WordsSection extends StatelessWidget {
           onTap: () => onToggleSelection(word.blockId),
           config: config,
           needsSpacing: needsSpacing,
+          hasLeadingSpace: hasLeadingSpace,
         );
       }).toList(),
     );
@@ -228,6 +269,7 @@ class _WordItem extends StatelessWidget {
   final VoidCallback onTap;
   final SubtitleConfig? config;
   final bool needsSpacing;
+  final bool hasLeadingSpace;
 
   const _WordItem({
     required this.isSelected,
@@ -236,12 +278,15 @@ class _WordItem extends StatelessWidget {
     required this.onTap,
     this.config,
     required this.needsSpacing,
+    required this.hasLeadingSpace,
   });
 
   @override
   Widget build(BuildContext context) {
     final origSize = config?.fontSizeOriginal ?? PhraseListStyles.fontSizeMainWord;
     final addSize = config?.fontSizeAdditional ?? PhraseListStyles.fontSizeAdditionalWord;
+    
+    final double leadingSpaceWidth = hasLeadingSpace ? origSize * 0.25 : 0;
 
     final additionalStyle = PhraseListStyles.getWordTextStyle(
       isSelected: isSelected,
@@ -267,8 +312,9 @@ class _WordItem extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? origSize * 0.1 : (needsSpacing ? origSize * 0.15 : 0),
+        padding: EdgeInsets.only(
+          left: leadingSpaceWidth + (isSelected ? origSize * 0.1 : 0),
+          right: isSelected ? origSize * 0.1 : 0,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

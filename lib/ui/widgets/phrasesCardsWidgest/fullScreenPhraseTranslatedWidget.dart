@@ -3,6 +3,7 @@ import 'package:eiga/backend/data/models/blockObject.dart';
 import 'package:eiga/backend/data/models/phraseObject.dart';
 import 'package:eiga/backend/data/models/wordObject.dart';
 import 'package:eiga/backend/data/models/subtitleSettings.dart';
+import 'package:eiga/backend/services/petition_ai/parsers/utils/romaji_utils.dart';
 import 'package:eiga/config/depacker/readingTypeLanguageConfig.dart';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
@@ -216,14 +217,48 @@ class _FullScreenWordsSection extends StatelessWidget {
     final needsSpacing = languageConfig.spacingOptions.contains(mainOption);
     final origSize = config?.fontSizeOriginal ?? 28.0;
 
+    bool isQuoteOpen = false;
+    String lastWord = '';
+
     return Wrap(
-      spacing: needsSpacing ? origSize * 0.1 : 0,
+      spacing: 0,
       runSpacing: 4,
       alignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.end,
-      children: allWords.map((word) {
+      children: allWords.asMap().entries.map((entry) {
+        final index = entry.key;
+        final word = entry.value;
+
         final mainText = getVersionText(word, mainOption).trim();
         final additionalText = getVersionText(word, additionalOption).trim();
+
+        bool hasLeadingSpace = false;
+
+        if (needsSpacing && index > 0 && mainText.isNotEmpty) {
+          final isOpening = RomajiUtils.isOpeningPunctuation(mainText);
+          final isClosing = RomajiUtils.isClosingPunctuation(mainText);
+          final isNeutral = RomajiUtils.isNeutralPunctuation(mainText);
+
+          final lastWasOpening = RomajiUtils.isOpeningPunctuation(lastWord);
+          final lastWasNeutral = RomajiUtils.isNeutralPunctuation(lastWord);
+
+          if (isNeutral) {
+            if (!isQuoteOpen) {
+              hasLeadingSpace = !lastWasOpening;
+            }
+            isQuoteOpen = !isQuoteOpen;
+          } else if (isOpening) {
+            hasLeadingSpace = !lastWasOpening;
+          } else if (isClosing) {
+            hasLeadingSpace = false;
+          } else {
+            hasLeadingSpace = !lastWasOpening && !(lastWasNeutral && isQuoteOpen);
+          }
+        }
+
+        if (mainText.isNotEmpty) {
+          lastWord = mainText;
+        }
 
         return _FullScreenWordItem(
           mainWord: mainText,
@@ -232,6 +267,7 @@ class _FullScreenWordsSection extends StatelessWidget {
           onTap: isLocked ? () => onToggleSelection(word.blockId) : null,
           config: config,
           needsSpacing: needsSpacing,
+          hasLeadingSpace: hasLeadingSpace,
         );
       }).toList(),
     );
@@ -245,6 +281,7 @@ class _FullScreenWordItem extends StatelessWidget {
   final VoidCallback? onTap;
   final SubtitleConfig? config;
   final bool needsSpacing;
+  final bool hasLeadingSpace;
 
   const _FullScreenWordItem({
     required this.mainWord,
@@ -253,12 +290,15 @@ class _FullScreenWordItem extends StatelessWidget {
     this.onTap,
     this.config,
     required this.needsSpacing,
+    required this.hasLeadingSpace,
   });
 
   @override
   Widget build(BuildContext context) {
     final origSize = config?.fontSizeOriginal ?? 28.0;
     final addSize = config?.fontSizeAdditional ?? 16.0;
+    
+    final double leadingSpaceWidth = hasLeadingSpace ? origSize * 0.25 : 0;
     
     final shadowOffset = origSize * 0.05;
     final shadow = [
@@ -270,8 +310,9 @@ class _FullScreenWordItem extends StatelessWidget {
 
     final content = AnimatedContainer(
       duration: const Duration(milliseconds: 200),
+      margin: EdgeInsets.only(left: leadingSpaceWidth),
       padding: EdgeInsets.symmetric(
-        horizontal: isSelected ? origSize * 0.2 : (needsSpacing ? origSize * 0.15 : 0),
+        horizontal: isSelected ? origSize * 0.2 : 0,
         vertical: origSize * 0.05,
       ),
       decoration: BoxDecoration(
