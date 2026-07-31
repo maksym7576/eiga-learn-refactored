@@ -20,13 +20,16 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
   Widget build(BuildContext context) {
     ref.watch(translationProvider);
     final splitRatio = ref.watch(videoSplitRatioProvider);
+    final isFullscreen = ref.watch(isFullScreenProvider);
 
     return Scaffold(
       body: OrientationBuilder(
         builder: (context, orientation) {
-          if (orientation == Orientation.landscape) {
-            // У ландшафтному режимі не використовуємо глобальний SafeArea, 
-            // щоб відео могло займати весь простір ліворуч.
+          // Якщо ми в повноекранному режимі, форсуємо ландшафтний макет, 
+          // щоб уникнути стрибків інтерфейсу під оверлеєм плеєра.
+          final effectiveOrientation = isFullscreen ? Orientation.landscape : orientation;
+
+          if (effectiveOrientation == Orientation.landscape) {
             return _buildLandscapeLayout(context, splitRatio);
           } else {
             return _buildPortraitLayout(context);
@@ -40,28 +43,34 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
     return Column(
       children: [
         const SizedBox(height: 30), // Відступ зверху
-        // Прибрали Safe Area з build(), додаємо відступ тут, якщо потрібно, або просто Stack
+
+        // Плеєр з кнопкою назад
         Stack(
           children: [
-              const VideoPlayerWidget(),
-              Positioned(
-                top: 0,
-                left: 0,
+            VideoPlayerWidget(isLandscapeSplit: false),
+            Positioned(
+              top: 0,
+              left: 0,
+              child: SafeArea(
                 child: IconButton(
                   onPressed: () => context.go('/main'),
                   icon: const Icon(Icons.arrow_back),
                   color: Colors.white,
                 ),
               ),
-            ],
-          ),
-          // Налаштування
-          const VideoSettingsNotFullScreenWidget(),
-          const Expanded(
-            child: PhraseListNotFullScreenWidget(),
-          ),
-        ],
-      );
+            ),
+          ],
+        ),
+
+        // Налаштування
+        const VideoSettingsNotFullScreenWidget(),
+
+        // Список фраз займає весь залишок місця
+        const Expanded(
+          child: PhraseListNotFullScreenWidget(),
+        ),
+      ],
+    );
   }
 
   Widget _buildLandscapeLayout(BuildContext context, double splitRatio) {
@@ -74,14 +83,16 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
         SizedBox(
           width: leftWidth,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Відео без заливки, вгорі
-              const Flexible(
-                child: VideoPlayerWidget(isLandscapeSplit: true),
-              ),
+              // Відео займає стільки місця, скільки диктує AspectRatio
+              VideoPlayerWidget(isLandscapeSplit: true),
               
-              // Налаштування
+              // Налаштування одразу під відео
               const VideoSettingsNotFullScreenWidget(),
+              
+              // Заповнюємо залишок місця знизу, щоб налаштування не висіли в повітрі
+              const Spacer(),
             ],
           ),
         ),

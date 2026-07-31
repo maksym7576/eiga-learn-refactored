@@ -1,102 +1,40 @@
-import 'dart:io';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
 import 'package:flick_video_player/flick_video_player.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:video_player/video_player.dart';
 
-// Провайдери для рисайзу та рухання
+import '../../../providers/FlickManagerState.dart';
+
+// Провайдери для рисайзу та рухання (лишаються без змін)
 final videoHeightProvider = StateProvider<double>((ref) => 250);
 final isDraggingProvider = StateProvider<bool>((ref) => false);
 
-class VideoPlayerWidget extends ConsumerStatefulWidget {
+// Глобальний ключ для збереження стану FlickVideoPlayer при перемиканні орієнтації
+final flickVideoPlayerKeyProvider = Provider((ref) => GlobalKey());
+
+class VideoPlayerWidget extends ConsumerWidget {
   final double? minHeight;
   final double? maxHeight;
   final bool isLandscapeSplit;
 
-  const VideoPlayerWidget({
-    super.key,
+  // Стабільний ключ, який зберігається однаковим і в portrait, і в
+  // landscape гілці дерева — це додатковий страхувальний трос, щоб
+  // Flutter не сприймав це як два різних елементи при зміні orientation.
+  static const _stableKey = ValueKey('video_player_widget_stable');
+
+  VideoPlayerWidget({
     this.minHeight = 150,
     this.maxHeight,
     this.isLandscapeSplit = false,
-  });
+  }) : super(key: _stableKey);
 
-  @override
-  ConsumerState<VideoPlayerWidget> createState() => _VideoPlayerWidgetState();
-}
+  void _handleDragUpdate(WidgetRef ref, double screenHeight, DragUpdateDetails details) {
+    final maxVideoHeight = maxHeight ?? screenHeight * 0.7;
+    final minVideoHeight = minHeight ?? 150;
 
-class _VideoPlayerWidgetState extends ConsumerState<VideoPlayerWidget> {
-  FlickManager? flickManager;
-  late double maxVideoHeight;
-  late double minVideoHeight;
-
-  @override
-  void initState() {
-    super.initState();
-    _init();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final screenHeight = MediaQuery.of(context).size.height;
-    minVideoHeight = widget.minHeight ?? 150;
-    maxVideoHeight = widget.maxHeight ?? screenHeight * 0.7;
-  }
-
-  Future<void> _init() async {
-    final id = ref.read(playerIdProvider.notifier).state;
-    final videoObject = await ref
-        .read(videoServiceProvider.notifier)
-        .getVideoById(id!);
-
-    final controller = VideoPlayerController.file(
-      File(videoObject!.videoPath!),
-    );
-
-    await controller.initialize();
-    await controller.play();
-    if (!mounted) {
-      controller.dispose();
-      return;
-    }
-
-    flickManager = FlickManager(
-      videoPlayerController: controller,
-      autoInitialize: false,
-      autoPlay: true, // ← додано: автоматичний запуск після ініціалізації
-    );
-
-    controller.addListener(_onControllerUpdate);
-
-    setState(() {});
-  }
-
-  void _onControllerUpdate() {
-    final controller =
-        flickManager?.flickVideoManager?.videoPlayerController;
-    if (controller == null) return;
-
-    final position = controller.value.position;
-    ref.read(playerTimeProvider.notifier).state = position;
-  }
-
-  @override
-  void dispose() {
-    flickManager?.flickVideoManager?.videoPlayerController
-        ?.removeListener(_onControllerUpdate);
-    flickManager?.dispose();
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-    super.dispose();
-  }
-
-  void _handleDragUpdate(DragUpdateDetails details) {
     final currentHeight = ref.read(videoHeightProvider);
     double newHeight = currentHeight + details.delta.dy;
 
@@ -107,26 +45,40 @@ class _VideoPlayerWidgetState extends ConsumerState<VideoPlayerWidget> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    bool isLocked = ref.watch(isLockedVideoProvider);
+  Widget build(BuildContext context, WidgetRef ref) {
+    debugPrint('[VP_LIFECYCLE] VideoPlayerWidget.build | isLandscapeSplit=$isLandscapeSplit');
+
+    final playerState = ref.watch(flickManagerProvider);
+    final isLocked = ref.watch(isLockedVideoProvider);
     final videoHeight = ref.watch(videoHeightProvider);
+    final screenHeight = MediaQuery.of(context).size.height;
 
     ref.listen<Duration?>(playerSeekProvider, (previous, next) {
       if (next != null) {
-        flickManager?.flickControlManager?.seekTo(next);
+        playerState.flickManager?.flickControlManager?.seekTo(next);
         Future.microtask(
               () => ref.read(playerSeekProvider.notifier).state = null,
         );
       }
     });
 
-    if (flickManager == null) {
+    if (playerState.isLoading || playerState.flickManager == null) {
       return const Center(
         child: CircularProgressIndicator(),
       );
     }
 
-    final double videoRatio = flickManager!
+    if (playerState.error != null) {
+      return Center(
+        child: Text('Помилка завантаження відео: ${playerState.error}'),
+      );
+    }
+
+    final flickManager = playerState.flickManager!;
+    final flickVideoPlayerKey = ref.watch(flickVideoPlayerKeyProvider);
+    final isFullscreen = ref.watch(isFullScreenProvider);
+
+    final double videoRatio = flickManager
         .flickVideoManager!
         .videoPlayerController!
         .value
@@ -134,8 +86,8 @@ class _VideoPlayerWidgetState extends ConsumerState<VideoPlayerWidget> {
     final double aspectRatio = videoRatio > 0 ? videoRatio : 16 / 9;
 
     final videoPlayerPart = Container(
-      height: widget.isLandscapeSplit ? double.infinity : videoHeight,
-      width: widget.isLandscapeSplit ? double.infinity : null,
+      height: isLandscapeSplit ? null : videoHeight,
+      width: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -150,10 +102,16 @@ class _VideoPlayerWidgetState extends ConsumerState<VideoPlayerWidget> {
         child: AspectRatio(
           aspectRatio: aspectRatio,
           child: FlickVideoPlayer(
-            flickManager: flickManager!,
-            systemUIOverlay: const [], // Приховує системні елементи під час програвання
+            key: flickVideoPlayerKey,
+            flickManager: flickManager,
+            systemUIOverlay: const [],
+            // Дозволяємо системний автоповорот, коли не в повноекранному режимі
             preferredDeviceOrientation: const [
               DeviceOrientation.portraitUp,
+              DeviceOrientation.landscapeLeft,
+              DeviceOrientation.landscapeRight,
+            ],
+            preferredDeviceOrientationFullscreen: const [
               DeviceOrientation.landscapeLeft,
               DeviceOrientation.landscapeRight,
             ],
@@ -196,15 +154,16 @@ class _VideoPlayerWidgetState extends ConsumerState<VideoPlayerWidget> {
       ),
     );
 
-    if (widget.isLandscapeSplit) {
+    if (isLandscapeSplit) {
       return videoPlayerPart;
     }
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         // Відеоплеєр
         GestureDetector(
-          onVerticalDragUpdate: _handleDragUpdate,
+          onVerticalDragUpdate: (details) => _handleDragUpdate(ref, screenHeight, details),
           onVerticalDragStart: (_) {
             ref.read(isDraggingProvider.notifier).state = true;
           },
@@ -217,7 +176,7 @@ class _VideoPlayerWidgetState extends ConsumerState<VideoPlayerWidget> {
         MouseRegion(
           cursor: SystemMouseCursors.resizeRow,
           child: GestureDetector(
-            onVerticalDragUpdate: _handleDragUpdate,
+            onVerticalDragUpdate: (details) => _handleDragUpdate(ref, screenHeight, details),
             onVerticalDragStart: (_) {
               ref.read(isDraggingProvider.notifier).state = true;
             },
