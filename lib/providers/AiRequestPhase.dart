@@ -1,4 +1,4 @@
-
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../backend/exeption/AiUserFacingError.dart';
 
 enum AiRequestPhase { success, partialSuccess, error }
@@ -28,3 +28,5 @@ class AiRequestResult {
   factory AiRequestResult.failure(AiErrorType type) =>
       AiRequestResult(phase: AiRequestPhase.error, error: type.toUserFacing());
 }
+
+final aiRequestResultProvider = StateProvider<AiRequestResult?>((ref) => null);

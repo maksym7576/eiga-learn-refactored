@@ -120,4 +120,15 @@ class PhraseService {
     });
   }
 
+  Future<void> resetPhrasesTranslationStatus(List<PhraseObject> phrases) async {
+    await db.writeTxn(() async {
+      for (var phrase in phrases) {
+        phrase.isTranslating = false;
+        phrase.translatedPhrase = null;
+        phrase.isTranslated = false;
+      }
+      await db.phraseObjects.putAll(phrases);
+    });
+  }
+
 }

@@ -15,6 +15,7 @@ class _IconPalette {
   static const Color reading = Color(0xFFF59E0B); // Amber 500
   static const Color aiInsights = Color(0xFF0EA5E9); // Sky 500
   static const Color sync = Color(0xFF94A3B8); // Slate 400
+  static const Color errors = Color(0xFFEF4444); // Red 500
 }
 
 class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
@@ -136,6 +137,7 @@ class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
             if (value == 2) _showReadingTypeDialog(context);
             if (value == 3) _showAiStatusDialog(context);
             if (value == 4) _showSubtitleSettingsDialog(context);
+            if (value == 5) _showAiStatusDialog(context);
           },
         ),
       ],
@@ -188,6 +190,12 @@ class _MoreSettingsButton extends StatelessWidget {
           icon: Icons.psychology_alt_rounded,
           color: _IconPalette.aiInsights,
           label: 'AI insights',
+        ),
+        _menuItem(
+          value: 5,
+          icon: Icons.error_outline_rounded,
+          color: _IconPalette.errors,
+          label: 'Gemini Errors',
         ),
         const PopupMenuDivider(height: 9),
         _menuItem(

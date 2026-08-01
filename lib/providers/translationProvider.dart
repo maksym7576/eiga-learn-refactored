@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:eiga/backend/data/models/phraseObject.dart';
+import 'package:eiga/backend/exeption/geminiException.dart';
+import 'package:eiga/providers/AiRequestPhase.dart';
 import 'package:eiga/providers/phraseListProvider.dart';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
@@ -137,10 +139,15 @@ class TranslationProvider {
         translationLanguage: video.translatedLanguage!,
       );
     } catch (e, st) {
-
-      try {
-        await ref.read(phraseServiceProvider).markPhrasesAsTranslatingByPhraseList(phrases);
-      } catch (_) {
+      if (e is GeminiException) {
+        ref.read(aiRequestResultProvider.notifier).state = AiRequestResult.failure(e.type);
+        try {
+          await ref.read(phraseServiceProvider).resetPhrasesTranslationStatus(phrases);
+        } catch (_) {}
+      } else {
+        try {
+          await ref.read(phraseServiceProvider).markPhrasesAsTranslatingByPhraseList(phrases);
+        } catch (_) {}
       }
 
       print('Translation API Error: $e\n$st');

@@ -1,13 +1,8 @@
-// AiRequestStatusWidget.dart
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../backend/exeption/AiUserFacingError.dart';
 import '../../../providers/AiRequestPhase.dart';
-import '../settingsScreen/aiModelsSettingsWidget.dart';
-
-final aiRequestResultProvider = StateProvider<AiRequestResult?>((ref) => null);
-
 
 class AiRequestStatusWidget extends ConsumerWidget {
   const AiRequestStatusWidget({
@@ -46,17 +41,25 @@ class AiRequestStatusWidget extends ConsumerWidget {
             ),
           ),
           child: (result == null || result.isOk)
-              ? const SizedBox.shrink(key: ValueKey('ai-status-empty'))
+              ? const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Column(
+                    children: [
+                      Icon(Icons.check_circle_outline_rounded, color: Colors.green, size: 40),
+                      SizedBox(height: 8),
+                      Text(
+                        'No active errors',
+                        style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                )
               : _StatusBanner(
             key: ValueKey('ai-status-${result.phase}'),
             result: result,
             onDismiss: () => ref.read(aiRequestResultProvider.notifier).state = null,
             onAction: onAction == null ? null : () => onAction!(result),
           ),
-        ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: AiModelsSettingsWidget(),
         ),
         const SizedBox(height: 20),
       ],
