@@ -70,7 +70,7 @@ class _SearchPickerWidgetState<TEntry, TFile>
       ref.read(searchResultsProvider(_key).notifier).state = [];
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Помилка пошуку: $e')));
+            .showSnackBar(SnackBar(content: Text('Search error: $e')));
       }
     } finally {
       ref.read(isSearchingProvider(_key).notifier).state = false;
@@ -96,7 +96,7 @@ class _SearchPickerWidgetState<TEntry, TFile>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Помилка завантаження деталей: $e')));
+            SnackBar(content: Text('Error loading details: $e')));
       }
     } finally {
       ref.read(isLoadingFilesProvider(_key).notifier).state = false;
@@ -127,7 +127,7 @@ class _SearchPickerWidgetState<TEntry, TFile>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Помилка: $e')));
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
       ref.read(isResolvingProvider(_key).notifier).state = false;
@@ -260,8 +260,8 @@ class _SearchPickerWidgetState<TEntry, TFile>
               final entry = results[index];
               return widget.source.buildEntryCard(
                 entry,
-                false, // на сторінці пошуку нема сенсу підсвічувати "активний" —
-                // тап одразу веде на іншу сторінку
+                false, // on search page there is no point in highlighting "active" —
+                // tap leads directly to another page
                     () => _onEntryTap(entry),
               );
             },
@@ -291,7 +291,7 @@ class _SearchPickerWidgetState<TEntry, TFile>
               : files.isEmpty
               ? Padding(
             padding: const EdgeInsets.all(24),
-            child: Text('Нічого не знайдено',
+            child: Text('Nothing found',
                 style:
                 TextStyle(color: Colors.black.withValues(alpha: 0.4))),
           )

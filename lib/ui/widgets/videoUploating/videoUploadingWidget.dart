@@ -6,8 +6,8 @@ import 'package:eiga/providers/videoComponentsProvider.dart';
 import 'package:eiga/ui/widgets/phrasesDepacked/phraseDepPreviewWidget.dart';
 import 'package:eiga/ui/widgets/searchWidgets/JimakuSearch/JimakuSubtitleSource.dart';
 import 'package:eiga/ui/widgets/searchWidgets/searchPickerWidget.dart';
-import 'package:eiga/ui/widgets/videoUploating/conponents/videoFilePickersRow.dart';
-import 'package:eiga/ui/widgets/videoUploating/conponents/videoFormActionButtons.dart';
+import 'package:eiga/ui/widgets/videoUploating/components/videoFilePickersRow.dart';
+import 'package:eiga/ui/widgets/videoUploating/components/videoFormActionButtons.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -15,9 +15,13 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import '../../../backend/services/depack_subtitles_services/SeasonEpisodeInfo.dart';
 import '../../../providers/DTOProviders.dart';
 import '../../../providers/searchProvider.dart';
-import 'AniListPreviewWidget.dart';
-import 'conponents/VideoTitleField.dart';
-import 'conponents/languageButtonWidget.dart';
+import '../dialogs/AppBottomSheet.dart';
+import '../searchWidgets/AniListSearch/AniListPreviewWidget.dart';
+import 'components/AttachSubtitleBottomSheet.dart';
+import 'components/JimakuSearchBottomSheet.dart';
+import 'components/UploadingTheme.dart';
+import 'components/VideoTitleField.dart';
+import 'components/languageButtonWidget.dart';
 
 class VideoUploadingWidget extends ConsumerStatefulWidget {
   const VideoUploadingWidget({super.key});
@@ -36,19 +40,25 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
     }
   }
 
-  Future<void> _pickPath() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['srt']);
-    if (result != null) {
-      ref.read(srtPathProvider.notifier).state = result.files.first.path;
-    }
+  void _showAttachSubtitleSheet() {
+    final theme = UploadingTheme.of(context);
+    AppBottomSheet.show(
+      context: context,
+      heightFactor: 0.85,
+      backgroundColor: theme.backgroundColor,
+      child: AttachSubtitleBottomSheet(
+        titleController: _titleController,
+      ),
+    );
   }
 
   void _pickJimakuSrt(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
+    final theme = UploadingTheme.of(context);
+    AppBottomSheet.show(
       context: context,
-      isScrollControlled: true,
-      builder: (_) => SearchPickerWidget<JimakuDataDTO, JimakuFileOrGroupDTO>(
-        source: JimakuSubtitleSource(),
+      heightFactor: 0.85,
+      backgroundColor: theme.backgroundColor,
+      child: JimakuSearchBottomSheet(
         onResolved: (path) {
           ref.read(srtPathProvider.notifier).state = path;
 
@@ -169,13 +179,11 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Column(
         children: [
-          VideoTitleField(controller: _titleController),
-          const SizedBox(height: 12),
           VideoFilePickersRow(
             videoPath: videoPatch,
             srtPath: srtPatch,
             onPickVideo: _pickVideo,
-            onPickSrt: _pickPath,
+            onAttachSubtitle: _showAttachSubtitleSheet,
             onPickJimakuSrt: _pickJimakuSrt,
           ),
           const SizedBox(height: 7),

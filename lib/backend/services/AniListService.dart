@@ -32,6 +32,152 @@ class AniListService {
     }
   ''';
 
+  static const _searchQuery = r'''
+    query ($search: String, $page: Int, $perPage: Int) {
+      Page(page: $page, perPage: $perPage) {
+        media(search: $search, type: ANIME) {
+          id
+          title {
+            romaji
+            english
+            native
+          }
+          description(asHtml: false)
+          bannerImage
+          genres
+          coverImage {
+            extraLarge
+            large
+            color
+          }
+        }
+      }
+    }
+  ''';
+
+  static const _multipleIdsQuery = r'''
+    query ($idIn: [Int], $page: Int, $perPage: Int) {
+      Page(page: $page, perPage: $perPage) {
+        media(id_in: $idIn, type: ANIME) {
+          id
+          title {
+            romaji
+            english
+            native
+          }
+          description(asHtml: false)
+          bannerImage
+          genres
+          coverImage {
+            extraLarge
+            large
+            color
+          }
+        }
+      }
+    }
+  ''';
+
+  Future<List<AniListDataDTO>> getByName(
+    String name, {
+    int page = 1,
+    int perPage = 10,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse(_endpoint),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({
+              'query': _searchQuery,
+              'variables': {
+                'search': name,
+                'page': page,
+                'perPage': perPage,
+              },
+            }),
+          )
+          .timeout(_timeout);
+
+      if (response.statusCode != 200) {
+        developer.log(
+          'AniList search failed: ${response.statusCode}',
+          name: 'AniListService',
+        );
+        return [];
+      }
+
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final mediaList = decoded['data']?['Page']?['media'] as List<dynamic>?;
+
+      if (mediaList == null) return [];
+
+      return mediaList
+          .map((m) => AniListDataDTO.fromJson(m as Map<String, dynamic>))
+          .toList();
+    } catch (e, st) {
+      developer.log(
+        'AniList getByName failed',
+        name: 'AniListService',
+        error: e,
+        stackTrace: st,
+      );
+      return [];
+    }
+  }
+
+  Future<List<AniListDataDTO>> getByIds(List<int> ids) async {
+    if (ids.isEmpty) return [];
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse(_endpoint),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({
+              'query': _multipleIdsQuery,
+              'variables': {
+                'idIn': ids,
+                'page': 1,
+                'perPage': ids.length,
+              },
+            }),
+          )
+          .timeout(_timeout);
+
+      if (response.statusCode != 200) {
+        developer.log(
+          'AniList getByIds failed: ${response.statusCode}',
+          name: 'AniListService',
+        );
+        return [];
+      }
+
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final mediaList = decoded['data']?['Page']?['media'] as List<dynamic>?;
+
+      if (mediaList == null) return [];
+
+      return mediaList
+          .map((m) => AniListDataDTO.fromJson(m as Map<String, dynamic>))
+          .toList();
+    } catch (e, st) {
+      developer.log(
+        'AniList getByIds failed',
+        name: 'AniListService',
+        error: e,
+        stackTrace: st,
+      );
+      return [];
+    }
+  }
+
   Future<AniListDataDTO?> getById(
       int anilistId, {
         bool downloadImages = true,

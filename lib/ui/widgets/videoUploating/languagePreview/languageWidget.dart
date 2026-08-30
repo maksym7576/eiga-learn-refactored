@@ -1,11 +1,8 @@
-
-
-
 import 'package:eiga/providers/videoComponentsProvider.dart';
+import 'package:eiga/ui/widgets/videoUploating/components/UploadingTheme.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import 'languagePreviewStyles.dart';
 import 'languagePreviewWidget.dart';
 
 class LanguageWidget extends ConsumerWidget {
@@ -33,7 +30,7 @@ class LanguageWidget extends ConsumerWidget {
     final original = stateLan.original;
     final translation = stateLan.target;
 
-    final theme = LanguagePreviewTheme.of(context);
+    final theme = UploadingTheme.of(context);
 
     final bool isSelected = (type == LanguageType.original && language == original) ||
         (type == LanguageType.translation && language == translation);
@@ -56,14 +53,21 @@ class LanguageWidget extends ConsumerWidget {
         opacity: isOccupied ? 0.4 : 1.0,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
             color: isSelected ? theme.selectedCardBackground : theme.cardBackground,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isSelected ? theme.selectedCardBorder : theme.cardBorder,
-              width: 1.5,
+              width: isSelected ? 2.0 : 1.5,
             ),
+            boxShadow: isSelected ? [
+              BoxShadow(
+                color: theme.selectedCardBorder.withValues(alpha: 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              )
+            ] : null,
           ),
           child: Row(
             children: [
@@ -71,8 +75,8 @@ class LanguageWidget extends ConsumerWidget {
                 child: Text(
                   displayLanguage,
                   style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    fontSize: 14,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                     color: isOccupied
                         ? theme.occupiedText
                         : isSelected
@@ -83,10 +87,11 @@ class LanguageWidget extends ConsumerWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               if (isSelected)
-                Icon(Icons.check, color: theme.checkIconColor, size: 20)
+                Icon(Icons.check_circle, color: theme.checkIconColor, size: 20)
               else if (isOccupied)
-                Icon(Icons.lock_outline, color: theme.lockIconColor, size: 18)
+                Icon(Icons.lock, color: theme.lockIconColor, size: 18)
               else
                 Container(
                   width: 18,

@@ -1,4 +1,4 @@
-import 'package:eiga/ui/widgets/videoUploating/conponents/swipeableFileBoxWidget.dart';
+import 'package:eiga/ui/widgets/videoUploating/components/swipeableFileBoxWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -13,14 +13,14 @@ class VideoFilePickersRow extends ConsumerWidget {
     required this.videoPath,
     required this.srtPath,
     required this.onPickVideo,
-    required this.onPickSrt,
+    required this.onAttachSubtitle,
     required this.onPickJimakuSrt,
   });
 
   final String? videoPath;
   final String? srtPath;
   final VoidCallback onPickVideo;
-  final VoidCallback onPickSrt;
+  final VoidCallback onAttachSubtitle;
   final void Function(BuildContext context, WidgetRef ref) onPickJimakuSrt;
 
   @override
@@ -50,7 +50,7 @@ class VideoFilePickersRow extends ConsumerWidget {
                 label: 'Attach subtitle',
                 path: srtPath,
                 icon: Icons.subtitles_sharp,
-                onTap: onPickSrt,
+                onTap: onAttachSubtitle,
               ),
               FileBoxVariant(
                 label: hasJimakuToken ? 'Jimaku subtitle' : 'Jimaku token not exists',

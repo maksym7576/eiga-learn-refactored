@@ -41,23 +41,37 @@ class JimakuClusteringUtil {
   }
 
   static String _extractBaseName(String name) {
-    // Remove common episode indicators like "E01", "Ep 01", " - 01", " _ 01", " [01]"
-    // Also remove file extension
-    String base = name;
-    
     // Remove extension
+    String base = name;
     if (base.contains('.')) {
-      base = base.substring(0, base.lastIndexOf('.'));
+      final lastDot = base.lastIndexOf('.');
+      // Check if it's a common extension (3-4 chars)
+      final ext = base.substring(lastDot + 1).toLowerCase();
+      if (ext == 'ass' || ext == 'srt' || ext == 'zip' || ext == 'rar' || ext == '7z') {
+        base = base.substring(0, lastDot);
+      }
     }
 
-    // Regexp for episode numbers, often preceded by space, dash, or bracket
-    // Matches things like " 01", " - 01", " Ep.01", " [01]"
-    final epRegex = RegExp(r'([\s\-_\[(]+)(?:[Ee][Pp][.\s]*)?(\d+)([\s\-_\])]*)');
+    // Regexp for episode numbers and season markers
+    // 1. Matches "S01E01", "s1e1", "E01", "ep1" etc.
+    // 2. Matches " - 01", " _ 01", " . 01"
+    // 3. Matches " 01 ", " [01]"
+    final epRegex = RegExp(
+      r'([\s\-_.]+|\[|\()?'      // Separator or opening bracket
+      r'(?:[Ss]\d+[Ee]|[Ee][Pp][.\s]*)?' // Optional "S01E" or "Ep"
+      r'(\d+)'                   // The actual episode number
+      r'([\s\-_.]+|\]|\))?',    // Trailing separator or closing bracket
+      caseSensitive: false,
+    );
     
     final match = epRegex.firstMatch(base);
     if (match != null) {
       // Take everything before the first episode-like number
-      return base.substring(0, match.start).trim();
+      final prefix = base.substring(0, match.start).trim();
+      if (prefix.isNotEmpty) {
+        // Clean up trailing dots/dashes
+        return prefix.replaceAll(RegExp(r'[\s\-_.]+$'), '');
+      }
     }
 
     return base.trim();

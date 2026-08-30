@@ -10,11 +10,11 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../providers/FlickManagerState.dart';
 
-// Провайдери для рисайзу та рухання (лишаються без змін)
+// Providers for resizing and dragging (remain unchanged)
 final videoHeightProvider = StateProvider<double>((ref) => 250);
 final isDraggingProvider = StateProvider<bool>((ref) => false);
 
-// Глобальний ключ для збереження стану FlickVideoPlayer при перемиканні орієнтації
+// Global key to preserve FlickVideoPlayer state when switching orientation
 final flickVideoPlayerKeyProvider = Provider((ref) => GlobalKey());
 
 class VideoPlayerWidget extends ConsumerWidget {
@@ -23,9 +23,9 @@ class VideoPlayerWidget extends ConsumerWidget {
   final bool isLandscapeSplit;
   final bool showDivider;
 
-  // Стабільний ключ, який зберігається однаковим і в portrait, і в
-  // landscape гілці дерева — це додатковий страхувальний трос, щоб
-  // Flutter не сприймав це як два різних елементи при зміні orientation.
+  // Stable key that remains the same in both portrait and
+  // landscape tree branches — this is an extra safety measure to
+  // prevent Flutter from treating it as two different elements when orientation changes.
   static const _stableKey = ValueKey('video_player_widget_stable');
 
   VideoPlayerWidget({
@@ -74,7 +74,7 @@ class VideoPlayerWidget extends ConsumerWidget {
 
     if (playerState.error != null) {
       return Center(
-        child: Text('Помилка завантаження відео: ${playerState.error}'),
+        child: Text('Error loading video: ${playerState.error}'),
       );
     }
 
@@ -136,7 +136,7 @@ class VideoPlayerWidget extends ConsumerWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Відеоплеєр
+        // Video Player
         GestureDetector(
           onVerticalDragUpdate: (details) => _handleDragUpdate(ref, screenHeight, details),
           onVerticalDragStart: (_) {
@@ -147,7 +147,7 @@ class VideoPlayerWidget extends ConsumerWidget {
           },
           child: videoPlayerPart,
         ),
-        // Розділювач для рисайзу
+        // Divider for resizing
         MouseRegion(
           cursor: SystemMouseCursors.resizeRow,
           child: GestureDetector(

@@ -1,4 +1,5 @@
 class AniListDataDTO {
+  final int? id;
   final String? romajiTitle;
   final String? englishTitle;
   final String? nativeTitle;
@@ -11,6 +12,7 @@ class AniListDataDTO {
   final int? colorThemeValue;
 
   const AniListDataDTO({
+    this.id,
     this.romajiTitle,
     this.englishTitle,
     this.nativeTitle,
@@ -35,6 +37,7 @@ class AniListDataDTO {
     }
 
     return AniListDataDTO(
+      id: json['id'] as int?,
       romajiTitle: title['romaji'] as String?,
       englishTitle: title['english'] as String?,
       nativeTitle: title['native'] as String?,
@@ -49,6 +52,7 @@ class AniListDataDTO {
   }
 
   AniListDataDTO copyWith({
+    int? id,
     String? romajiTitle,
     String? englishTitle,
     String? nativeTitle,
@@ -61,6 +65,7 @@ class AniListDataDTO {
     int? colorThemeValue,
   }) {
     return AniListDataDTO(
+      id: id ?? this.id,
       romajiTitle: romajiTitle ?? this.romajiTitle,
       englishTitle: englishTitle ?? this.englishTitle,
       nativeTitle: nativeTitle ?? this.nativeTitle,

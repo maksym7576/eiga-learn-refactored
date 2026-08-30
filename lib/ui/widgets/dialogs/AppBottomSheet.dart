@@ -128,11 +128,11 @@ class _DraggableSheetBodyState extends State<_DraggableSheetBody>
     return Transform.translate(
       offset: Offset(0, _dragExtent * sheetHeight),
       child: Container(
-        height: sheetHeight,
         width: double.infinity,
+        constraints: BoxConstraints(maxHeight: sheetHeight),
         decoration: BoxDecoration(
           color: widget.backgroundColor ??
-              (widget.isDark ? Colors.grey[900] : Colors.deepPurple[50]),
+              (widget.isDark ? const Color(0xFF1C1C1E) : Colors.white),
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(20),
             topRight: Radius.circular(20),
@@ -145,39 +145,40 @@ class _DraggableSheetBodyState extends State<_DraggableSheetBody>
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-          child: SafeArea(
-            child: Column(
-              children: [
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onVerticalDragStart: _onDragStart,
-                  onVerticalDragUpdate: (d) =>
-                      _onDragUpdate(d, sheetHeight),
-                  onVerticalDragEnd: _onDragEnd,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onVerticalDragStart: _onDragStart,
+              onVerticalDragUpdate: (d) =>
+                  _onDragUpdate(d, sheetHeight),
+              onVerticalDragEnd: _onDragEnd,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.only(top: 8, bottom: 8),
+                child: Center(
                   child: Container(
-                    color: Colors.transparent,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: widget.isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
-                Expanded(child: widget.child),
-              ],
+              ),
             ),
-          ),
+            Flexible(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+                child: widget.child,
+              ),
+            ),
+          ],
         ),
       ),
     );

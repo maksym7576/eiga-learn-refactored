@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../../providers/DTOProviders.dart';
+import '../../../../providers/DTOProviders.dart';
 
 class AnilistPreviewWidget extends ConsumerWidget {
   const AnilistPreviewWidget({super.key});
@@ -88,7 +88,7 @@ class AnilistPreviewWidget extends ConsumerWidget {
             ),
             SizedBox(width: 8),
             Expanded(
-              child: Text('Завантаження...', style: TextStyle(color: Colors.grey)),
+              child: Text('Loading...', style: TextStyle(color: Colors.grey)),
             ),
           ],
         ),

@@ -1,8 +1,8 @@
 import 'package:eiga/config/depacker/depackerLanguageConfig.dart';
+import 'package:eiga/ui/widgets/videoUploating/components/UploadingTheme.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import 'languagePreviewStyles.dart';
 import 'languageWidget.dart';
 
 enum LanguageType { original, translation }
@@ -17,7 +17,7 @@ class LanguagePreviewWidget extends ConsumerStatefulWidget {
 class _LanguagesWidgetState extends ConsumerState<LanguagePreviewWidget> {
   LanguageType _activeTypeNow = LanguageType.original;
 
-  Widget _buildToggleButton(String title, LanguageType type, LanguagePreviewTheme theme) {
+  Widget _buildToggleButton(String title, LanguageType type, UploadingTheme theme) {
     final isActive = _activeTypeNow == type;
 
     return Expanded(
@@ -49,11 +49,12 @@ class _LanguagesWidgetState extends ConsumerState<LanguagePreviewWidget> {
   @override
   Widget build(BuildContext context) {
     final languages = DepackerLanguageConfigRegistry.getAllLanguages();
-    final theme = LanguagePreviewTheme.of(context);
+    final theme = UploadingTheme.of(context);
 
     return Container(
       color: theme.backgroundColor,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 8),
           Row(
@@ -115,16 +116,24 @@ class _LanguagesWidgetState extends ConsumerState<LanguagePreviewWidget> {
             ),
           ),
           const SizedBox(height: 20),
-          Expanded(
-            child: GridView.count(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              crossAxisCount: 2,
-              childAspectRatio: 2.3,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              children: languages.map((lan) {
-                return LanguageWidget(language: lan, type: _activeTypeNow);
-              }).toList(),
+          Flexible(
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const ClampingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 2.5,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+              ),
+              itemCount: languages.length,
+              itemBuilder: (context, index) {
+                return LanguageWidget(
+                  language: languages[index],
+                  type: _activeTypeNow,
+                );
+              },
             ),
           ),
           const SizedBox(height: 20),

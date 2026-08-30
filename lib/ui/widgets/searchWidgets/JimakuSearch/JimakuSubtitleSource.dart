@@ -1,8 +1,9 @@
 import 'package:eiga/backend/data/dto/JimakuFileOrGroupDTO.dart';
 import 'package:eiga/backend/services/utils/jimaku_clustering_util.dart';
 import 'package:eiga/providers/searchProvider.dart';
-import 'package:eiga/ui/widgets/searchWidgets/JimakuSearch/JimakuEntryTile.dart';
+import 'package:eiga/ui/widgets/searchWidgets/JimakuSearch/JimakuEntryCard.dart';
 import 'package:eiga/ui/widgets/searchWidgets/JimakuSearch/JimakuFileTile.dart';
+import 'package:eiga/ui/widgets/videoUploating/components/UploadingTheme.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -61,6 +62,32 @@ class JimakuSubtitleSource implements SearchSource<JimakuDataDTO, JimakuFileOrGr
     }).toList();
   }
 
+  Future<void> fetchMetadataForRange(
+      List<JimakuDataDTO> results, int start, int end, WidgetRef ref) async {
+    if (start >= results.length) return;
+    final rangeEnd = end > results.length ? results.length : end;
+    final range = results.sublist(start, rangeEnd);
+
+    final currentMetadata = ref.read(searchMetadataProvider(key));
+    final missingIds = range
+        .map((e) => e.anilistId)
+        .whereType<int>()
+        .where((id) => !currentMetadata.containsKey(id))
+        .toSet()
+        .toList();
+
+    if (missingIds.isNotEmpty) {
+      final aniListService = ref.read(aniListServiceProvider);
+      final metadataList = await aniListService.getByIds(missingIds);
+      final newMetadata = {for (var m in metadataList) m.id!: m};
+
+      ref.read(searchMetadataProvider(key).notifier).state = {
+        ...currentMetadata,
+        ...newMetadata,
+      };
+    }
+  }
+
   @override
   Future<List<JimakuFileOrGroupDTO>> getFiles(
       JimakuDataDTO entry, Map<String, dynamic> filters, WidgetRef ref) async {
@@ -116,7 +143,7 @@ class JimakuSubtitleSource implements SearchSource<JimakuDataDTO, JimakuFileOrGr
 
   @override
   Widget buildFilterBar(BuildContext context, WidgetRef ref) {
-    // ... existing filter bar logic ...
+    final theme = UploadingTheme.of(context);
     final filters = ref.watch(searchFiltersProvider(key));
     final animeOnly = filters['animeOnly'] as bool? ?? true;
     final includeAdult = filters['includeAdult'] as bool? ?? false;
@@ -130,10 +157,16 @@ class JimakuSubtitleSource implements SearchSource<JimakuDataDTO, JimakuFileOrGr
     }
 
     return Theme(
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      data: Theme.of(context).copyWith(
+        dividerColor: Colors.transparent,
+        expansionTileTheme: ExpansionTileThemeData(
+          iconColor: theme.subtitleColor,
+          textColor: theme.normalText,
+        ),
+      ),
       child: ExpansionTile(
-        leading: const Icon(Icons.tune),
-        title: const Text('Filters', style: TextStyle(fontWeight: FontWeight.w500)),
+        leading: Icon(Icons.tune, color: theme.subtitleColor),
+        title: Text('Filters', style: TextStyle(fontWeight: FontWeight.w600, color: theme.normalText)),
         childrenPadding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
         children: [
           Column(
@@ -175,7 +208,7 @@ class JimakuSubtitleSource implements SearchSource<JimakuDataDTO, JimakuFileOrGr
                     selected: includeUnverified,
                     showCheckmark: false,
                     avatar: includeUnverified ? const Icon(Icons.warning_amber_rounded, size: 18) : null,
-                    selectedColor: Colors.deepPurpleAccent.withValues(alpha: 0.15),
+                    selectedColor: theme.selectionAccentColor.withValues(alpha: 0.15),
                     onSelected: (val) => updateFilter('includeUnverified', val),
                   ),
                 ],
@@ -189,7 +222,7 @@ class JimakuSubtitleSource implements SearchSource<JimakuDataDTO, JimakuFileOrGr
 
   @override
   Widget buildEntryCard(JimakuDataDTO entry, bool isActive, VoidCallback onTap) {
-    return JimakuEntryTile(entry: entry, isActive: isActive, onTap: onTap);
+    return JimakuEntryCard(entry: entry, isActive: isActive, onTap: onTap);
   }
 
   @override
@@ -236,57 +269,72 @@ class _JimakuGroupTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = UploadingTheme.of(context);
+    final isExpanded = group.isExpanded;
+    
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
       child: GestureDetector(
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.deepPurpleAccent.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: Colors.deepPurpleAccent.withValues(alpha: 0.2),
-            ),
+            color: isExpanded 
+                ? theme.selectionAccentColor.withValues(alpha: 0.1) 
+                : theme.cardBackground,
+            borderRadius: isExpanded 
+                ? const BorderRadius.vertical(top: Radius.circular(10)) 
+                : BorderRadius.circular(10),
+            border: !isExpanded ? Border.all(color: theme.cardBorder, width: 0.5) : null,
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(
-                group.isExpanded ? Icons.folder_open : Icons.folder,
-                color: Colors.deepPurpleAccent,
+                isExpanded ? Icons.folder_open_rounded : Icons.folder_rounded,
+                color: theme.selectionAccentColor,
                 size: 20,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
-                child: Text(
-                  group.name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF1E293B),
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.deepPurpleAccent.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${group.files.length} files',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.deepPurpleAccent,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 1),
+                  child: Text(
+                    group.name,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: theme.normalText,
+                      height: 1.35,
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              Icon(
-                group.isExpanded ? Icons.expand_less : Icons.expand_more,
-                color: Colors.deepPurpleAccent,
-                size: 20,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: isExpanded ? Colors.transparent : theme.cardBackground,
+                  borderRadius: BorderRadius.circular(6),
+                  border: isExpanded ? null : Border.all(color: theme.cardBorder),
+                ),
+                child: Text(
+                  '${group.files.length}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isExpanded ? theme.selectionAccentColor : theme.subtitleColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Padding(
+                padding: const EdgeInsets.only(top: 3),
+                child: Icon(
+                  isExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                  color: isExpanded ? theme.selectionAccentColor : theme.mutedText,
+                  size: 16,
+                ),
               ),
             ],
           ),

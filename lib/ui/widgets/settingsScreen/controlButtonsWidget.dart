@@ -5,6 +5,7 @@ import 'package:eiga/ui/widgets/settingsScreen/aiModelsSettingsWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../providers/servicesProviders.dart';
 import '../../../providers/redirectProviders.dart';
 
 class ControlButtonWidget extends ConsumerStatefulWidget {
@@ -296,7 +297,83 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
           title: 'AI Models',
           dialogBuilder: (context) => const AiModelsSettingsWidget(),
         ),
+        const SizedBox(height: 5),
+        _settingsButton(
+          context,
+          title: 'Clear Database',
+          dialogBuilder: (context) => _clearDatabaseDialog(context),
+        ),
       ],
+    );
+  }
+
+  Widget _clearDatabaseDialog(BuildContext context) {
+    return Consumer(
+      builder: (context, ref, child) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.redAccent,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Clear All Data?',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'This action will permanently delete all videos, phrases, and progress. API keys will not be affected.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Colors.black87),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: const BorderSide(color: Colors.deepPurpleAccent),
+                    ),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      await ref
+                          .read(databaseMaintenanceServiceProvider)
+                          .clearAllData();
+                      if (context.mounted) {
+                        Navigator.of(context).pop();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Database cleared successfully'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: const Text(
+                      'Clear',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
     );
   }
 }

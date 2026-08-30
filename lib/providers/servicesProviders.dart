@@ -5,6 +5,7 @@ import 'package:eiga/backend/services/models_services/phraseService.dart';
 import 'package:eiga/backend/services/models_services/videoService.dart';
 import 'package:eiga/backend/services/models_services/wordService.dart';
 import 'package:eiga/backend/services/petition_ai/parsers/PhraseResponseHandler.dart';
+import 'package:eiga/backend/services/system/databaseMaintenanceService.dart';
 import 'package:eiga/config/appConfigs.dart';
 import 'package:eiga/providers/modelsProviders.dart';
 import 'package:eiga/providers/packageProviders.dart';
@@ -41,6 +42,11 @@ final blockServiceProvider = Provider<BlockService>((ref) {
 final wordServiceProvider = Provider<WordService>((ref) {
   final db = ref.watch(isarProvider);
   return WordService(db);
+});
+
+final databaseMaintenanceServiceProvider = Provider<DatabaseMaintenanceService>((ref) {
+  final db = ref.watch(isarProvider);
+  return DatabaseMaintenanceService(db);
 });
 
 final jimakuServiceProvider = FutureProvider<JimakuService>((ref) async {
