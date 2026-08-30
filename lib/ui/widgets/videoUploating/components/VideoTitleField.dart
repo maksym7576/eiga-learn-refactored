@@ -1,4 +1,4 @@
-import 'package:eiga/ui/widgets/videoUploating/components/UploadingTheme.dart';
+import 'package:eiga/ui/styles/AdditionalWindowTheme.dart';
 import 'package:flutter/material.dart';
 
 class VideoTitleField extends StatelessWidget {
@@ -21,7 +21,7 @@ class VideoTitleField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = UploadingTheme.of(context);
+    final theme = AdditionalWindowTheme.of(context);
 
     return SizedBox(
       height: 44,

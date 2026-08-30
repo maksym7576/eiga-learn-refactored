@@ -1,5 +1,5 @@
 import 'package:eiga/backend/data/dto/AniListDataDTO.dart';
-import 'package:eiga/ui/widgets/videoUploating/components/UploadingTheme.dart';
+import 'package:eiga/ui/styles/AdditionalWindowTheme.dart';
 import 'package:flutter/material.dart';
 
 class AniListEntryCard extends StatelessWidget {
@@ -16,7 +16,7 @@ class AniListEntryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = UploadingTheme.of(context);
+    final theme = AdditionalWindowTheme.of(context);
 
     return GestureDetector(
       onTap: onTap,
@@ -115,7 +115,7 @@ class AniListEntryCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCover(UploadingTheme theme) {
+  Widget _buildCover(AdditionalWindowTheme theme) {
     if (entry.coverImageUrl != null) {
       return Image.network(
         entry.coverImageUrl!,
@@ -126,7 +126,7 @@ class AniListEntryCard extends StatelessWidget {
     return _buildPlaceholder(theme);
   }
 
-  Widget _buildPlaceholder(UploadingTheme theme) {
+  Widget _buildPlaceholder(AdditionalWindowTheme theme) {
     return Center(
       child: Icon(
         Icons.movie_filter_rounded,

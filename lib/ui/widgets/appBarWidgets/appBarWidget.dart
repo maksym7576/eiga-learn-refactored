@@ -8,6 +8,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../config/modelsUrl/TranslationPipelineStep.dart';
 import '../../../providers/ai_models_state_provider.dart';
+import '../../styles/AppAppBarTheme.dart';
 import '../dialogs/AppBottomSheet.dart';
 
 class AppBarWidget extends ConsumerStatefulWidget implements PreferredSizeWidget {
@@ -106,23 +107,17 @@ class _AppBarWidgetState extends ConsumerState<AppBarWidget> {
       isStreamingCustom: false,
     );
 
-    const Color purplePrimary = Colors.deepPurpleAccent;
-    final Color purpleAccent = Colors.deepPurple.shade300;
+    final theme = AppAppBarTheme.of(context);
 
     return AppBar(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: theme.backgroundColor,
       elevation: 0,
       title: Row(
         children: [
           const SizedBox(width: 10),
           Text(
             'eiga',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-              color: purplePrimary,
-              letterSpacing: 1.2,
-            ),
+            style: theme.logoStyle,
           ),
           const SizedBox(width: 20),
           Expanded(
@@ -133,23 +128,17 @@ class _AppBarWidgetState extends ConsumerState<AppBarWidget> {
                 curve: Curves.easeOutCirc,
                 decoration: BoxDecoration(
                   color: _isModelDialogOpen
-                      ? purplePrimary.withValues(alpha: 0.08)
-                      : Colors.grey.shade50,
+                      ? theme.selectorActiveBackground
+                      : theme.selectorBackground,
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
                     color: _isModelDialogOpen
-                        ? purplePrimary
-                        : purplePrimary.withValues(alpha: 0.3),
+                        ? theme.selectorActiveBorder
+                        : theme.selectorBorder,
                     width: _isModelDialogOpen ? 2.0 : 1.5,
                   ),
                   boxShadow: _isModelDialogOpen
-                      ? [
-                    BoxShadow(
-                      color: purplePrimary.withValues(alpha: 0.15),
-                      blurRadius: 12,
-                      spreadRadius: 2,
-                    )
-                  ]
+                      ? theme.selectorActiveShadow
                       : [],
                 ),
                 child: ClipRRect(
@@ -190,15 +179,9 @@ class _AppBarWidgetState extends ConsumerState<AppBarWidget> {
                             width: 8,
                             height: 8,
                             decoration: BoxDecoration(
-                              color: purplePrimary,
+                              color: theme.indicatorColor,
                               shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: purplePrimary.withValues(alpha: 0.4),
-                                  blurRadius: 4,
-                                  spreadRadius: 1,
-                                ),
-                              ],
+                              boxShadow: theme.indicatorShadow,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -209,22 +192,13 @@ class _AppBarWidgetState extends ConsumerState<AppBarWidget> {
                               children: [
                                 Text(
                                   step.displayName.toUpperCase(),
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    color: purpleAccent,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.5,
-                                  ),
+                                  style: theme.stepLabelStyle,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 1),
                                 Text(
                                   selectedItem.name,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.black87,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                  style: theme.modelNameStyle,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ],
@@ -237,16 +211,12 @@ class _AppBarWidgetState extends ConsumerState<AppBarWidget> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: purplePrimary.withValues(alpha: 0.08),
+                              color: theme.badgeBackground,
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
                               '${selectedItem.used}/${selectedItem.currentDailyMaxLimit}',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: purplePrimary,
-                              ),
+                              style: theme.badgeTextStyle,
                             ),
                           ),
                         ],
@@ -261,7 +231,7 @@ class _AppBarWidgetState extends ConsumerState<AppBarWidget> {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.menu_rounded, color: Colors.black87),
+          icon: Icon(Icons.menu_rounded, color: theme.iconColor),
           onPressed: () {
             context.push('/settings');
           },

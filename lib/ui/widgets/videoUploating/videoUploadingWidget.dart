@@ -4,10 +4,6 @@ import 'package:eiga/backend/data/models/videoObject.dart';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoComponentsProvider.dart';
 import 'package:eiga/ui/widgets/phrasesDepacked/phraseDepPreviewWidget.dart';
-import 'package:eiga/ui/widgets/searchWidgets/JimakuSearch/JimakuSubtitleSource.dart';
-import 'package:eiga/ui/widgets/searchWidgets/searchPickerWidget.dart';
-import 'package:eiga/ui/widgets/videoUploating/components/videoFilePickersRow.dart';
-import 'package:eiga/ui/widgets/videoUploating/components/videoFormActionButtons.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -19,9 +15,11 @@ import '../dialogs/AppBottomSheet.dart';
 import '../searchWidgets/AniListSearch/AniListPreviewWidget.dart';
 import 'components/AttachSubtitleBottomSheet.dart';
 import 'components/JimakuSearchBottomSheet.dart';
-import 'components/UploadingTheme.dart';
-import 'components/VideoTitleField.dart';
+import '../../styles/AdditionalWindowTheme.dart';
+import '../../styles/VideoUploadingTheme.dart';
 import 'components/languageButtonWidget.dart';
+import 'components/videoFilePickersRow.dart';
+import 'components/videoFormActionButtons.dart';
 
 class VideoUploadingWidget extends ConsumerStatefulWidget {
   const VideoUploadingWidget({super.key});
@@ -41,7 +39,7 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
   }
 
   void _showAttachSubtitleSheet() {
-    final theme = UploadingTheme.of(context);
+    final theme = AdditionalWindowTheme.of(context);
     AppBottomSheet.show(
       context: context,
       heightFactor: 0.85,
@@ -53,7 +51,7 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
   }
 
   void _pickJimakuSrt(BuildContext context, WidgetRef ref) {
-    final theme = UploadingTheme.of(context);
+    final theme = AdditionalWindowTheme.of(context);
     AppBottomSheet.show(
       context: context,
       heightFactor: 0.85,
@@ -175,8 +173,10 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
         lanProv.original.isNotEmpty &&
         lanProv.target.isNotEmpty;
 
+    final theme = VideoUploadingTheme.of(context);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: theme.containerPadding,
       child: Column(
         children: [
           VideoFilePickersRow(
@@ -186,26 +186,26 @@ class _VideoUploadingWidgetState extends ConsumerState<VideoUploadingWidget> {
             onAttachSubtitle: _showAttachSubtitleSheet,
             onPickJimakuSrt: _pickJimakuSrt,
           ),
-          const SizedBox(height: 7),
+          SizedBox(height: theme.sectionGapSmall),
           Row(
             children: [
               Expanded(child: LanguageButtonWidget(original: lanProv.original, translation: lanProv.target)),
             ],
           ),
-          const SizedBox(height: 7),
+          SizedBox(height: theme.sectionGapSmall),
           const AnilistPreviewWidget(),
           if (srtPatch != null && lanProv.original.isNotEmpty)
             PhrasesDepPreviewWidget(
               onSearch: () => _pickJimakuSrt(context, ref),
             ),
-          const SizedBox(height: 16),
+          SizedBox(height: theme.sectionGapLarge),
           VideoFormActionButtons(
             hasAnyData: hasAnyData,
             isSubmitEnabled: isButtonEnabled,
             onCancel: _clearForm,
             onSubmit: _submitVideo,
           ),
-          const SizedBox(height: 100),
+          SizedBox(height: theme.bottomSpacer),
         ],
       ),
     );

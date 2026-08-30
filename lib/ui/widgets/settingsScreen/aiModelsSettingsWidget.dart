@@ -1,4 +1,5 @@
 import 'package:eiga/backend/data/dto/AiModelSettingsDTO.dart';
+import 'package:eiga/ui/styles/SettingsTheme.dart';
 import 'package:flutter/material.dart';
 
 import '../../../config/modelsUrl/aiModelManager.dart';
@@ -38,6 +39,7 @@ class _AiModelsSettingsWidgetState extends State<AiModelsSettingsWidget> {
   }
 
   Future<void> _openEditDialog(AiModelSettingsDTO model) async {
+    final theme = SettingsTheme.of(context);
     final maxLimitController =
     TextEditingController(text: model.currentMaxLimit.toString());
     final phrasesController =
@@ -47,11 +49,11 @@ class _AiModelsSettingsWidgetState extends State<AiModelsSettingsWidget> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: Colors.deepPurple[50],
+          backgroundColor: theme.dialogBackground,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(
             model.name,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: theme.normalText),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -59,18 +61,22 @@ class _AiModelsSettingsWidgetState extends State<AiModelsSettingsWidget> {
               TextField(
                 controller: maxLimitController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Ліміт запитів',
-                  border: OutlineInputBorder(),
+                style: TextStyle(color: theme.normalText),
+                decoration: InputDecoration(
+                  labelText: 'Request limit',
+                  labelStyle: TextStyle(color: theme.mutedText),
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: phrasesController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Фраз за один запит',
-                  border: OutlineInputBorder(),
+                style: TextStyle(color: theme.normalText),
+                decoration: InputDecoration(
+                  labelText: 'Phrases per request',
+                  labelStyle: TextStyle(color: theme.mutedText),
+                  border: const OutlineInputBorder(),
                 ),
               ),
             ],
@@ -78,13 +84,11 @@ class _AiModelsSettingsWidgetState extends State<AiModelsSettingsWidget> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Скасувати'),
+              child: Text('Cancel', style: TextStyle(color: theme.mutedText)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurpleAccent,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              style: theme.primaryButtonStyle().copyWith(
+                padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 20, vertical: 10)),
               ),
               onPressed: () async {
                 final newLimit = int.tryParse(maxLimitController.text.trim());
@@ -104,7 +108,7 @@ class _AiModelsSettingsWidgetState extends State<AiModelsSettingsWidget> {
                 if (context.mounted) Navigator.of(context).pop();
                 _reload();
               },
-              child: const Text('Зберегти'),
+              child: const Text('Save'),
             ),
           ],
         );
@@ -112,7 +116,7 @@ class _AiModelsSettingsWidgetState extends State<AiModelsSettingsWidget> {
     );
   }
 
-  Widget _modelTile(AiModelSettingsDTO model) {
+  Widget _modelTile(AiModelSettingsDTO model, SettingsTheme theme) {
     final bool isCurrent = model.name == _currentName;
 
     return Container(
@@ -122,12 +126,12 @@ class _AiModelsSettingsWidgetState extends State<AiModelsSettingsWidget> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: isCurrent
-            ? Colors.deepPurpleAccent.withValues(alpha: 0.08)
-            : Colors.white,
+            ? theme.primaryAccent.withValues(alpha: 0.08)
+            : theme.backgroundColor,
         border: Border.all(
           color: isCurrent
-              ? Colors.deepPurpleAccent
-              : Colors.black.withValues(alpha: 0.08),
+              ? theme.primaryAccent
+              : theme.dialogBorder,
           width: isCurrent ? 1.5 : 1,
         ),
         boxShadow: [
@@ -151,8 +155,8 @@ class _AiModelsSettingsWidgetState extends State<AiModelsSettingsWidget> {
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
                     color: isCurrent
-                        ? Colors.deepPurpleAccent.shade700
-                        : Colors.black87,
+                        ? theme.primaryAccent
+                        : theme.normalText,
                   ),
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
@@ -166,11 +170,11 @@ class _AiModelsSettingsWidgetState extends State<AiModelsSettingsWidget> {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.deepPurpleAccent,
+                    color: theme.primaryAccent,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Text(
-                    'активна',
+                    'active',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 10,
@@ -182,20 +186,20 @@ class _AiModelsSettingsWidgetState extends State<AiModelsSettingsWidget> {
               IconButton(
                 visualDensity: VisualDensity.compact,
                 onPressed: () => _openEditDialog(model),
-                icon: const Icon(
+                icon: Icon(
                   Icons.settings_outlined,
                   size: 20,
-                  color: Colors.deepPurpleAccent,
+                  color: theme.primaryAccent,
                 ),
               ),
               if (!isCurrent)
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   onPressed: () => _selectModel(model.name),
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.radio_button_unchecked,
                     size: 20,
-                    color: Colors.grey,
+                    color: theme.mutedText,
                   ),
                 ),
             ],
@@ -207,18 +211,18 @@ class _AiModelsSettingsWidgetState extends State<AiModelsSettingsWidget> {
               const SizedBox(width: 6),
               Text(
                 '${model.used}/${model.currentMaxLimit}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: Colors.black54,
+                  color: theme.mutedText,
                 ),
               ),
               const Spacer(),
               Text(
-                '${model.currentPhrasesPerRequest} фраз/запит',
-                style: const TextStyle(
+                '${model.currentPhrasesPerRequest} phr/req',
+                style: TextStyle(
                   fontSize: 13,
-                  color: Colors.black45,
+                  color: theme.mutedText,
                 ),
               ),
             ],
@@ -230,6 +234,8 @@ class _AiModelsSettingsWidgetState extends State<AiModelsSettingsWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = SettingsTheme.of(context);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -247,7 +253,7 @@ class _AiModelsSettingsWidgetState extends State<AiModelsSettingsWidget> {
               if (!snapshot.hasData || snapshot.data!.isEmpty) {
                 return const Padding(
                   padding: EdgeInsets.all(40),
-                  child: Center(child: Text('Немає доступних моделей')),
+                  child: Center(child: Text('No models available')),
                 );
               }
               final models = snapshot.data!;
@@ -255,7 +261,7 @@ class _AiModelsSettingsWidgetState extends State<AiModelsSettingsWidget> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: models.length,
-                itemBuilder: (context, index) => _modelTile(models[index]),
+                itemBuilder: (context, index) => _modelTile(models[index], theme),
               );
             },
           ),

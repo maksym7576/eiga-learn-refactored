@@ -3,7 +3,7 @@ import 'package:eiga/backend/services/utils/jimaku_clustering_util.dart';
 import 'package:eiga/providers/searchProvider.dart';
 import 'package:eiga/ui/widgets/searchWidgets/JimakuSearch/JimakuEntryCard.dart';
 import 'package:eiga/ui/widgets/searchWidgets/JimakuSearch/JimakuFileTile.dart';
-import 'package:eiga/ui/widgets/videoUploating/components/UploadingTheme.dart';
+import 'package:eiga/ui/styles/AdditionalWindowTheme.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -143,7 +143,7 @@ class JimakuSubtitleSource implements SearchSource<JimakuDataDTO, JimakuFileOrGr
 
   @override
   Widget buildFilterBar(BuildContext context, WidgetRef ref) {
-    final theme = UploadingTheme.of(context);
+    final theme = AdditionalWindowTheme.of(context);
     final filters = ref.watch(searchFiltersProvider(key));
     final animeOnly = filters['animeOnly'] as bool? ?? true;
     final includeAdult = filters['includeAdult'] as bool? ?? false;
@@ -269,7 +269,7 @@ class _JimakuGroupTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = UploadingTheme.of(context);
+    final theme = AdditionalWindowTheme.of(context);
     final isExpanded = group.isExpanded;
     
     return Padding(

@@ -1,4 +1,5 @@
 import 'package:eiga/backend/data/models/phraseObject.dart';
+import 'package:eiga/ui/styles/PhraseDepTheme.dart';
 import 'package:flutter/material.dart';
 
 class PhraseDepWidget extends StatefulWidget {
@@ -21,6 +22,7 @@ String _formatTime(DateTime? time) {
 class _PhraseDepWidgetState extends State<PhraseDepWidget> {
   @override
   Widget build(BuildContext context) {
+    final theme = PhraseDepTheme.of(context);
     final order = widget.phraseObject.phraseOrder;
     final text = widget.phraseObject.originalPhrase ?? '';
     final start = _formatTime(widget.phraseObject.startTime);
@@ -30,30 +32,30 @@ class _PhraseDepWidgetState extends State<PhraseDepWidget> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.grey.shade50,
+          color: theme.cardBackground,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: Colors.deepPurple.withValues(alpha: 0.1),
+            color: theme.cardBorder,
             width: 1.2,
           ),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(width: 4),
+            const SizedBox(width: 4),
             Container(
               margin: const EdgeInsets.only(top: 2),
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
               decoration: BoxDecoration(
-                color: Colors.deepPurpleAccent.withValues(alpha: 0.12),
+                color: theme.badgeBackground,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 '${order ?? '?'}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
-                  color: Colors.deepPurpleAccent,
+                  color: theme.badgeText,
                 ),
               ),
             ),
@@ -64,10 +66,10 @@ class _PhraseDepWidgetState extends State<PhraseDepWidget> {
                 children: [
                   Text(
                     text,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: Colors.black87,
+                      color: theme.normalText,
                       height: 1.4,
                     ),
                   ),
@@ -77,7 +79,7 @@ class _PhraseDepWidgetState extends State<PhraseDepWidget> {
                       Icon(
                         Icons.access_time_rounded,
                         size: 12,
-                        color: Colors.deepPurple.withValues(alpha: 0.4),
+                        color: theme.mutedText,
                       ),
                       const SizedBox(width: 4),
                       Row(
@@ -87,21 +89,21 @@ class _PhraseDepWidgetState extends State<PhraseDepWidget> {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
-                              color: Colors.deepPurple.withValues(alpha: 0.4),
+                              color: theme.mutedText,
                             ),
                           ),
                           const SizedBox(width: 1),
                           Icon(
                             Icons.arrow_right_alt,
                             size: 11,
-                            color: Colors.deepPurple.withValues(alpha: 0.4),
+                            color: theme.mutedText,
                           ),
                           Text(
                             end,
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
-                              color: Colors.deepPurple.withValues(alpha: 0.4),
+                              color: theme.mutedText,
                             ),
                           ),
                         ],

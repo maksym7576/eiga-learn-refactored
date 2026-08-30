@@ -1,5 +1,6 @@
 import 'package:eiga/config/depacker/readingTypeLanguageConfig.dart';
 import 'package:eiga/providers/readingTypeProvider.dart';
+import 'package:eiga/ui/styles/PlayerSettingsTheme.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -19,23 +20,25 @@ class ReadingTypeSelectorWidget extends ConsumerWidget {
 
   Widget _buildContent(BuildContext context, WidgetRef ref, ReadingTypeProvider data) {
     final options = data.config.options;
+    final theme = PlayerSettingsTheme.of(context);
 
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Subtitle Display',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w900,
-              color: Colors.deepPurpleAccent,
+              color: theme.primaryAccent,
             ),
           ),
           const SizedBox(height: 24),
           _buildGroup(
             context: context,
+            theme: theme,
             title: 'Primary Subtitle',
             subtitle: 'This will be the main text shown.',
             child: Column(
@@ -51,6 +54,7 @@ class ReadingTypeSelectorWidget extends ConsumerWidget {
           const SizedBox(height: 24),
           _buildGroup(
             context: context,
+            theme: theme,
             title: 'Secondary Subtitle',
             subtitle: 'Optional text shown above the primary.',
             child: Column(
@@ -81,6 +85,7 @@ class ReadingTypeSelectorWidget extends ConsumerWidget {
     required String title,
     required String subtitle,
     required Widget child,
+    required PlayerSettingsTheme theme,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -94,10 +99,10 @@ class ReadingTypeSelectorWidget extends ConsumerWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
-                    color: Colors.black87,
+                    color: theme.normalText,
                   ),
                 ),
                 Text(
@@ -105,7 +110,7 @@ class ReadingTypeSelectorWidget extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: Colors.black.withValues(alpha: 0.4),
+                    color: theme.mutedText,
                   ),
                 ),
               ],
@@ -113,10 +118,10 @@ class ReadingTypeSelectorWidget extends ConsumerWidget {
           ),
           Container(
             decoration: BoxDecoration(
-              color: Colors.deepPurple.shade50.withValues(alpha: 0.5),
+              color: theme.sectionBackground,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: Colors.deepPurpleAccent.withValues(alpha: 0.08),
+                color: theme.tileBorder,
                 width: 1.5,
               ),
             ),
@@ -144,17 +149,18 @@ class _ReadingOptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = Colors.deepPurpleAccent;
+    final theme = PlayerSettingsTheme.of(context);
+    final accent = theme.primaryAccent;
     
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected ? accent.withValues(alpha: 0.04) : Colors.transparent,
+          color: isSelected ? theme.tileActiveBackground : Colors.transparent,
           border: Border(
             bottom: BorderSide(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: theme.tileBorder,
               width: 1,
             ),
           ),
@@ -167,7 +173,7 @@ class _ReadingOptionTile extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? accent : Colors.black87,
+                  color: isSelected ? accent : theme.normalText,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -181,7 +187,7 @@ class _ReadingOptionTile extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: Colors.black.withValues(alpha: 0.1),
+                    color: theme.tileBorder,
                     width: 2,
                   ),
                 ),

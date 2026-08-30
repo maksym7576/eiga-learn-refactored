@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:eiga/ui/widgets/videoUploating/components/UploadingTheme.dart';
+import 'package:eiga/ui/styles/AdditionalWindowTheme.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
@@ -71,7 +71,7 @@ class _AttachSubtitleBottomSheetState extends ConsumerState<AttachSubtitleBottom
     final isSearching = ref.watch(isSearchingProvider(key));
     final selectedAnime = ref.watchAniListSelectedEntry();
     final srtPath = ref.watch(srtPathProvider);
-    final theme = UploadingTheme.of(context);
+    final theme = AdditionalWindowTheme.of(context);
 
     return Padding(
       padding: EdgeInsets.only(
@@ -164,7 +164,7 @@ class _AttachSubtitleBottomSheetState extends ConsumerState<AttachSubtitleBottom
     );
   }
 
-  Widget _buildSelectedAnimeInfo(AniListDataDTO anime, UploadingTheme theme) {
+  Widget _buildSelectedAnimeInfo(AniListDataDTO anime, AdditionalWindowTheme theme) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(10),
@@ -233,7 +233,7 @@ class _AttachSubtitleBottomSheetState extends ConsumerState<AttachSubtitleBottom
     );
   }
 
-  Widget _buildSubtitlePicker(String? srtPath, UploadingTheme theme) {
+  Widget _buildSubtitlePicker(String? srtPath, AdditionalWindowTheme theme) {
     return InkWell(
       onTap: _pickSrt,
       borderRadius: BorderRadius.circular(12),
@@ -289,7 +289,7 @@ class _AttachSubtitleBottomSheetState extends ConsumerState<AttachSubtitleBottom
     );
   }
 
-  Widget _buildActionButtons(UploadingTheme theme) {
+  Widget _buildActionButtons(AdditionalWindowTheme theme) {
     return Row(
       children: [
         Expanded(

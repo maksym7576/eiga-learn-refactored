@@ -2,7 +2,7 @@ import 'package:eiga/backend/data/dto/JimakuDataDTO.dart';
 import 'package:eiga/backend/data/dto/JimakuFileOrGroupDTO.dart';
 import 'package:eiga/providers/searchProvider.dart';
 import 'package:eiga/ui/widgets/searchWidgets/JimakuSearch/JimakuSubtitleSource.dart';
-import 'package:eiga/ui/widgets/videoUploating/components/UploadingTheme.dart';
+import 'package:eiga/ui/styles/AdditionalWindowTheme.dart';
 import 'package:eiga/ui/widgets/videoUploating/components/VideoTitleField.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -152,7 +152,7 @@ class _JimakuSearchBottomSheetState extends ConsumerState<JimakuSearchBottomShee
 
   @override
   Widget build(BuildContext context) {
-    final theme = UploadingTheme.of(context);
+    final theme = AdditionalWindowTheme.of(context);
     final results = ref.watch(searchResultsProvider(_key)).cast<JimakuDataDTO>();
     final selectedEntry = ref.watch(selectedEntryProvider(_key)) as JimakuDataDTO?;
     final files = ref.watch(filesProvider(_key)).cast<JimakuFileOrGroupDTO>();
@@ -217,7 +217,7 @@ class _JimakuSearchBottomSheetState extends ConsumerState<JimakuSearchBottomShee
     );
   }
 
-  Widget _buildHeader(UploadingTheme theme, bool showDetails, JimakuDataDTO? selectedEntry) {
+  Widget _buildHeader(AdditionalWindowTheme theme, bool showDetails, JimakuDataDTO? selectedEntry) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -255,7 +255,7 @@ class _JimakuSearchBottomSheetState extends ConsumerState<JimakuSearchBottomShee
     );
   }
 
-  Widget _buildSearchView(UploadingTheme theme, bool isSearching, List<JimakuDataDTO> results) {
+  Widget _buildSearchView(AdditionalWindowTheme theme, bool isSearching, List<JimakuDataDTO> results) {
     if (isSearching) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 40),
@@ -287,7 +287,7 @@ class _JimakuSearchBottomSheetState extends ConsumerState<JimakuSearchBottomShee
   }
 
   Widget _buildDetailsView(
-    UploadingTheme theme,
+    AdditionalWindowTheme theme,
     JimakuDataDTO entry,
     bool isLoadingFiles,
     List<JimakuFileOrGroupDTO> files,
@@ -396,7 +396,7 @@ class _JimakuSearchBottomSheetState extends ConsumerState<JimakuSearchBottomShee
     );
   }
 
-  Widget _buildActionButtons(UploadingTheme theme, bool showDetails, dynamic selectedResult, bool isResolving) {
+  Widget _buildActionButtons(AdditionalWindowTheme theme, bool showDetails, dynamic selectedResult, bool isResolving) {
     final isDisabled = (selectedResult == null || isResolving || !showDetails);
     
     return Row(

@@ -1,5 +1,5 @@
 import 'package:eiga/providers/searchProvider.dart';
-import 'package:eiga/ui/widgets/videoUploating/components/UploadingTheme.dart';
+import 'package:eiga/ui/styles/AdditionalWindowTheme.dart';
 import 'package:flutter/material.dart';
 import 'package:eiga/backend/data/dto/JimakuDataDTO.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -20,7 +20,7 @@ class JimakuEntryCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = UploadingTheme.of(context);
+    final theme = AdditionalWindowTheme.of(context);
     final metadata = ref.watch(searchMetadataProvider(SearchSourceKeys.jimaku));
     final aniListData = entry.anilistId != null ? metadata[entry.anilistId] as AniListDataDTO? : null;
 
@@ -85,7 +85,7 @@ class JimakuEntryCard extends ConsumerWidget {
                     Positioned(
                       top: 6,
                       left: 6,
-                      child: _buildTypeBadge(entry),
+                      child: _buildTypeBadge(context, entry),
                     ),
                   ],
                 ),
@@ -122,7 +122,7 @@ class JimakuEntryCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildCover(UploadingTheme theme, AniListDataDTO? aniListData) {
+  Widget _buildCover(AdditionalWindowTheme theme, AniListDataDTO? aniListData) {
     final hasAnilistId = entry.anilistId != null;
     
     if (aniListData?.coverImageUrl != null) {
@@ -140,7 +140,7 @@ class JimakuEntryCard extends ConsumerWidget {
     return _buildPlaceholder(theme);
   }
 
-  Widget _buildPlaceholder(UploadingTheme theme) {
+  Widget _buildPlaceholder(AdditionalWindowTheme theme) {
     return Center(
       child: Icon(
         Icons.movie_filter_rounded,
@@ -150,9 +150,10 @@ class JimakuEntryCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildTypeBadge(JimakuDataDTO entry) {
+  Widget _buildTypeBadge(BuildContext context, JimakuDataDTO entry) {
+    final theme = AdditionalWindowTheme.of(context);
     final isMovie = entry.isMovie;
-    final color = isMovie ? Colors.orange : Colors.deepPurpleAccent;
+    final color = isMovie ? Colors.orange : theme.primaryAccent;
     final label = isMovie ? 'MOVIE' : 'ANIME';
 
     return Container(

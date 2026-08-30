@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:eiga/providers/videoDataProviders.dart';
+import 'package:eiga/ui/styles/PlayerSettingsTheme.dart';
 import 'package:eiga/ui/widgets/playerWidgets/readingTypeSelectorWidget.dart';
 import 'package:eiga/ui/widgets/playerWidgets/subtitleSelectorWidget.dart';
 import 'package:eiga/ui/widgets/playerWidgets/timerShiftEditorWidget.dart';
@@ -9,14 +10,6 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../dialogs/AppBottomSheet.dart';
 import '../subtitles/AiRequestStatusWidget.dart';
-
-class _IconPalette {
-  static const Color subtitles = Color(0xFF4338CA); // Indigo 700
-  static const Color reading = Color(0xFFF59E0B); // Amber 500
-  static const Color aiInsights = Color(0xFF0EA5E9); // Sky 500
-  static const Color sync = Color(0xFF94A3B8); // Slate 400
-  static const Color errors = Color(0xFFEF4444); // Red 500
-}
 
 class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
   const VideoSettingsNotFullScreenWidget({
@@ -71,6 +64,7 @@ class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final subtitlesEnabled = ref.watch(autoScrollProvider);
+    final theme = PlayerSettingsTheme.of(context);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -79,18 +73,19 @@ class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
         return ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
               width: double.infinity,
-              constraints: const BoxConstraints(maxHeight: 50),
+              constraints: const BoxConstraints(maxHeight: 52),
               decoration: BoxDecoration(
-                color: Colors.deepPurpleAccent.withValues(alpha: 0.1),
+                color: theme.barBackground,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.deepPurpleAccent.withValues(alpha: 0.2)),
+                border: Border.all(color: theme.barBorder, width: 1.2),
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                child: _buildCompactLayout(context, ref, subtitlesEnabled, scale),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                child: _buildCompactLayout(context, ref, subtitlesEnabled, scale, theme),
               ),
             ),
           ),
@@ -104,6 +99,7 @@ class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
       WidgetRef ref,
       bool subtitlesEnabled,
       double scale,
+      PlayerSettingsTheme theme,
       ) {
     return Row(
       children: [
@@ -115,7 +111,8 @@ class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
           label: subtitlesEnabled ? 'CC ON' : 'CC OFF',
           isActive: subtitlesEnabled,
           scale: scale,
-          color: _IconPalette.subtitles,
+          activeColor: theme.iconSubtitles,
+          theme: theme,
         ),
 
         SizedBox(width: 8 * scale),
@@ -132,6 +129,7 @@ class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
 
         _MoreSettingsButton(
           scale: scale,
+          theme: theme,
           onSelected: (value) {
             if (value == 1) _showTimeEditDialog(context);
             if (value == 2) _showReadingTypeDialog(context);
@@ -145,30 +143,29 @@ class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
   }
 }
 
-/// Кнопка "більше налаштувань" — власна кругла скляна капсула замість
-/// голої іконки, щоб вона читалась як окремий, тапабельний елемент,
-/// а не як прикраса поруч зі списком статистики.
 class _MoreSettingsButton extends StatelessWidget {
   final double scale;
   final ValueChanged<int> onSelected;
+  final PlayerSettingsTheme theme;
 
   const _MoreSettingsButton({
     required this.scale,
     required this.onSelected,
+    required this.theme,
   });
 
   @override
   Widget build(BuildContext context) {
     return PopupMenuButton<int>(
       tooltip: 'More settings',
-      offset: const Offset(0, 44),
-      color: Colors.deepPurple[50],
+      offset: const Offset(0, 48),
+      color: theme.backgroundColor,
       surfaceTintColor: Colors.transparent,
-      elevation: 12,
-      shadowColor: Colors.black.withValues(alpha: 0.1),
+      elevation: 16,
+      shadowColor: Colors.black.withValues(alpha: 0.15),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.deepPurpleAccent.withValues(alpha: 0.1)),
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: theme.tileBorder, width: 1),
       ),
       padding: EdgeInsets.zero,
       onSelected: onSelected,
@@ -176,47 +173,48 @@ class _MoreSettingsButton extends StatelessWidget {
         _menuItem(
           value: 2,
           icon: Icons.menu_book_rounded,
-          color: _IconPalette.reading,
+          color: theme.iconReading,
           label: 'Reading settings',
         ),
         _menuItem(
           value: 4,
           icon: Icons.subtitles_rounded,
-          color: _IconPalette.subtitles,
+          color: theme.iconSubtitles,
           label: 'Subtitle display',
         ),
         _menuItem(
           value: 3,
           icon: Icons.psychology_alt_rounded,
-          color: _IconPalette.aiInsights,
+          color: theme.iconAiInsights,
           label: 'AI insights',
         ),
         _menuItem(
           value: 5,
           icon: Icons.error_outline_rounded,
-          color: _IconPalette.errors,
+          color: theme.iconErrors,
           label: 'Gemini Errors',
         ),
-        const PopupMenuDivider(height: 9),
+        const PopupMenuDivider(height: 12),
         _menuItem(
           value: 1,
           icon: Icons.history_toggle_off_rounded,
-          color: _IconPalette.sync,
+          color: theme.iconSync,
           label: 'Sync subtitles',
         ),
       ],
-      child: Container(
-        width: 34 * scale,
-        height: 34 * scale,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 36 * scale,
+        height: 36 * scale,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.black.withValues(alpha: 0.04),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+          color: theme.actionButtonBackground,
+          border: Border.all(color: theme.actionButtonBorder),
         ),
         child: Icon(
           Icons.tune_rounded,
-          size: 18 * scale,
-          color: const Color(0xFF1E293B).withValues(alpha: 0.8),
+          size: 20 * scale,
+          color: theme.normalText.withValues(alpha: 0.9),
         ),
       ),
     );
@@ -230,27 +228,25 @@ class _MoreSettingsButton extends StatelessWidget {
   }) {
     return PopupMenuItem(
       value: value,
-      height: 44,
+      height: 48,
       child: Row(
         children: [
-          // Іконка-бейдж: м'який кольоровий фон замість голої іконки —
-          // сучасний патерн (iOS Settings / Notion), краще читається в списку.
           Container(
-            width: 30,
-            height: 30,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(9),
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, size: 17, color: color),
+            child: Icon(icon, size: 18, color: color),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: Colors.black87,
+              color: theme.normalText,
             ),
           ),
         ],
@@ -265,7 +261,8 @@ class _CompactActionChip extends StatelessWidget {
   final String label;
   final bool isActive;
   final double scale;
-  final Color color;
+  final Color activeColor;
+  final PlayerSettingsTheme theme;
 
   const _CompactActionChip({
     required this.onTap,
@@ -273,7 +270,8 @@ class _CompactActionChip extends StatelessWidget {
     required this.label,
     required this.isActive,
     required this.scale,
-    required this.color,
+    required this.activeColor,
+    required this.theme,
   });
 
   @override
@@ -281,42 +279,32 @@ class _CompactActionChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
         padding: EdgeInsets.symmetric(
-          horizontal: (10 * scale).clamp(6, 12),
+          horizontal: (12 * scale).clamp(8, 14),
           vertical: 6 * scale,
         ),
         decoration: BoxDecoration(
           color: isActive
-              ? color
-              : Colors.black.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(20),
+              ? activeColor
+              : theme.chipInactiveBackground,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isActive ? color : Colors.black.withValues(alpha: 0.08),
+            color: isActive ? activeColor.withValues(alpha: 0.5) : theme.chipInactiveBorder,
             width: 1.2,
           ),
-          // Легке світіння тільки в активному стані — дає іконці "вагу"
-          // без того, щоб панель виглядала перевантаженою.
-          boxShadow: isActive
-              ? [
-            BoxShadow(
-              color: color.withValues(alpha: 0.3),
-              blurRadius: 12,
-              spreadRadius: 0,
-            ),
-          ]
-              : null,
+          boxShadow: isActive ? theme.chipActiveShadow : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              size: 18 * scale,
-              color: isActive ? Colors.white : const Color(0xFF1E293B).withValues(alpha: 0.65),
+              size: 19 * scale,
+              color: isActive ? Colors.white : theme.normalText.withValues(alpha: 0.7),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             Flexible(
               child: FittedBox(
                 fit: BoxFit.scaleDown,
@@ -324,10 +312,10 @@ class _CompactActionChip extends StatelessWidget {
                   label,
                   maxLines: 1,
                   style: TextStyle(
-                    fontSize: 11 * scale,
-                    color: isActive ? Colors.white : const Color(0xFF1E293B).withValues(alpha: 0.75),
-                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                    letterSpacing: 0.3,
+                    fontSize: 12 * scale,
+                    color: isActive ? Colors.white : theme.normalText.withValues(alpha: 0.8),
+                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
+                    letterSpacing: 0.2,
                   ),
                 ),
               ),

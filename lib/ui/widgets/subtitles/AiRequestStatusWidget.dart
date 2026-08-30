@@ -1,3 +1,4 @@
+import 'package:eiga/ui/styles/AdditionalWindowTheme.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -15,17 +16,18 @@ class AiRequestStatusWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final result = ref.watch(aiRequestResultProvider);
+    final theme = AdditionalWindowTheme.of(context);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         const SizedBox(height: 16),
-        const Text(
+        Text(
           'AI Insights',
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w900,
-            color: Colors.deepPurpleAccent,
+            color: theme.titleColor,
             letterSpacing: 0.5,
           ),
         ),
@@ -41,15 +43,15 @@ class AiRequestStatusWidget extends ConsumerWidget {
             ),
           ),
           child: (result == null || result.isOk)
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Column(
                     children: [
-                      Icon(Icons.check_circle_outline_rounded, color: Colors.green, size: 40),
-                      SizedBox(height: 8),
+                      const Icon(Icons.check_circle_outline_rounded, color: Colors.green, size: 40),
+                      const SizedBox(height: 8),
                       Text(
                         'No active errors',
-                        style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500),
+                        style: TextStyle(color: theme.mutedText, fontWeight: FontWeight.w500),
                       ),
                     ],
                   ),

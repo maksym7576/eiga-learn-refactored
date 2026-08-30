@@ -9,11 +9,10 @@ import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/subtitle_settings_provider.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
 import 'package:eiga/providers/FlickManagerState.dart';
+import 'package:eiga/ui/styles/PhraseListTheme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-import '../../styles/phraseListStyles.dart';
 
 class PhraseTranslatedWidget extends ConsumerStatefulWidget {
   final PhraseObject phraseObject;
@@ -65,14 +64,10 @@ class _PhraseTranslatedWidgetState extends ConsumerState<PhraseTranslatedWidget>
 
   String _getVersionText(WordObject word, String key) {
     try {
-      // Спробуємо знайти за основним ключем
       var item = word.versions.where((v) => v.key == key).firstOrNull;
-
-      // Якщо не знайшли і шукаємо romaji, спробуємо знайти за застарілим ключем romanji
       if (item == null && key == 'romaji') {
         item = word.versions.where((v) => v.key == 'romanji').firstOrNull;
       }
-
       return item?.text ?? '';
     } catch (_) {
       return '';
@@ -144,6 +139,7 @@ class _PhraseTranslatedContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = PhraseListTheme.of(context);
     final blocksList = [...blocks]
       ..sort((a, b) => a.translatedPositionIndex.first.compareTo(b.translatedPositionIndex.first));
 
@@ -160,13 +156,15 @@ class _PhraseTranslatedContent extends StatelessWidget {
           getVersionText: getVersionText,
           config: config,
           originalLanguage: originalLanguage,
+          theme: theme,
         ),
-        const SizedBox(height: PhraseListStyles.blockSectionSpacing),
+        const SizedBox(height: 4),
         _BlocksSection(
           blocksList: blocksList,
           selectedBlockId: selectedBlockId,
           onToggleSelection: onToggleSelection,
           config: config,
+          theme: theme,
         ),
       ],
     );
@@ -182,6 +180,7 @@ class _WordsSection extends StatelessWidget {
   final String Function(WordObject, String) getVersionText;
   final SubtitleConfig? config;
   final String? originalLanguage;
+  final PhraseListTheme theme;
 
   const _WordsSection({
     required this.allWords,
@@ -190,6 +189,7 @@ class _WordsSection extends StatelessWidget {
     required this.selectedBlockId,
     required this.onToggleSelection,
     required this.getVersionText,
+    required this.theme,
     this.config,
     this.originalLanguage,
   });
@@ -198,15 +198,14 @@ class _WordsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final languageConfig = ReadingTypeLanguageConfigRegistry.getConfing(originalLanguage ?? 'japanese');
     final needsSpacing = languageConfig.spacingOptions.contains(mainOption);
-    final origSize = config?.fontSizeOriginal ?? PhraseListStyles.fontSizeMainWord;
 
     bool isQuoteOpen = false;
     String lastWord = '';
 
     return Wrap(
       alignment: WrapAlignment.center,
-      spacing: 0, // Динамічний відступ через padding у WordItem
-      runSpacing: PhraseListStyles.wordRunSpacing,
+      spacing: 0,
+      runSpacing: 2,
       crossAxisAlignment: WrapCrossAlignment.end,
       children: allWords.asMap().entries.map((entry) {
         final index = entry.key;
@@ -223,24 +222,18 @@ class _WordsSection extends StatelessWidget {
           final isNeutral = RomajiUtils.isNeutralPunctuation(mainText);
 
           final lastWasOpening = RomajiUtils.isOpeningPunctuation(lastWord);
-          final lastWasNeutral = RomajiUtils.isNeutralPunctuation(lastWord);
 
           if (isNeutral) {
-            // Якщо це лапка, і вона зараз "відкриває" — потрібен пробіл
-            // Якщо вона "закриває" — пробіл не потрібен (вона тулиться до слова зліва)
             if (!isQuoteOpen) {
               hasLeadingSpace = !lastWasOpening;
             }
             isQuoteOpen = !isQuoteOpen;
           } else if (isOpening) {
-            // Перед дужкою, що відкривається, потрібен пробіл (якщо попереду не інша відкриваюча дужка)
             hasLeadingSpace = !lastWasOpening;
           } else if (isClosing) {
-            // Перед комою/крапкою пробіл не потрібен
             hasLeadingSpace = false;
           } else {
-            // Звичайне слово: потрібен пробіл, якщо попереду не відкриваюча дужка/лапка
-            hasLeadingSpace = !lastWasOpening && !(lastWasNeutral && isQuoteOpen);
+            hasLeadingSpace = !lastWasOpening && !(RomajiUtils.isNeutralPunctuation(lastWord) && isQuoteOpen);
           }
         }
 
@@ -249,31 +242,21 @@ class _WordsSection extends StatelessWidget {
         }
 
         final bool isOnlyPunc = RomajiUtils.isOnlyPunctuation(mainText);
-
-        // Logic for seamless capsule:
-        // A word sticks to the previous one if it's the same block AND no space between them.
         final bool sticksToPrevious = index > 0 && 
             allWords[index - 1].blockId == word.blockId && 
             !hasLeadingSpace;
         
-        // A word sticks to the next one if the NEXT word has the same block and NO leading space.
         bool sticksToNext = false;
         if (index < allWords.length - 1) {
           final nextWord = allWords[index + 1];
           final nextMainText = getVersionText(nextWord, mainOption).trim();
           if (nextWord.blockId == word.blockId && nextMainText.isNotEmpty) {
-             // We need to know if the NEXT word would have a leading space.
-             // Let's pre-calculate or use the same logic.
              final nextIsOpening = RomajiUtils.isOpeningPunctuation(nextMainText);
              final nextIsClosing = RomajiUtils.isClosingPunctuation(nextMainText);
-             final nextIsNeutral = RomajiUtils.isNeutralPunctuation(nextMainText);
              
              bool nextHasLeadingSpace = false;
              if (needsSpacing) {
-                if (nextIsNeutral) {
-                   // This is slightly complex because isQuoteOpen changes. 
-                   // But for "sticking" we usually care about the current word being opening or next being closing.
-                } else if (nextIsOpening) {
+                if (nextIsOpening) {
                    nextHasLeadingSpace = !RomajiUtils.isOpeningPunctuation(mainText);
                 } else if (nextIsClosing) {
                    nextHasLeadingSpace = false;
@@ -296,6 +279,7 @@ class _WordsSection extends StatelessWidget {
           hasLeadingSpace: hasLeadingSpace,
           sticksToPrevious: sticksToPrevious,
           sticksToNext: sticksToNext,
+          theme: theme,
         );
       }).toList(),
     );
@@ -312,12 +296,14 @@ class _WordItem extends StatelessWidget {
   final bool hasLeadingSpace;
   final bool sticksToPrevious;
   final bool sticksToNext;
+  final PhraseListTheme theme;
 
   const _WordItem({
     required this.isSelected,
     required this.cleanedMainWord,
     required this.cleanedAdditionalWord,
     required this.onTap,
+    required this.theme,
     this.config,
     required this.needsSpacing,
     required this.hasLeadingSpace,
@@ -327,27 +313,25 @@ class _WordItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final origSize = config?.fontSizeOriginal ?? PhraseListStyles.fontSizeMainWord;
-    final addSize = config?.fontSizeAdditional ?? PhraseListStyles.fontSizeAdditionalWord;
+    final origSize = config?.fontSizeOriginal ?? 17;
+    final addSize = config?.fontSizeAdditional ?? 10;
     
     final double leadingSpaceWidth = hasLeadingSpace ? origSize * 0.25 : 0;
 
-    final additionalStyle = PhraseListStyles.getWordTextStyle(
-      isSelected: isSelected,
-      isAdditional: true,
-    ).copyWith(
+    final additionalStyle = TextStyle(
+      color: isSelected ? theme.primaryAccent : theme.mutedText,
       fontSize: addSize,
       fontWeight: config?.isBoldAdditional == true ? FontWeight.bold : null,
       fontStyle: config?.isItalicAdditional == true ? FontStyle.italic : null,
       height: 1.1,
     );
-    final mainStyle = PhraseListStyles.getWordTextStyle(
-      isSelected: isSelected,
-      isAdditional: false,
-    ).copyWith(
+    final mainStyle = TextStyle(
+      color: isSelected ? theme.primaryAccent : theme.normalText,
       fontSize: origSize,
-      fontWeight: config?.isBoldOriginal == true ? FontWeight.bold : null,
+      fontWeight: (config?.isBoldOriginal == true || isSelected) ? FontWeight.bold : FontWeight.w500,
       fontStyle: config?.isItalicOriginal == true ? FontStyle.italic : null,
+      decoration: isSelected ? TextDecoration.underline : null,
+      decorationColor: theme.successAccent,
       height: 1.1,
       letterSpacing: needsSpacing ? null : 0,
     );
@@ -363,7 +347,7 @@ class _WordItem extends StatelessWidget {
         child: Container(
           decoration: isSelected 
             ? BoxDecoration(
-                color: PhraseListStyles.getWordTextStyle(isSelected: true, isAdditional: false).color?.withValues(alpha: 0.1),
+                color: theme.primaryAccent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.horizontal(
                   left: Radius.circular(sticksToPrevious ? 0 : 4),
                   right: Radius.circular(sticksToNext ? 0 : 4),
@@ -374,12 +358,10 @@ class _WordItem extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Фурігана (Ruby) - показуємо лише якщо є текст
               Text(
                 cleanedAdditionalWord,
                 style: additionalStyle,
               ),
-              // Основне слово
               Text(
                 cleanedMainWord,
                 style: mainStyle,
@@ -397,17 +379,19 @@ class _BlocksSection extends StatelessWidget {
   final int? selectedBlockId;
   final Function(int?) onToggleSelection;
   final SubtitleConfig? config;
+  final PhraseListTheme theme;
 
   const _BlocksSection({
     required this.blocksList,
     required this.selectedBlockId,
     required this.onToggleSelection,
+    required this.theme,
     this.config,
   });
 
   @override
   Widget build(BuildContext context) {
-    final transSize = config?.fontSizeTranslation ?? PhraseListStyles.fontSizeBlock;
+    final transSize = config?.fontSizeTranslation ?? 14;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4.0),
@@ -418,12 +402,11 @@ class _BlocksSection extends StatelessWidget {
             final isSelected = selectedBlockId == block.id;
             return TextSpan(
               text: '$blockText\u2009',
-              style: PhraseListStyles.getBlockTextStyle(
-                isSelected: isSelected,
-              ).copyWith(
+              style: TextStyle(
+                color: isSelected ? theme.primaryAccent : theme.normalText.withValues(alpha: 0.8),
                 fontSize: transSize,
                 fontWeight: config?.isBoldTranslation == true ? FontWeight.bold : (isSelected ? FontWeight.bold : null),
-                fontStyle: config?.isItalicTranslation == true ? FontStyle.italic : null,
+                fontStyle: (config?.isItalicTranslation == true || !isSelected) ? FontStyle.italic : null,
               ),
               recognizer: TapGestureRecognizer()..onTap = () => onToggleSelection(block.id),
             );

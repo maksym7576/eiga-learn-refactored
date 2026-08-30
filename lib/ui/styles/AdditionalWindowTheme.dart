@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 
-class UploadingTheme {
+class AdditionalWindowTheme {
   final bool isDark;
 
-  UploadingTheme({required this.isDark});
+  AdditionalWindowTheme({required this.isDark});
 
-  factory UploadingTheme.of(BuildContext context) {
+  factory AdditionalWindowTheme.of(BuildContext context) {
     final brightness = Theme.of(context).brightness;
-    return UploadingTheme(isDark: brightness == Brightness.dark);
+    return AdditionalWindowTheme(isDark: brightness == Brightness.dark);
   }
 
   // General colors
   Color get backgroundColor => isDark ? const Color(0xFF1C1C1E) : Colors.white;
+  Color get primaryAccent => Colors.indigo;
   Color get titleColor => isDark ? Colors.white : Colors.black87;
   Color get subtitleColor => isDark ? Colors.white60 : Colors.black54;
   Color get closeIconColor => isDark ? Colors.white70 : Colors.black45;

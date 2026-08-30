@@ -3,6 +3,8 @@ import 'package:eiga/ui/widgets/videoCardsList/videoCard.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../styles/VideoListTheme.dart';
+
 class VideoListWidget extends ConsumerStatefulWidget {
   const VideoListWidget({super.key});
 
@@ -14,6 +16,7 @@ class _VideoListWidgetState extends ConsumerState<VideoListWidget> {
   @override
   Widget build(BuildContext context) {
     final videos = ref.watch(videoServiceProvider);
+    final theme = VideoListTheme.of(context);
 
     if (videos.isEmpty) {
       return const _EmptyState();
@@ -22,13 +25,13 @@ class _VideoListWidgetState extends ConsumerState<VideoListWidget> {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(12),
+      padding: theme.gridPadding,
       itemCount: videos.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 3 / 4,
+        crossAxisSpacing: theme.crossAxisSpacing,
+        mainAxisSpacing: theme.mainAxisSpacing,
+        childAspectRatio: theme.childAspectRatio,
       ),
       itemBuilder: (context, index) {
         final video = videos[index];
@@ -46,6 +49,8 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = VideoListTheme.of(context);
+    
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
       child: Column(
@@ -54,32 +59,25 @@ class _EmptyState extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.deepPurpleAccent.withValues(alpha: 0.08),
+              color: theme.iconContainerColor,
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.video_library_outlined,
               size: 56,
-              color: Colors.deepPurpleAccent.withValues(alpha: 0.6),
+              color: theme.iconColor,
             ),
           ),
           const SizedBox(height: 20),
           Text(
             'Still you do not have videos',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.deepPurpleAccent.withValues(alpha: 0.8),
-            ),
+            style: theme.emptyStateTitleStyle,
           ),
           const SizedBox(height: 8),
           Text(
             'Add first video',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey.shade600,
-            ),
+            style: theme.emptyStateSubtitleStyle,
           ),
         ],
       ),

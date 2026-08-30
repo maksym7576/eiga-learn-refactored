@@ -1,5 +1,6 @@
 import 'package:eiga/backend/data/models/subtitleSettings.dart';
 import 'package:eiga/providers/subtitle_settings_provider.dart';
+import 'package:eiga/ui/styles/PlayerSettingsTheme.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -25,6 +26,7 @@ class _SubtitleSelectorWidgetState extends ConsumerState<SubtitleSelectorWidget>
   }
 
   Widget _buildContent(SubtitleSettingsState data) {
+    final theme = PlayerSettingsTheme.of(context);
     final currentConfig = _isFullScreenMode ? data.fullScreen : data.portrait;
 
     return SingleChildScrollView(
@@ -32,9 +34,9 @@ class _SubtitleSelectorWidgetState extends ConsumerState<SubtitleSelectorWidget>
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Subtitle Customization',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.deepPurpleAccent),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: theme.primaryAccent),
           ),
           const SizedBox(height: 16),
 
@@ -53,12 +55,13 @@ class _SubtitleSelectorWidgetState extends ConsumerState<SubtitleSelectorWidget>
 
           const SizedBox(height: 24),
 
-          _buildInteractionPreview(currentConfig),
+          _buildInteractionPreview(currentConfig, theme),
 
           const SizedBox(height: 24),
 
           // PRESET SELECT
           _buildGroup(
+            theme: theme,
             title: 'Visual Preset',
             subtitle: 'Pre-defined colors and shadows',
             child: Row(
@@ -85,6 +88,7 @@ class _SubtitleSelectorWidgetState extends ConsumerState<SubtitleSelectorWidget>
 
           // MASTER SCALE
           _buildGroup(
+            theme: theme,
             title: 'Master Scaling',
             subtitle: 'Resize all elements proportionally',
             child: Padding(
@@ -93,7 +97,7 @@ class _SubtitleSelectorWidgetState extends ConsumerState<SubtitleSelectorWidget>
                 label: 'Global Scale',
                 value: currentConfig.globalScale,
                 min: 0.5, max: 2.0,
-                color: Colors.deepPurpleAccent,
+                color: theme.primaryAccent,
                 onChanged: (v) => ref.read(subtitleSettingsNotifierProvider.notifier).updateGlobalScale(_isFullScreenMode, v),
                 displayValue: '${(currentConfig.globalScale * 100).toInt()}%',
               ),
@@ -103,6 +107,7 @@ class _SubtitleSelectorWidgetState extends ConsumerState<SubtitleSelectorWidget>
           const SizedBox(height: 24),
 
           _buildGroup(
+            theme: theme,
             title: 'Individual Styles',
             subtitle: 'Fine-tune each line (affected by Master Scale)',
             child: Padding(
@@ -147,6 +152,7 @@ class _SubtitleSelectorWidgetState extends ConsumerState<SubtitleSelectorWidget>
             const SizedBox(height: 24),
             // VERTICAL POSITION SLIDER
             _buildGroup(
+              theme: theme,
               title: 'Subtitle Position',
               subtitle: 'Adjust vertical offset on screen',
               child: Padding(
@@ -155,7 +161,7 @@ class _SubtitleSelectorWidgetState extends ConsumerState<SubtitleSelectorWidget>
                   label: 'Vertical Offset',
                   value: data.fullScreen.groupOffset,
                   min: 0.0, max: 0.9,
-                  color: Colors.deepPurpleAccent,
+                  color: theme.primaryAccent,
                   onChanged: (v) => ref.read(subtitleSettingsNotifierProvider.notifier).updateFsGroupOffset(v),
                   displayValue: '${(data.fullScreen.groupOffset * 100).toInt()}%',
                 ),
@@ -165,6 +171,7 @@ class _SubtitleSelectorWidgetState extends ConsumerState<SubtitleSelectorWidget>
             const SizedBox(height: 24),
             // BG RGBA SLIDERS
             _buildGroup(
+              theme: theme,
               title: 'Background Styling',
               subtitle: 'Enable and tune overlay colors',
               child: Column(
@@ -172,7 +179,7 @@ class _SubtitleSelectorWidgetState extends ConsumerState<SubtitleSelectorWidget>
                   SwitchListTile(
                     title: const Text('Enable Background', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                     value: data.fullScreen.backgroundEnabled,
-                    activeThumbColor: Colors.deepPurpleAccent,
+                    activeTrackColor: theme.primaryAccent,
                     onChanged: (v) => ref.read(subtitleSettingsNotifierProvider.notifier).updateFsBackground(v),
                   ),
                   if (data.fullScreen.backgroundEnabled) _buildRgbaSliders(data.fullScreen.backgroundColor),
@@ -204,7 +211,6 @@ class _SubtitleSelectorWidgetState extends ConsumerState<SubtitleSelectorWidget>
           builder: (context, constraints) {
             return Stack(
               children: [
-                // Japanese Style Background
                 Positioned.fill(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(11),
@@ -216,7 +222,6 @@ class _SubtitleSelectorWidgetState extends ConsumerState<SubtitleSelectorWidget>
                   ),
                 ),
 
-                // Unified Draggable Group
                 Positioned(
                   left: 0,
                   right: 0,
@@ -282,12 +287,13 @@ class _SubtitleSelectorWidgetState extends ConsumerState<SubtitleSelectorWidget>
     );
   }
 
-  Widget _buildInteractionPreview(SubtitleConfig config) {
+  Widget _buildInteractionPreview(SubtitleConfig config, PlayerSettingsTheme theme) {
     final SubtitleElementStyle mainStyle = config.originalStyle;
     final SubtitleElementStyle addStyle = config.additionalStyle;
     final SubtitleElementStyle transStyle = config.translationStyle;
 
     return _buildGroup(
+      theme: theme,
       title: 'Active Interaction Preview',
       subtitle: 'Appearance when a user clicks on a word',
       child: Container(
@@ -351,7 +357,7 @@ class _SubtitleSelectorWidgetState extends ConsumerState<SubtitleSelectorWidget>
     ref.read(subtitleSettingsNotifierProvider.notifier).updateFsBgColor(newColor.toARGB32());
   }
 
-  Widget _buildGroup({required String title, required String subtitle, required Widget child}) {
+  Widget _buildGroup({required PlayerSettingsTheme theme, required String title, required String subtitle, required Widget child}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -362,13 +368,17 @@ class _SubtitleSelectorWidgetState extends ConsumerState<SubtitleSelectorWidget>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-                Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.black.withValues(alpha: 0.4))),
+                Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: theme.normalText)),
+                Text(subtitle, style: TextStyle(fontSize: 12, color: theme.mutedText)),
               ],
             ),
           ),
           Container(
-            decoration: BoxDecoration(color: Colors.deepPurple.shade50.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.deepPurpleAccent.withValues(alpha: 0.08), width: 1.5)),
+            decoration: BoxDecoration(
+              color: theme.sectionBackground,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: theme.tileBorder, width: 1.5),
+            ),
             child: ClipRRect(borderRadius: BorderRadius.circular(20), child: child),
           ),
         ],
@@ -398,13 +408,14 @@ class _ElementStyleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = PlayerSettingsTheme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: Colors.black87)),
+            Text(label, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: theme.normalText)),
             Row(
               children: [
                 _ToggleButton(icon: Icons.format_bold, isActive: isBold, onTap: () => onBoldChanged(!isBold)),
@@ -420,6 +431,7 @@ class _ElementStyleRow extends StatelessWidget {
           value: fontSize,
           min: 10, max: 50,
           onChanged: onSizeChanged,
+          color: theme.primaryAccent,
         ),
       ],
     );
@@ -435,16 +447,17 @@ class _ToggleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = PlayerSettingsTheme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
-          color: isActive ? Colors.deepPurpleAccent.withValues(alpha: 0.1) : Colors.transparent,
+          color: isActive ? theme.tileActiveBackground : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: isActive ? Colors.deepPurpleAccent : Colors.black12),
+          border: Border.all(color: isActive ? theme.primaryAccent : theme.tileBorder),
         ),
-        child: Icon(icon, size: 18, color: isActive ? Colors.deepPurpleAccent : Colors.black45),
+        child: Icon(icon, size: 18, color: isActive ? theme.primaryAccent : theme.mutedText),
       ),
     );
   }
@@ -502,11 +515,12 @@ class _SliderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = PlayerSettingsTheme.of(context);
     return Row(
       children: [
-        SizedBox(width: 80, child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12))),
+        SizedBox(width: 80, child: Text(label, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: theme.normalText))),
         Expanded(child: Slider(value: value.clamp(min, max), min: min, max: max, activeColor: color, onChanged: onChanged)),
-        SizedBox(width: 40, child: Text(displayValue ?? value.toStringAsFixed(0), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
+        SizedBox(width: 40, child: Text(displayValue ?? value.toStringAsFixed(0), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: theme.normalText))),
       ],
     );
   }
@@ -521,20 +535,21 @@ class _PresetTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = Colors.deepPurpleAccent;
+    final theme = PlayerSettingsTheme.of(context);
+    final accent = theme.primaryAccent;
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
         decoration: BoxDecoration(
-          color: isSelected ? accent.withValues(alpha: 0.05) : Colors.transparent,
+          color: isSelected ? theme.tileActiveBackground : Colors.transparent,
           border: Border.all(color: isSelected ? accent.withValues(alpha: 0.2) : Colors.transparent),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(name, style: TextStyle(fontSize: 13, fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600, color: isSelected ? accent : Colors.black87)),
+            Text(name, style: TextStyle(fontSize: 13, fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600, color: isSelected ? accent : theme.normalText)),
             if (isSelected) ...[const SizedBox(width: 6), Icon(Icons.check_circle, color: accent, size: 16)],
           ],
         ),

@@ -1,5 +1,5 @@
 import 'package:eiga/providers/videoComponentsProvider.dart';
-import 'package:eiga/ui/widgets/videoUploating/components/UploadingTheme.dart';
+import 'package:eiga/ui/styles/AdditionalWindowTheme.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -30,7 +30,7 @@ class LanguageWidget extends ConsumerWidget {
     final original = stateLan.original;
     final translation = stateLan.target;
 
-    final theme = UploadingTheme.of(context);
+    final theme = AdditionalWindowTheme.of(context);
 
     final bool isSelected = (type == LanguageType.original && language == original) ||
         (type == LanguageType.translation && language == translation);

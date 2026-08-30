@@ -22,11 +22,15 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
     ref.watch(translationProvider);
     final splitRatio = ref.watch(videoSplitRatioProvider);
     final isFullscreen = ref.watch(isFullScreenProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final orientation = MediaQuery.of(context).orientation;
-    // Якщо ми в повноекранному режимі, форсуємо ландшафтний макет, 
-    // щоб уникнути стрибків інтерфейсу під оверлеєм плеєра.
     final effectiveOrientation = isFullscreen ? Orientation.landscape : orientation;
+
+    // Neutral colors for dividers and backgrounds
+    final backgroundColor = isDark ? const Color(0xFF1C1C1E) : Colors.grey.shade50;
+    final dividerColor = isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05);
+    final handleColor = isDark ? Colors.white24 : Colors.black12;
 
     return PopScope(
       canPop: !isFullscreen,
@@ -34,33 +38,31 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
         if (didPop) return;
 
         if (isFullscreen) {
-          // Якщо в повноекранному режимі — виходимо з нього одним свайпом
           final flickManager = ref.read(flickManagerProvider).flickManager;
           flickManager?.flickControlManager?.exitFullscreen();
         }
       },
       child: Scaffold(
+        backgroundColor: backgroundColor,
         body: effectiveOrientation == Orientation.landscape
-            ? _buildLandscapeLayout(context, splitRatio)
-            : _buildPortraitLayout(context),
+            ? _buildLandscapeLayout(context, splitRatio, backgroundColor, dividerColor, handleColor)
+            : _buildPortraitLayout(context, backgroundColor, dividerColor, handleColor),
       ),
     );
   }
 
-  Widget _buildPortraitLayout(BuildContext context) {
+  Widget _buildPortraitLayout(BuildContext context, Color bgColor, Color divColor, Color handleColor) {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Column(
       children: [
         VideoPlayerWidget(showDivider: false),
 
-        // Розділювач для вертикального рисайзу (між плеєром і налаштуваннями)
         GestureDetector(
           onVerticalDragUpdate: (details) {
             final currentHeight = ref.read(videoHeightProvider);
             double newHeight = currentHeight + details.delta.dy;
             
-            // Обмеження: мінімум 150, максимум 70% екрана
             if (newHeight < 150) newHeight = 150;
             if (newHeight > screenHeight * 0.7) newHeight = screenHeight * 0.7;
             
@@ -71,13 +73,13 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
             child: Container(
               height: 12,
               width: double.infinity,
-              color: Colors.deepPurple[50],
+              color: divColor,
               child: Center(
                 child: Container(
                   width: 50,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.deepPurple[200],
+                    color: handleColor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -86,10 +88,8 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
           ),
         ),
 
-        // Налаштування (під розділювачем)
         const VideoSettingsNotFullScreenWidget(),
 
-        // Список фраз займає весь залишок місця
         const Expanded(
           child: PhraseListNotFullScreenWidget(),
         ),
@@ -97,21 +97,19 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
     );
   }
 
-  Widget _buildLandscapeLayout(BuildContext context, double splitRatio) {
+  Widget _buildLandscapeLayout(BuildContext context, double splitRatio, Color bgColor, Color divColor, Color handleColor) {
     final screenWidth = MediaQuery.of(context).size.width;
     final leftWidth = screenWidth * splitRatio;
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch, // Забезпечуємо повну висоту
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Ліва частина: Відео + Налаштування
         Container(
           width: leftWidth,
-          color: Colors.deepPurple[50],
+          color: bgColor,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Плеєр з закругленими кутами
               Expanded(
                 child: Center(
                   child: ClipRRect(
@@ -129,7 +127,6 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
           ),
         ),
         
-        // Розділювач для горизонтального рисайзу
         GestureDetector(
           onHorizontalDragUpdate: (details) {
             final newRatio = details.globalPosition.dx / screenWidth;
@@ -141,13 +138,13 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
             cursor: SystemMouseCursors.resizeColumn,
             child: Container(
               width: 12,
-              color: Colors.deepPurple[50],
+              color: divColor,
               child: Center(
                 child: Container(
                   width: 4,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: Colors.deepPurple[200],
+                    color: handleColor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -156,7 +153,6 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
           ),
         ),
 
-        // Права частина: Картки (фрази)
         const Expanded(
           child: PhraseListNotFullScreenWidget(),
         ),

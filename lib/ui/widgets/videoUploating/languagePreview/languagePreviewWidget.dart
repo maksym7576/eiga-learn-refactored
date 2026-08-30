@@ -1,5 +1,5 @@
 import 'package:eiga/config/depacker/depackerLanguageConfig.dart';
-import 'package:eiga/ui/widgets/videoUploating/components/UploadingTheme.dart';
+import 'package:eiga/ui/styles/AdditionalWindowTheme.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -17,7 +17,7 @@ class LanguagePreviewWidget extends ConsumerStatefulWidget {
 class _LanguagesWidgetState extends ConsumerState<LanguagePreviewWidget> {
   LanguageType _activeTypeNow = LanguageType.original;
 
-  Widget _buildToggleButton(String title, LanguageType type, UploadingTheme theme) {
+  Widget _buildToggleButton(String title, LanguageType type, AdditionalWindowTheme theme) {
     final isActive = _activeTypeNow == type;
 
     return Expanded(
@@ -49,7 +49,7 @@ class _LanguagesWidgetState extends ConsumerState<LanguagePreviewWidget> {
   @override
   Widget build(BuildContext context) {
     final languages = DepackerLanguageConfigRegistry.getAllLanguages();
-    final theme = UploadingTheme.of(context);
+    final theme = AdditionalWindowTheme.of(context);
 
     return Container(
       color: theme.backgroundColor,

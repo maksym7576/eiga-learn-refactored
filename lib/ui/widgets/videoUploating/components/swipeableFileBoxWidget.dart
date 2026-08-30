@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../styles/VideoUploadingTheme.dart';
 
 class FileBoxVariant {
   final String label;
@@ -26,7 +27,13 @@ class _SwipeableFileBoxState extends State<SwipeableFileBox> {
   final _controller = PageController();
   int _page = 0;
 
-  Widget _buildFileBox({required String label, required String? path, required IconData icon, required VoidCallback onTap}) {
+  Widget _buildFileBox({
+    required String label, 
+    required String? path, 
+    required IconData icon, 
+    required VoidCallback onTap,
+    required VideoUploadingTheme theme,
+  }) {
     final isPicked = path != null;
     final fileName = isPicked ? path.split('/').last : null;
 
@@ -37,15 +44,13 @@ class _SwipeableFileBoxState extends State<SwipeableFileBox> {
         curve: Curves.easeOutCirc,
         height: 120,
         decoration: BoxDecoration(
-          color: isPicked ? Colors.deepPurpleAccent.withValues(alpha: 0.08) : Colors.grey.shade50,
+          color: isPicked ? theme.fileBoxActiveBackground : theme.fileBoxBackground,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isPicked ? Colors.deepPurpleAccent : Colors.deepPurple.withValues(alpha: 0.25),
+            color: isPicked ? theme.fileBoxActiveBorder : theme.fileBoxBorder,
             width: isPicked ? 2.0 : 1.5,
           ),
-          boxShadow: isPicked
-              ? [BoxShadow(color: Colors.deepPurpleAccent.withValues(alpha: 0.12), blurRadius: 12, spreadRadius: 2)]
-              : [],
+          boxShadow: isPicked ? theme.fileBoxActiveShadow : [],
         ),
         child: Center(
           child: AnimatedSwitcher(
@@ -59,7 +64,7 @@ class _SwipeableFileBoxState extends State<SwipeableFileBox> {
               key: const ValueKey('picked'),
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.deepPurpleAccent, size: 36),
+                Icon(Icons.check_circle_rounded, color: theme.fileBoxActiveIcon, size: 36),
                 const SizedBox(height: 8),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -68,7 +73,7 @@ class _SwipeableFileBoxState extends State<SwipeableFileBox> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 11, color: Colors.deepPurpleAccent, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 11, color: theme.fileBoxActiveText, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
@@ -77,11 +82,11 @@ class _SwipeableFileBoxState extends State<SwipeableFileBox> {
               key: const ValueKey('empty'),
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, color: Colors.deepPurpleAccent.withValues(alpha: 0.35), size: 36),
+                Icon(icon, color: theme.fileBoxInactiveIcon, size: 36),
                 const SizedBox(height: 8),
                 Text(
                   label,
-                  style: TextStyle(fontSize: 13, color: Colors.deepPurpleAccent.withValues(alpha: 0.45), fontWeight: FontWeight.w600),
+                  style: TextStyle(fontSize: 13, color: theme.fileBoxInactiveText, fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -93,6 +98,8 @@ class _SwipeableFileBoxState extends State<SwipeableFileBox> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = VideoUploadingTheme.of(context);
+
     return SizedBox(
       height: 120,
       child: Stack(
@@ -103,7 +110,13 @@ class _SwipeableFileBoxState extends State<SwipeableFileBox> {
             onPageChanged: (i) => setState(() => _page = i),
             itemBuilder: (context, i) {
               final v = widget.variants[i];
-              return _buildFileBox(label: v.label, path: v.path, icon: v.icon, onTap: v.onTap);
+              return _buildFileBox(
+                label: v.label, 
+                path: v.path, 
+                icon: v.icon, 
+                onTap: v.onTap,
+                theme: theme,
+              );
             },
           ),
           if (widget.variants.length > 1)
@@ -123,8 +136,8 @@ class _SwipeableFileBoxState extends State<SwipeableFileBox> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(3),
                       color: active
-                          ? Colors.deepPurpleAccent
-                          : Colors.deepPurpleAccent.withValues(alpha: 0.25),
+                          ? theme.primaryAccent
+                          : theme.primaryAccent.withValues(alpha: 0.25),
                     ),
                   );
                 }),

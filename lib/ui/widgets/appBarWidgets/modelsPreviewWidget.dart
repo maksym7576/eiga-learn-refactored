@@ -1,5 +1,6 @@
 import 'package:eiga/backend/data/dto/AiModelSettingsDTO.dart';
 import 'package:eiga/config/modelsUrl/AIModelsURLData.dart';
+import 'package:eiga/ui/styles/ModelSelectionTheme.dart';
 import 'package:eiga/ui/widgets/appBarWidgets/modelWidget.dart';
 import 'package:eiga/ui/widgets/buttons/EqualToggleButtons.dart';
 import 'package:flutter/material.dart';
@@ -23,7 +24,6 @@ class ModelPreviewWidget extends ConsumerStatefulWidget {
 
 class _ModelPreviewWidgetState extends ConsumerState<ModelPreviewWidget> {
   late TranslationPipelineStep _activeStep;
-
   final _scrollController = ScrollController();
 
   @override
@@ -45,14 +45,6 @@ class _ModelPreviewWidgetState extends ConsumerState<ModelPreviewWidget> {
     );
   }
 
-  /// Вибір моделі: пишемо новий active model через провайдер (а не напряму
-  /// в AiModelManager, як було раніше в ModelWidget) — тому
-  /// aiModelsProvider.state.activeNameByStep коректно оновлюється і
-  /// обрана модель одразу переїжджає на позицію "активної" (index == 0).
-  ///
-  /// Вікно НЕ закривається — Navigator.pop тут навмисно відсутній.
-  /// Замість цього після оновлення стану плавно скролимо список назад
-  /// до верху, щоб користувач одразу побачив нову активну модель.
   Future<void> _selectModel(String modelName) async {
     await ref
         .read(aiModelsProvider.notifier)
@@ -71,14 +63,11 @@ class _ModelPreviewWidgetState extends ConsumerState<ModelPreviewWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // Таймер, дані моделей і ресет тепер повністю живуть у провайдері.
+    final theme = ModelSelectionTheme.of(context);
     final aiState = ref.watch(aiModelsProvider);
     final isLoading = aiState.isLoading;
     final remainingTime = aiState.remainingTime;
 
-    // Список моделей для активного кроку — вже відфільтрований і
-    // відсортований провайдером (напр. для analyze лишаться тільки
-    // моделі з web search).
     final stepModels = ref.watch(modelsForStepProvider(_activeStep));
 
     final activeName = aiState.activeNameByStep[_activeStep];
@@ -88,16 +77,16 @@ class _ModelPreviewWidgetState extends ConsumerState<ModelPreviewWidget> {
     stepModels.where((m) => m.name != activeName).toList();
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+        color: theme.backgroundColor,
+        borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
         ),
       ),
       child: Column(
         children: [
-          _buildHeader(remainingTime),
+          _buildHeader(remainingTime, theme),
           const SizedBox(height: 10),
 
           Padding(
@@ -113,16 +102,16 @@ class _ModelPreviewWidgetState extends ConsumerState<ModelPreviewWidget> {
 
           Expanded(
             child: isLoading
-                ? const Center(
+                ? Center(
               child: CircularProgressIndicator(
-                color: Colors.deepPurpleAccent,
+                color: theme.primaryAccent,
               ),
             )
                 : selectedModel == null
-                ? const Center(
+                ? Center(
               child: Text(
                 'No models available for this step',
-                style: TextStyle(color: Colors.black54),
+                style: TextStyle(color: theme.mutedText),
               ),
             )
                 : ListView.builder(
@@ -167,9 +156,7 @@ class _ModelPreviewWidgetState extends ConsumerState<ModelPreviewWidget> {
     );
   }
 
-  /// Оновлена шапка: іконка + заголовок ліворуч, чіп з таймером під
-  /// підзаголовком, кругла кнопка закриття справа.
-  Widget _buildHeader(String remainingTime) {
+  Widget _buildHeader(String remainingTime, ModelSelectionTheme theme) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 10, 12, 6),
       child: Row(
@@ -178,17 +165,16 @@ class _ModelPreviewWidgetState extends ConsumerState<ModelPreviewWidget> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.deepPurpleAccent.withValues(alpha: 0.12),
+              color: theme.primaryAccent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.auto_awesome_rounded,
               size: 26,
-              color: Colors.deepPurpleAccent,
+              color: theme.primaryAccent,
             ),
           ),
           const SizedBox(width: 12),
-          // Компактна текстова частина
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -196,24 +182,23 @@ class _ModelPreviewWidgetState extends ConsumerState<ModelPreviewWidget> {
               children: [
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       'Models',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
-                        color: Colors.black87,
+                        color: theme.normalText,
                         letterSpacing: 0.2,
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Компактний бейдж таймера поруч із заголовком
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.deepPurpleAccent.withValues(alpha: 0.08),
+                        color: theme.primaryAccent.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -222,15 +207,15 @@ class _ModelPreviewWidgetState extends ConsumerState<ModelPreviewWidget> {
                           Icon(
                             Icons.access_time_rounded,
                             size: 11,
-                            color: Colors.deepPurpleAccent.withValues(alpha: 0.8),
+                            color: theme.primaryAccent.withValues(alpha: 0.8),
                           ),
                           const SizedBox(width: 3),
                           Text(
                             'Reset in $remainingTime',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: Colors.deepPurpleAccent,
+                              color: theme.primaryAccent,
                             ),
                           ),
                         ],
@@ -244,7 +229,7 @@ class _ModelPreviewWidgetState extends ConsumerState<ModelPreviewWidget> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: Colors.black.withValues(alpha: 0.45),
+                    color: theme.mutedText,
                   ),
                 ),
               ],
@@ -256,10 +241,10 @@ class _ModelPreviewWidgetState extends ConsumerState<ModelPreviewWidget> {
             child: Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: theme.selectionAccentColor.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.close, size: 20, color: Colors.black87),
+              child: Icon(Icons.close, size: 20, color: theme.normalText),
             ),
           ),
         ],

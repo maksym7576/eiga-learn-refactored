@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../styles/VideoUploadingTheme.dart';
 
 class VideoFormActionButtons extends StatelessWidget {
   const VideoFormActionButtons({
@@ -16,24 +17,18 @@ class VideoFormActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = VideoUploadingTheme.of(context);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 30),
+      padding: theme.actionsRowPadding,
       child: Row(
         children: [
           if (hasAnyData) ...[
             Expanded(
               child: OutlinedButton(
                 onPressed: onCancel,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.deepPurple,
-                  side: const BorderSide(color: Colors.deepPurpleAccent),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text(
-                  'Cancel',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0.4),
-                ),
+                style: theme.cancelButtonStyle(),
+                child: const Text('Cancel'),
               ),
             ),
             const SizedBox(width: 16),
@@ -41,17 +36,8 @@ class VideoFormActionButtons extends StatelessWidget {
           Expanded(
             child: ElevatedButton(
               onPressed: isSubmitEnabled ? onSubmit : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurpleAccent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 0,
-              ),
-              child: const Text(
-                'Submit',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0.4),
-              ),
+              style: theme.submitButtonStyle(),
+              child: const Text('Submit'),
             ),
           ),
         ],

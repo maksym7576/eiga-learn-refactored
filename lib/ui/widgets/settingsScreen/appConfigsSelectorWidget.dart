@@ -1,4 +1,6 @@
 import 'package:eiga/providers/app_configs_provider.dart';
+import 'package:eiga/ui/styles/PlayerSettingsTheme.dart';
+import 'package:eiga/ui/styles/SettingsTheme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -18,22 +20,25 @@ class AppConfigsSelectorWidget extends ConsumerWidget {
   }
 
   Widget _buildContent(BuildContext context, WidgetRef ref, AppConfigsState data) {
+    final theme = SettingsTheme.of(context);
+
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'App Configuration',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w900,
-              color: Colors.deepPurpleAccent,
+              color: theme.primaryAccent,
             ),
           ),
           const SizedBox(height: 24),
           _buildGroup(
-            context: context,
+            theme: theme,
+            playerTheme: null,
             title: 'Seconds Before Send',
             subtitle: 'Adjustment for timing (tap number to edit).',
             child: Padding(
@@ -47,6 +52,7 @@ class AppConfigsSelectorWidget extends ConsumerWidget {
                       max: 1000,
                       divisions: 100,
                       label: data.secondsAhead.toString(),
+                      activeColor: theme.primaryAccent,
                       onChanged: (val) => ref
                           .read(appConfigsNotifierProvider.notifier)
                           .updateSecondsAhead(val.toInt()),
@@ -57,6 +63,7 @@ class AppConfigsSelectorWidget extends ConsumerWidget {
                     suffix: 's',
                     min: 0,
                     max: 1000,
+                    theme: theme,
                     onChanged: (val) => ref
                         .read(appConfigsNotifierProvider.notifier)
                         .updateSecondsAhead(val),
@@ -67,7 +74,8 @@ class AppConfigsSelectorWidget extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           _buildGroup(
-            context: context,
+            theme: theme,
+            playerTheme: null,
             title: 'Number of Phrases',
             subtitle: 'Limit for phrase fetching (tap number to edit).',
             child: Padding(
@@ -81,6 +89,7 @@ class AppConfigsSelectorWidget extends ConsumerWidget {
                       max: 200,
                       divisions: 199,
                       label: data.numberOfPhrases.toString(),
+                      activeColor: theme.primaryAccent,
                       onChanged: (val) => ref
                           .read(appConfigsNotifierProvider.notifier)
                           .updateNumberOfPhrases(val.toInt()),
@@ -90,6 +99,7 @@ class AppConfigsSelectorWidget extends ConsumerWidget {
                     value: data.numberOfPhrases,
                     min: 1,
                     max: 200,
+                    theme: theme,
                     onChanged: (val) => ref
                         .read(appConfigsNotifierProvider.notifier)
                         .updateNumberOfPhrases(val),
@@ -107,6 +117,8 @@ class AppConfigsSelectorWidget extends ConsumerWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
               foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
           const SizedBox(height: 16),
@@ -116,7 +128,8 @@ class AppConfigsSelectorWidget extends ConsumerWidget {
   }
 
   Widget _buildGroup({
-    required BuildContext context,
+    required PlayerSettingsTheme? playerTheme, // Fallback if needed
+    required SettingsTheme theme,
     required String title,
     required String subtitle,
     required Widget child,
@@ -133,10 +146,10 @@ class AppConfigsSelectorWidget extends ConsumerWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
-                    color: Colors.black87,
+                    color: theme.normalText,
                   ),
                 ),
                 Text(
@@ -144,7 +157,7 @@ class AppConfigsSelectorWidget extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: Colors.black.withValues(alpha: 0.4),
+                    color: theme.mutedText,
                   ),
                 ),
               ],
@@ -152,10 +165,10 @@ class AppConfigsSelectorWidget extends ConsumerWidget {
           ),
           Container(
             decoration: BoxDecoration(
-              color: Colors.deepPurple.shade50.withValues(alpha: 0.5),
+              color: theme.sectionBackground,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: Colors.deepPurpleAccent.withValues(alpha: 0.08),
+                color: theme.dialogBorder,
                 width: 1.5,
               ),
             ),
@@ -176,9 +189,11 @@ class _EditableValue extends StatefulWidget {
   final int min;
   final int max;
   final ValueChanged<int> onChanged;
+  final SettingsTheme theme;
 
   const _EditableValue({
     required this.value,
+    required this.theme,
     this.suffix = '',
     required this.min,
     required this.max,
@@ -227,6 +242,8 @@ class _EditableValueState extends State<_EditableValue> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = widget.theme;
+
     if (_isEditing) {
       return SizedBox(
         width: 60,
@@ -236,7 +253,7 @@ class _EditableValueState extends State<_EditableValue> {
           keyboardType: TextInputType.number,
           textAlign: TextAlign.center,
           autofocus: true,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: theme.normalText),
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           decoration: const InputDecoration(
             isDense: true,
@@ -259,13 +276,13 @@ class _EditableValueState extends State<_EditableValue> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: Colors.deepPurpleAccent.withValues(alpha: 0.05),
+          color: theme.primaryAccent.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: Colors.deepPurpleAccent.withValues(alpha: 0.1)),
+          border: Border.all(color: theme.primaryAccent.withValues(alpha: 0.1)),
         ),
         child: Text(
           '${widget.value}${widget.suffix}',
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.deepPurpleAccent),
+          style: TextStyle(fontWeight: FontWeight.bold, color: theme.primaryAccent),
         ),
       ),
     );

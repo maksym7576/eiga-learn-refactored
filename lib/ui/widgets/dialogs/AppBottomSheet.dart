@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../styles/AppBottomSheetTheme.dart';
 
 class AppBottomSheet {
   static Future<void> show({
@@ -11,14 +12,14 @@ class AppBottomSheet {
     bool isScrollControlled = true,
     VoidCallback? onClosed,
   }) async {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = AppBottomSheetTheme.of(context);
 
     await showGeneralDialog(
       context: context,
       barrierDismissible: barrierDismissible,
       barrierLabel: barrierLabel,
-      barrierColor: Colors.black.withValues(alpha: 0.5),
-      transitionDuration: const Duration(milliseconds: 300),
+      barrierColor: theme.barrierColor,
+      transitionDuration: theme.transitionDuration,
       pageBuilder: (context, anim1, anim2) {
         return Align(
           alignment: Alignment.bottomCenter,
@@ -27,7 +28,7 @@ class AppBottomSheet {
             child: _DraggableSheetBody(
               heightFactor: heightFactor,
               backgroundColor: backgroundColor,
-              isDark: isDark,
+              theme: theme,
               child: child,
             ),
           ),
@@ -54,13 +55,13 @@ class AppBottomSheet {
 class _DraggableSheetBody extends StatefulWidget {
   final double heightFactor;
   final Color? backgroundColor;
-  final bool isDark;
+  final AppBottomSheetTheme theme;
   final Widget child;
 
   const _DraggableSheetBody({
     required this.heightFactor,
     required this.backgroundColor,
-    required this.isDark,
+    required this.theme,
     required this.child,
   });
 
@@ -82,7 +83,7 @@ class _DraggableSheetBodyState extends State<_DraggableSheetBody>
     super.initState();
     _snapController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 200),
+      duration: widget.theme.snapDuration,
     )..addListener(() {
       setState(() => _dragExtent = _snapController.value);
     });
@@ -122,6 +123,7 @@ class _DraggableSheetBodyState extends State<_DraggableSheetBody>
 
   @override
   Widget build(BuildContext context) {
+    final theme = widget.theme;
     final sheetHeight =
         MediaQuery.of(context).size.height * widget.heightFactor;
 
@@ -131,19 +133,9 @@ class _DraggableSheetBodyState extends State<_DraggableSheetBody>
         width: double.infinity,
         constraints: BoxConstraints(maxHeight: sheetHeight),
         decoration: BoxDecoration(
-          color: widget.backgroundColor ??
-              (widget.isDark ? const Color(0xFF1C1C1E) : Colors.white),
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 10,
-              spreadRadius: 5,
-            ),
-          ],
+          color: widget.backgroundColor ?? theme.backgroundColor,
+          borderRadius: theme.borderRadius,
+          boxShadow: theme.shadow,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -156,14 +148,14 @@ class _DraggableSheetBodyState extends State<_DraggableSheetBody>
               onVerticalDragEnd: _onDragEnd,
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.only(top: 8, bottom: 8),
+                padding: theme.handlePadding,
                 child: Center(
                   child: Container(
-                    width: 36,
-                    height: 4,
+                    width: theme.handleWidth,
+                    height: theme.handleHeight,
                     decoration: BoxDecoration(
-                      color: widget.isDark ? Colors.white24 : Colors.black12,
-                      borderRadius: BorderRadius.circular(2),
+                      color: theme.handleColor,
+                      borderRadius: BorderRadius.circular(theme.handleRadius),
                     ),
                   ),
                 ),
@@ -171,10 +163,7 @@ class _DraggableSheetBodyState extends State<_DraggableSheetBody>
             ),
             Flexible(
               child: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                ),
+                borderRadius: theme.borderRadius,
                 child: widget.child,
               ),
             ),

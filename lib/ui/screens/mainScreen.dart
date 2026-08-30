@@ -20,16 +20,32 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
+      backgroundColor: isDark ? Colors.black : Colors.white,
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: AppBarWidget(),
+        preferredSize: const Size.fromHeight(60),
+        child: const AppBarWidget(),
       ),
       body: SingleChildScrollView(
-        child: Column(children: [
-          VideoUploadingWidget(),
-          VideoListWidget(),
-        ]),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const VideoUploadingWidget(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Text(
+                'My Videos',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+              ),
+            ),
+            const VideoListWidget(),
+          ],
+        ),
       ),
     );
   }

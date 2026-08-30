@@ -1,4 +1,4 @@
-import 'package:eiga/ui/widgets/videoUploating/components/UploadingTheme.dart';
+import 'package:eiga/ui/styles/AdditionalWindowTheme.dart';
 import 'package:flutter/material.dart';
 import 'package:eiga/backend/data/dto/JimakuDataDTO.dart';
 
@@ -35,7 +35,7 @@ class JimakuFileTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = UploadingTheme.of(context);
+    final theme = AdditionalWindowTheme.of(context);
     final ext = file.name.split('.').last.toUpperCase();
     
     return Padding(
@@ -127,7 +127,7 @@ class JimakuFileTile extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailBadge(IconData icon, String label, UploadingTheme theme) {
+  Widget _buildDetailBadge(IconData icon, String label, AdditionalWindowTheme theme) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

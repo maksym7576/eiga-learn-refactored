@@ -1,6 +1,7 @@
 import 'package:eiga/backend/data/models/phraseObject.dart';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoComponentsProvider.dart';
+import 'package:eiga/ui/styles/PhraseDepTheme.dart';
 import 'package:eiga/ui/widgets/phrasesDepacked/phraseDepWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -82,7 +83,7 @@ class _PhrasesDepPreviewWidgetState
     }
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(PhraseDepTheme theme) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 12, 8),
       child: Row(
@@ -91,12 +92,12 @@ class _PhrasesDepPreviewWidgetState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Phrases Preview',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
-                    color: Colors.deepPurpleAccent,
+                    color: theme.titleColor,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -108,40 +109,30 @@ class _PhrasesDepPreviewWidgetState
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Colors.deepPurpleAccent.withValues(alpha: 0.5),
+                    color: theme.subtitleColor,
                   ),
                 ),
               ],
             ),
           ),
-          if (widget.onSearch != null)
-            IconButton(
-              onPressed: widget.onSearch,
-              icon: const Icon(Icons.search, color: Colors.deepPurpleAccent),
-              tooltip: 'Search subtitles',
-              style: IconButton.styleFrom(
-                backgroundColor: Colors.deepPurpleAccent.withValues(alpha: 0.1),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            ),
         ],
       ),
     );
   }
 
-  Widget _buildLoader() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 24),
+  Widget _buildLoader(PhraseDepTheme theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
       child: Center(
         child: CircularProgressIndicator(
-          color: Colors.deepPurpleAccent,
+          color: theme.primaryAccent,
           strokeWidth: 2.5,
         ),
       ),
     );
   }
 
-  Widget _buildEmpty() {
+  Widget _buildEmpty(PhraseDepTheme theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Center(
@@ -149,7 +140,7 @@ class _PhrasesDepPreviewWidgetState
           'No phrases found',
           style: TextStyle(
             fontSize: 14,
-            color: Colors.deepPurple.withValues(alpha: 0.4),
+            color: theme.mutedText,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -157,7 +148,7 @@ class _PhrasesDepPreviewWidgetState
     );
   }
 
-  void _showAllPhrases(BuildContext context) {
+  void _showAllPhrases(BuildContext context, PhraseDepTheme theme) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -168,9 +159,9 @@ class _PhrasesDepPreviewWidgetState
         maxChildSize: 0.98,
         expand: false,
         builder: (context, scrollController) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: theme.backgroundColor,
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(24),
               topRight: Radius.circular(24),
             ),
@@ -182,23 +173,23 @@ class _PhrasesDepPreviewWidgetState
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.black12,
+                  color: theme.dividerColor,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Padding(
-                      padding: EdgeInsets.only(left: 48),
+                      padding: const EdgeInsets.only(left: 48),
                       child: Text(
                         'All Phrases',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w900,
-                          color: Colors.deepPurpleAccent,
+                          color: theme.titleColor,
                           letterSpacing: 1.2,
                         ),
                       ),
@@ -206,7 +197,7 @@ class _PhrasesDepPreviewWidgetState
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, size: 28),
+                    icon: Icon(Icons.close, size: 28, color: theme.normalText),
                   ),
                   const SizedBox(width: 8),
                 ],
@@ -227,7 +218,7 @@ class _PhrasesDepPreviewWidgetState
     );
   }
 
-  Widget _buildList(BuildContext context) {
+  Widget _buildList(BuildContext context, PhraseDepTheme theme) {
     List<PhraseObject> tookPhrases = _phrasesList.take(_previewCount).toList();
     return Column(
       children: [
@@ -248,15 +239,15 @@ class _PhrasesDepPreviewWidgetState
             margin: const EdgeInsets.only(top: 8),
             padding: const EdgeInsets.symmetric(vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.deepPurpleAccent.withValues(alpha: 0.08),
+              color: theme.badgeBackground,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.deepPurpleAccent.withValues(alpha: 0.4)),
+              border: Border.all(color: theme.cardBorder),
             ),
-            child: const Text(
+            child: Text(
               'See more',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.deepPurpleAccent,
+                color: theme.badgeText,
                 fontWeight: FontWeight.w600,
                 fontSize: 15,
               ),
@@ -277,12 +268,14 @@ class _PhrasesDepPreviewWidgetState
       _loadPhrasesIfReady();
     });
 
+    final theme = PhraseDepTheme.of(context);
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.backgroundColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Colors.deepPurpleAccent.withValues(alpha: 0.3),
+          color: theme.cardBorder,
           width: 1.5,
         ),
         boxShadow: [
@@ -296,15 +289,15 @@ class _PhrasesDepPreviewWidgetState
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: GestureDetector(
-          onTap: () => _showAllPhrases(context),
+          onTap: () => _showAllPhrases(context, theme),
           behavior: HitTestBehavior.opaque,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildHeader(),
-              if (_isLoading) _buildLoader(),
-              if (!_isLoading && _phrasesList.isEmpty) _buildEmpty(),
-              if (!_isLoading && _phrasesList.isNotEmpty) _buildList(context),
+              _buildHeader(theme),
+              if (_isLoading) _buildLoader(theme),
+              if (!_isLoading && _phrasesList.isEmpty) _buildEmpty(theme),
+              if (!_isLoading && _phrasesList.isNotEmpty) _buildList(context, theme),
             ],
           ),
         ),

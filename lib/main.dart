@@ -5,6 +5,7 @@ import 'package:eiga/backend/data/models/wordObject.dart';
 import 'package:eiga/providers/modelsProviders.dart';
 import 'package:eiga/providers/packageProviders.dart';
 import 'package:eiga/providers/servicesProviders.dart';
+import 'package:eiga/providers/themeProvider.dart';
 import 'package:eiga/ui/navigators/appRouter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -67,10 +68,19 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeModeProvider);
+    
     return MaterialApp.router(
       routerConfig: AppRouter,
       debugShowCheckedModeBanner: false,
+      themeMode: themeMode,
       theme: ThemeData(
+        brightness: Brightness.light,
+        primarySwatch: Colors.blue,
+        useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
         primarySwatch: Colors.blue,
         useMaterial3: true,
       ),

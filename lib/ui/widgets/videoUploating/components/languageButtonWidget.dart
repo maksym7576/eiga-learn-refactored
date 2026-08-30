@@ -1,4 +1,4 @@
-import 'package:eiga/ui/widgets/videoUploating/components/UploadingTheme.dart';
+import 'package:eiga/ui/styles/AdditionalWindowTheme.dart';
 import 'package:flutter/material.dart';
 import '../../dialogs/AppBottomSheet.dart';
 import '../languagePreview/languagePreviewWidget.dart';
@@ -10,7 +10,7 @@ class LanguageButtonWidget extends StatelessWidget {
   const LanguageButtonWidget({super.key, required this.original, required this.translation});
 
   void _showAllLanguages(BuildContext context) {
-    final theme = UploadingTheme.of(context);
+    final theme = AdditionalWindowTheme.of(context);
     AppBottomSheet.show(
       context: context,
       barrierLabel: "ModelsLabel",

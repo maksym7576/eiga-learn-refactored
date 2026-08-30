@@ -1,6 +1,7 @@
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:eiga/providers/videoDataProviders.dart';
 import 'package:eiga/ui/widgets/phrasesCardsWidgest/fullScreenPhraseWidget.dart';
+import 'package:eiga/ui/styles/PlayerSettingsTheme.dart';
 import 'package:flick_video_player/flick_video_player.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -91,12 +92,12 @@ class VideoPlayerWidget extends ConsumerWidget {
     final videoPlayerPart = Container(
       height: isLandscapeSplit ? null : videoHeight,
       width: double.infinity,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.deepPurple.shade900,
+            Color(0xFF0F172A), // Slate 900
             Colors.black,
           ],
         ),
@@ -133,6 +134,8 @@ class VideoPlayerWidget extends ConsumerWidget {
       return videoPlayerPart;
     }
 
+    final theme = PlayerSettingsTheme.of(context);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -161,13 +164,13 @@ class VideoPlayerWidget extends ConsumerWidget {
             child: Container(
               height: 10,
               width: double.infinity,
-              color: Colors.deepPurple[100],
+              color: theme.tileBorder,
               child: Center(
                 child: Container(
                   width: 40,
                   height: 3,
                   decoration: BoxDecoration(
-                    color: Colors.deepPurple[300],
+                    color: theme.mutedText,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),

@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:ui';
+import 'package:eiga/ui/styles/AdditionalWindowTheme.dart';
 import 'package:eiga/ui/widgets/searchWidgets/searchSourceAbstract.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 import '../../../providers/searchProvider.dart';
-
 
 class SearchPickerWidget<TEntry, TFile> extends ConsumerStatefulWidget {
   final SearchSource<TEntry, TFile> source;
@@ -140,7 +140,7 @@ class _SearchPickerWidgetState<TEntry, TFile>
     super.dispose();
   }
 
-  Widget _buildHeader(bool showDetails, TEntry? selectedEntry) {
+  Widget _buildHeader(bool showDetails, TEntry? selectedEntry, AdditionalWindowTheme theme) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -149,8 +149,7 @@ class _SearchPickerWidgetState<TEntry, TFile>
             children: [
               if (showDetails)
                 IconButton(
-                  icon: const Icon(Icons.arrow_back,
-                      color: Colors.deepPurpleAccent),
+                  icon: Icon(Icons.arrow_back, color: theme.selectionAccentColor),
                   onPressed: _goBack,
                 )
               else
@@ -166,7 +165,7 @@ class _SearchPickerWidgetState<TEntry, TFile>
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: Colors.deepPurpleAccent.withValues(alpha: 0.5),
+                          color: theme.mutedText,
                         ),
                       ),
                     Text(
@@ -175,10 +174,10 @@ class _SearchPickerWidgetState<TEntry, TFile>
                           : widget.source.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
-                        color: Colors.deepPurpleAccent,
+                        color: theme.titleColor,
                       ),
                     ),
                   ],
@@ -189,16 +188,16 @@ class _SearchPickerWidgetState<TEntry, TFile>
         ),
         GestureDetector(
           onTap: () => Navigator.pop(context),
-          child: const Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: Icon(Icons.close, size: 24, color: Colors.black87),
+          child: Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Icon(Icons.close, size: 24, color: theme.normalText),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSearchView(bool isSearching, List<TEntry> results) {
+  Widget _buildSearchView(bool isSearching, List<TEntry> results, AdditionalWindowTheme theme) {
     return Column(
       key: const ValueKey('search-view'),
       children: [
@@ -210,10 +209,12 @@ class _SearchPickerWidgetState<TEntry, TFile>
                 child: TextField(
                   controller: _controller,
                   onSubmitted: (_) => _search(),
+                  style: TextStyle(color: theme.normalText),
                   decoration: InputDecoration(
                     hintText: widget.source.searchHint,
+                    hintStyle: TextStyle(color: theme.mutedText),
                     filled: true,
-                    fillColor: Colors.grey.shade100,
+                    fillColor: theme.cardBackground,
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 14, vertical: 10),
                     border: OutlineInputBorder(
@@ -229,18 +230,18 @@ class _SearchPickerWidgetState<TEntry, TFile>
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.deepPurpleAccent,
+                    color: theme.addButtonBackground,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: isSearching
-                      ? const SizedBox(
+                      ? SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
+                        strokeWidth: 2, color: theme.addButtonText),
                   )
-                      : const Icon(Icons.search,
-                      color: Colors.white, size: 20),
+                      : Icon(Icons.search,
+                      color: theme.addButtonText, size: 20),
                 ),
               ),
             ],
@@ -252,7 +253,7 @@ class _SearchPickerWidgetState<TEntry, TFile>
               ? Padding(
             padding: const EdgeInsets.all(24),
             child: Text('No results',
-                style: TextStyle(color: Colors.black.withValues(alpha: 0.4))),
+                style: TextStyle(color: theme.mutedText)),
           )
               : ListView.builder(
             itemCount: results.length,
@@ -260,9 +261,8 @@ class _SearchPickerWidgetState<TEntry, TFile>
               final entry = results[index];
               return widget.source.buildEntryCard(
                 entry,
-                false, // on search page there is no point in highlighting "active" —
-                // tap leads directly to another page
-                    () => _onEntryTap(entry),
+                false,
+                () => _onEntryTap(entry),
               );
             },
           ),
@@ -276,14 +276,15 @@ class _SearchPickerWidgetState<TEntry, TFile>
       bool isLoadingFiles,
       List<TFile> files,
       dynamic selectedResult,
+      AdditionalWindowTheme theme,
       ) {
     return Column(
       key: const ValueKey('details-view'),
       children: [
         widget.source.buildEntryCard(entry, true, _goBack),
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
-          child: Divider(height: 1),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+          child: Divider(height: 1, color: theme.dividerColor),
         ),
         Expanded(
           child: isLoadingFiles
@@ -292,8 +293,7 @@ class _SearchPickerWidgetState<TEntry, TFile>
               ? Padding(
             padding: const EdgeInsets.all(24),
             child: Text('Nothing found',
-                style:
-                TextStyle(color: Colors.black.withValues(alpha: 0.4))),
+                style: TextStyle(color: theme.mutedText)),
           )
               : ListView.builder(
             itemCount: files.length,
@@ -324,7 +324,8 @@ class _SearchPickerWidgetState<TEntry, TFile>
     final isSearching = ref.watch(isSearchingProvider(_key));
     final isLoadingFiles = ref.watch(isLoadingFilesProvider(_key));
     final isResolving = ref.watch(isResolvingProvider(_key));
-
+    
+    final theme = AdditionalWindowTheme.of(context);
     final showDetails = widget.source.hasFileStage && selectedEntry != null;
 
     return DraggableScrollableSheet(
@@ -342,30 +343,29 @@ class _SearchPickerWidgetState<TEntry, TFile>
             filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.85),
+                color: theme.backgroundColor.withValues(alpha: 0.85),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(32),
                   topRight: Radius.circular(32),
                 ),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: Colors.white.withValues(alpha: 0.1),
                   width: 1.5,
                 ),
               ),
               child: Column(
                 children: [
                   const SizedBox(height: 12),
-                  // Handle for dragging
                   Container(
                     width: 40,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.1),
+                      color: theme.handleColor,
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  _buildHeader(showDetails, selectedEntry),
+                  _buildHeader(showDetails, selectedEntry, theme),
                   const SizedBox(height: 4),
                   Expanded(
                     child: AnimatedSwitcher(
@@ -390,8 +390,9 @@ class _SearchPickerWidgetState<TEntry, TFile>
                     isLoadingFiles,
                     files,
                     selectedResult,
+                    theme,
                   )
-                      : _buildSearchView(isSearching, results),
+                      : _buildSearchView(isSearching, results, theme),
                 ),
               ),
               Padding(
@@ -403,22 +404,22 @@ class _SearchPickerWidgetState<TEntry, TFile>
                         ? null
                         : _confirm,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurpleAccent,
+                      backgroundColor: theme.addButtonBackground,
+                      foregroundColor: theme.addButtonText,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                     child: isResolving
-                        ? const SizedBox(
+                        ? SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                          strokeWidth: 2, color: theme.addButtonText),
                     )
                         : const Text('OK',
                         style: TextStyle(
-                            color: Colors.white,
                             fontWeight: FontWeight.w700)),
                   ),
                 ),

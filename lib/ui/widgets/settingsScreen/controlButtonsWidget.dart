@@ -5,8 +5,10 @@ import 'package:eiga/ui/widgets/settingsScreen/aiModelsSettingsWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../../providers/themeProvider.dart';
 import '../../../providers/servicesProviders.dart';
 import '../../../providers/redirectProviders.dart';
+import '../../styles/SettingsTheme.dart';
 
 class ControlButtonWidget extends ConsumerStatefulWidget {
   const ControlButtonWidget({super.key});
@@ -38,6 +40,8 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
     required String title,
     required WidgetBuilder builder,
   }) {
+    final theme = SettingsTheme.of(context);
+
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -47,7 +51,7 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
       pageBuilder: (context, anim1, anim2) {
         return Center(
           child: Padding(
-            padding: const EdgeInsetsGeometry.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Material(
               color: Colors.transparent,
               child: Container(
@@ -57,17 +61,18 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
                   minWidth: MediaQuery.of(context).size.width * 0.9,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.deepPurple[50],
+                  color: theme.dialogBackground,
                   borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: theme.dialogBorder),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 10,
                       spreadRadius: 5,
                     ),
                   ],
                 ),
-                padding: EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
                 child: builder(context),
               ),
             ),
@@ -87,6 +92,8 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
   }
 
   Widget _apiKeyView(BuildContext context, ApiTokenType type) {
+    final theme = SettingsTheme.of(context);
+
     return Consumer(
       builder: (context, ref, child) {
         final tokenAsync = ref.watch(tokenProvider(type));
@@ -97,26 +104,21 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
             final controller = TextEditingController(text: token);
 
             return Column(
-              mainAxisSize: MainAxisSize.max,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   '${type.name.toUpperCase()} API Key',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: theme.normalText),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
 
                 Container(
-                  padding: EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
+                    color: theme.cardBackground,
                     borderRadius: BorderRadius.circular(10),
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.deepPurpleAccent.shade100,
-                        Colors.deepPurple.shade100,
-                      ],
-                    ),
                     border: Border.all(
-                      color: Colors.deepPurpleAccent.shade200,
+                      color: theme.apiKeyCardBorder,
                       width: 1.5,
                     ),
                   ),
@@ -127,12 +129,12 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
                         height: 36,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.deepPurpleAccent.shade100,
+                          color: theme.apiKeyInfoIconBackground,
                         ),
                         child: Center(
                           child: Icon(
                             Icons.info_outline,
-                            color: Colors.deepPurpleAccent.shade200,
+                            color: theme.apiKeyInfoIcon,
                           ),
                         ),
                       ),
@@ -146,7 +148,7 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.deepPurpleAccent.shade700,
+                                color: theme.apiKeyCardTitle,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -154,7 +156,7 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
                               hasToken ? token : 'add api key',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.deepPurpleAccent.shade400,
+                                color: theme.apiKeyCardSubtitle,
                               ),
                             ),
                           ],
@@ -163,16 +165,18 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
                     ],
                   ),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 TextField(
                   controller: controller,
+                  style: TextStyle(color: theme.normalText),
                   decoration: InputDecoration(
                     hintText: 'input new key',
-                    border: OutlineInputBorder(),
-                    fillColor: Colors.deepPurpleAccent.shade100,
+                    hintStyle: TextStyle(color: theme.mutedText),
+                    border: const OutlineInputBorder(),
+                    enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: theme.dialogBorder)),
                   ),
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(
@@ -184,14 +188,8 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
                             if (context.mounted) Navigator.of(context).pop();
                           }
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepPurpleAccent,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        child: Text(
-                          hasToken ? 'Update' : 'Add Key',
-                          style: TextStyle(color: Colors.white),
-                        ),
+                        style: theme.primaryButtonStyle(),
+                        child: Text(hasToken ? 'Update' : 'Add Key'),
                       ),
                     ),
                     if (hasToken) ...[
@@ -204,12 +202,12 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.redAccent,
+                            foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            elevation: 0,
                           ),
-                          child: const Text(
-                            'Delete',
-                            style: TextStyle(color: Colors.white),
-                          ),
+                          child: const Text('Delete'),
                         ),
                       ),
                     ],
@@ -219,7 +217,7 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Error')),
+          error: (e, _) => Center(child: Text('Error', style: TextStyle(color: theme.normalText))),
         );
       },
     );
@@ -230,32 +228,19 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
     required String title,
     required WidgetBuilder dialogBuilder,
   }) {
-    return Material(
-      child: ElevatedButton(
-        onPressed: () =>
-            _openSettingDialog(context, title: title, builder: dialogBuilder),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.deepPurpleAccent,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.4,
-              ),
-            ),
-          ],
+    final theme = SettingsTheme.of(context);
+
+    return ElevatedButton(
+      onPressed: () =>
+          _openSettingDialog(context, title: title, builder: dialogBuilder),
+      style: theme.primaryButtonStyle(),
+      child: Text(
+        title,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.4,
         ),
       ),
     );
@@ -263,8 +248,11 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final themeMode = ref.watch(themeModeProvider);
+    final theme = SettingsTheme.of(context);
+
     return ListView(
-      padding: EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+      padding: const EdgeInsets.all(12),
       children: [
         Row(
           children: [
@@ -275,7 +263,7 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
                 dialogBuilder: (context) => _apiKeyView(context, ApiTokenType.gemeni),
               ),
             ),
-            const SizedBox(width: 5),
+            const SizedBox(width: 8),
             Expanded(
               child: _settingsButton(
                 context,
@@ -285,19 +273,63 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
             ),
           ],
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            'Appearance',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.normalText),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: theme.sectionBackground,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: theme.dialogBorder),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Theme Mode', style: TextStyle(fontWeight: FontWeight.w600, color: theme.normalText)),
+              SegmentedButton<ThemeMode>(
+                segments: const [
+                  ButtonSegment(value: ThemeMode.system, icon: Icon(Icons.brightness_auto)),
+                  ButtonSegment(value: ThemeMode.light, icon: Icon(Icons.light_mode)),
+                  ButtonSegment(value: ThemeMode.dark, icon: Icon(Icons.dark_mode)),
+                ],
+                selected: {themeMode},
+                onSelectionChanged: (newSelection) {
+                  ref.read(themeModeProvider.notifier).setMode(newSelection.first);
+                },
+                showSelectedIcon: false,
+                style: const ButtonStyle(
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            'App Settings',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: theme.normalText),
+          ),
+        ),
         _settingsButton(
           context,
           title: 'App Configuration',
           dialogBuilder: (context) => const AppConfigsSelectorWidget(),
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 8),
         _settingsButton(
           context,
           title: 'AI Models',
           dialogBuilder: (context) => const AiModelsSettingsWidget(),
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 8),
         _settingsButton(
           context,
           title: 'Clear Database',
@@ -308,6 +340,8 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
   }
 
   Widget _clearDatabaseDialog(BuildContext context) {
+    final theme = SettingsTheme.of(context);
+
     return Consumer(
       builder: (context, ref, child) {
         return Column(
@@ -319,15 +353,15 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
               size: 48,
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Clear All Data?',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: theme.normalText),
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'This action will permanently delete all videos, phrases, and progress. API keys will not be affected.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.black87),
+              style: TextStyle(fontSize: 14, color: theme.mutedText),
             ),
             const SizedBox(height: 24),
             Row(
@@ -335,9 +369,8 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: Colors.deepPurpleAccent),
+                    style: theme.secondaryButtonStyle().copyWith(
+                      side: WidgetStateProperty.all(const BorderSide(color: Colors.indigo)),
                     ),
                     child: const Text('Cancel'),
                   ),
@@ -361,12 +394,12 @@ class _ControlButtonWidgetState extends ConsumerState<ControlButtonWidget> {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.redAccent,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      elevation: 0,
                     ),
-                    child: const Text(
-                      'Clear',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    child: const Text('Clear'),
                   ),
                 ),
               ],

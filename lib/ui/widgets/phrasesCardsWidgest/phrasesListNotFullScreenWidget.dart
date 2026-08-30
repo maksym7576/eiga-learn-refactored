@@ -6,7 +6,6 @@ import 'package:flutter/rendering.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
-import '../../styles/phraseListStyles.dart';
 import 'phraseCardWidget.dart';
 
 class PhraseListNotFullScreenWidget extends ConsumerStatefulWidget {
@@ -35,9 +34,9 @@ class _PhraseListNotFullScreenWidgetState
     if (!_itemScrollController.isAttached) return;
     _itemScrollController.scrollTo(
       index: index,
-      duration: PhraseListStyles.durationScroll,
-      curve: PhraseListStyles.curveScroll,
-      alignment: PhraseListStyles.scrollAlignment,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOutCubic,
+      alignment: 0.2,
     );
   }
 
