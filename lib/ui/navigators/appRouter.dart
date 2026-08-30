@@ -12,7 +12,7 @@ final GoRouter AppRouter = GoRouter(
     routes: [
       ShellRoute(
           builder: (context, state, child) => AppNavigator(
-            showBottomBar: false,
+            showBottomBar: true,
             child: child,
           ),
           routes: [

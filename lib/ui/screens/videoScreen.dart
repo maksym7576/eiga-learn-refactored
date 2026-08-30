@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
+import '../../providers/FlickManagerState.dart';
 import '../../providers/videoDataProviders.dart';
 
 class VideoScreen extends ConsumerStatefulWidget {
@@ -27,10 +28,22 @@ class _VideoScreenState extends ConsumerState<VideoScreen> {
     // щоб уникнути стрибків інтерфейсу під оверлеєм плеєра.
     final effectiveOrientation = isFullscreen ? Orientation.landscape : orientation;
 
-    return Scaffold(
-      body: effectiveOrientation == Orientation.landscape
-          ? _buildLandscapeLayout(context, splitRatio)
-          : _buildPortraitLayout(context),
+    return PopScope(
+      canPop: !isFullscreen,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+
+        if (isFullscreen) {
+          // Якщо в повноекранному режимі — виходимо з нього одним свайпом
+          final flickManager = ref.read(flickManagerProvider).flickManager;
+          flickManager?.flickControlManager?.exitFullscreen();
+        }
+      },
+      child: Scaffold(
+        body: effectiveOrientation == Orientation.landscape
+            ? _buildLandscapeLayout(context, splitRatio)
+            : _buildPortraitLayout(context),
+      ),
     );
   }
 

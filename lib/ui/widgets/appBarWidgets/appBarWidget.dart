@@ -263,7 +263,7 @@ class _AppBarWidgetState extends ConsumerState<AppBarWidget> {
         IconButton(
           icon: const Icon(Icons.menu_rounded, color: Colors.black87),
           onPressed: () {
-            context.go('/settings');
+            context.push('/settings');
           },
         ),
         const SizedBox(width: 4),

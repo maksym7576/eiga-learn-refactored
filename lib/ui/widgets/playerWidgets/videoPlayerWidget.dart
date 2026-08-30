@@ -274,7 +274,7 @@ class VideoPlayerWidget extends ConsumerWidget {
           if (flickManager?.flickControlManager?.isFullscreen == true) {
             flickManager?.flickControlManager?.exitFullscreen();
           }
-          GoRouter.of(context).go('/main');
+          context.pop();
         },
         child: Container(
           padding: const EdgeInsets.all(10),

@@ -29,7 +29,7 @@ class AppNavigator extends HookConsumerWidget {
             context.go('/main');
             break;
             case 1:
-              context.go('/settings');
+              context.push('/settings');
           }
         },
         items: const [

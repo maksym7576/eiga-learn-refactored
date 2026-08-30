@@ -31,7 +31,7 @@ class VideoCard extends ConsumerWidget {
         child: InkWell(
           onTap: () async {
             ref.read(playerIdProvider.notifier).state = video.id;
-            context.go('/player');
+            context.push('/player');
           },
           borderRadius: BorderRadius.circular(18),
           child: ClipRRect(
