@@ -1,5 +1,5 @@
 import 'package:eiga/providers/servicesProviders.dart';
-import 'package:eiga/ui/widgets/videoUploating/videoCard.dart';
+import 'package:eiga/ui/widgets/videoCardsList/videoCard.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -28,8 +28,6 @@ class _VideoListWidgetState extends ConsumerState<VideoListWidget> {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        // 3 / 4 узгоджено з AspectRatio всередині VideoCard,
-        // щоб картки заповнювали клітинку без порожніх зазорів
         childAspectRatio: 3 / 4,
       ),
       itemBuilder: (context, index) {
@@ -67,7 +65,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           Text(
-            'Тут ще немає відео',
+            'Still you do not have videos',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -76,7 +74,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Додайте своє перше відео, щоб побачити його тут',
+            'Add first video',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,

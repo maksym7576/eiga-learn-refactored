@@ -1,11 +1,11 @@
-import 'package:eiga/ui/widgets/videoUploating/swipeableFileBoxWidget.dart';
+import 'package:eiga/ui/widgets/videoUploating/conponents/swipeableFileBoxWidget.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../../config/secureStorage.dart';
-import '../../../providers/localStoragesProviders.dart';
-import '../../../providers/redirectProviders.dart';
+import '../../../../config/secureStorage.dart';
+import '../../../../providers/localStoragesProviders.dart';
+import '../../../../providers/redirectProviders.dart';
 
 class VideoFilePickersRow extends ConsumerWidget {
   const VideoFilePickersRow({

@@ -6,8 +6,8 @@ import 'package:eiga/providers/videoComponentsProvider.dart';
 import 'package:eiga/ui/widgets/phrasesDepacked/phraseDepPreviewWidget.dart';
 import 'package:eiga/ui/widgets/searchWidgets/JimakuSearch/JimakuSubtitleSource.dart';
 import 'package:eiga/ui/widgets/searchWidgets/searchPickerWidget.dart';
-import 'package:eiga/ui/widgets/videoUploating/videoFilePickersRow.dart';
-import 'package:eiga/ui/widgets/videoUploating/videoFormActionButtons.dart';
+import 'package:eiga/ui/widgets/videoUploating/conponents/videoFilePickersRow.dart';
+import 'package:eiga/ui/widgets/videoUploating/conponents/videoFormActionButtons.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -16,8 +16,8 @@ import '../../../backend/services/depack_subtitles_services/SeasonEpisodeInfo.da
 import '../../../providers/DTOProviders.dart';
 import '../../../providers/searchProvider.dart';
 import 'AniListPreviewWidget.dart';
-import 'VideoTitleField.dart';
-import 'languageButtonWidget.dart';
+import 'conponents/VideoTitleField.dart';
+import 'conponents/languageButtonWidget.dart';
 
 class VideoUploadingWidget extends ConsumerStatefulWidget {
   const VideoUploadingWidget({super.key});

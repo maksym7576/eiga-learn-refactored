@@ -15,7 +15,7 @@ class VideoCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return AspectRatio(
-      aspectRatio: 3 / 4, // фіксовані пропорції картки — не залежать від розміру фото
+      aspectRatio: 3 / 4,
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
@@ -137,8 +137,6 @@ class VideoCard extends ConsumerWidget {
     );
   }
 
-  /// Головний метод показу зображення картки.
-  /// Пріоритет: coverImagePath (URL або локальний файл) -> thumbnailPath -> іконка-плейсхолдер.
   Widget _buildThumbnail() {
     final cover = video.coverImagePath;
 
@@ -146,7 +144,6 @@ class VideoCard extends ConsumerWidget {
       final isUrl = cover.startsWith('http://') || cover.startsWith('https://');
 
       if (isUrl) {
-        // coverImagePath — це посилання з інтернету (наприклад, з AniList)
         return Image.network(
           cover,
           fit: BoxFit.cover,
@@ -163,7 +160,6 @@ class VideoCard extends ConsumerWidget {
           },
         );
       } else {
-        // coverImagePath — це локальний шлях до файлу на диску
         final file = File(cover);
         if (file.existsSync()) {
           return Image.file(

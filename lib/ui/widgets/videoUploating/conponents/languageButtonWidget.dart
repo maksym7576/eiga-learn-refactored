@@ -1,6 +1,7 @@
+import 'package:eiga/ui/widgets/videoUploating/languagePreview/languagePreviewStyles.dart';
 import 'package:flutter/material.dart';
-import '../dialogs/AppDialog.dart';
-import 'languagePreviewWidget.dart';
+import '../../dialogs/AppBottomSheet.dart';
+import '../languagePreview/languagePreviewWidget.dart';
 
 class LanguageButtonWidget extends StatelessWidget {
   final String original;
@@ -9,9 +10,12 @@ class LanguageButtonWidget extends StatelessWidget {
   const LanguageButtonWidget({super.key, required this.original, required this.translation});
 
   void _showAllLanguages(BuildContext context) {
-    AppDialog.show(
+    final theme = LanguagePreviewTheme.of(context);
+    AppBottomSheet.show(
       context: context,
       barrierLabel: "ModelsLabel",
+      heightFactor: 0.9,
+      backgroundColor: theme.backgroundColor,
       child: const LanguagePreviewWidget(),
     );
   }
