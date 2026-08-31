@@ -18,6 +18,16 @@ class TranslationProvider {
 
   TranslationProvider(this.ref) {
     _initListeners();
+    _cleanupDatabaseState();
+  }
+
+  Future<void> _cleanupDatabaseState() async {
+    try {
+      await ref.read(phraseServiceProvider).resetAllTranslatingStatuses();
+      print('TranslationProvider: Database translating statuses reset on initialization');
+    } catch (e) {
+      print('TranslationProvider: Failed to reset translating statuses: $e');
+    }
   }
 
   void _initListeners() {
@@ -65,7 +75,11 @@ class TranslationProvider {
   }
 
   Future<void> _checkAndTranslate(Duration currentTime) async {
-    if (_isProcessing || _currentVideoId == null) return;
+    if (_isProcessing) {
+      print('TranslationProvider: Skipping checkAndTranslate because processing is in progress');
+      return;
+    }
+    if (_currentVideoId == null) return;
 
     final allPhrases = ref.read(phraseListProvider(_currentVideoId!)).value ?? [];
     if (allPhrases.isEmpty) return;
@@ -110,7 +124,11 @@ class TranslationProvider {
   }
 
   Future<void> _sendToApi(List<PhraseObject> phrases) async {
-    if (phrases.isEmpty || _isProcessing) return;
+    if (phrases.isEmpty) return;
+    if (_isProcessing) {
+      print('TranslationProvider: Skipping _sendToApi because processing is already in progress');
+      return;
+    }
 
     _isProcessing = true;
 
@@ -124,13 +142,11 @@ class TranslationProvider {
       try {
         await ref.read(phraseServiceProvider).markPhrasesAsTranslatingByPhraseList(phrases);
       } catch (e) {
+        print('TranslationProvider: Failed to mark phrases as translating: $e');
       }
 
       final aiService = ref.read(aiServiceProvider);
 
-      // Маршрутизація по video.pepelineIndetificator відбувається всередині
-      // runTranslationForVideo — TranslationProvider більше не знає і не має
-      // знати, який саме пайплайн (total_v1 / context_translation_v1) буде викликано.
       final result = await aiService.runTranslationForVideo(
         ref: ref,
         video: video,
@@ -145,16 +161,15 @@ class TranslationProvider {
     } catch (e, st) {
       if (e is GeminiException) {
         ref.read(aiRequestResultProvider.notifier).state = AiRequestResult.failure(e.type);
-        try {
-          await ref.read(phraseServiceProvider).resetPhrasesTranslationStatus(phrases);
-        } catch (_) {}
       } else {
-        try {
-          await ref.read(phraseServiceProvider).markPhrasesAsTranslatingByPhraseList(phrases);
-        } catch (_) {}
+        print('TranslationProvider: Unexpected API error: $e\n$st');
       }
 
-      print('Translation API Error: $e\n$st');
+      try {
+        await ref.read(phraseServiceProvider).resetPhrasesTranslationStatus(phrases);
+      } catch (err) {
+        print('TranslationProvider: Failed to reset phrases status after error: $err');
+      }
     } finally {
       _isProcessing = false;
     }

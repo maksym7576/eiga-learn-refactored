@@ -106,38 +106,39 @@ $jsonData
     return model.supportsStreaming;
   }
 
+  void _checkProvider(AiModelEntry model) {
+    if (model.provider != AiProvider.google) {
+      throw Exception("Provider ${model.provider} is not supported yet");
+    }
+  }
+
   Future<AiRequestResult> _fetchParseAndSaveData(AiModelEntry model, String url, String prompt, {List<int> expectedIds = const []}) async {
+    _checkProvider(model);
     final bool isStreamingMode = _isStreamingFor(model);
 
-    if (model.provider == AiProvider.google) {
-      if (isStreamingMode) {
-        return await geminiStreamingService.fetchParseAndSaveData(url, prompt, expectedIds: expectedIds);
-      } else {
-        return await _geminiHTTPService.fetchParseAndSaveData(url, prompt, expectedIds: expectedIds);
-      }
+    if (isStreamingMode) {
+      return await geminiStreamingService.fetchParseAndSaveData(url, prompt, expectedIds: expectedIds);
+    } else {
+      return await _geminiHTTPService.fetchParseAndSaveData(url, prompt, expectedIds: expectedIds);
     }
-    throw Exception("Provider ${model.provider} is not supported yet");
   }
 
   Future<AiRequestResult> _fetchEpisodeContext(Ref ref, AiModelEntry model, String url, String prompt) async {
-    if (model.provider == AiProvider.google) {
-      return await _geminiHTTPService.fetchEpisodeContext(ref, url, prompt);
-    }
-    throw Exception("Provider ${model.provider} is not supported yet");
+    _checkProvider(model);
+    return await _geminiHTTPService.fetchEpisodeContext(ref, url, prompt);
   }
 
-  Future<AiRequestResult> _fetchTranslations(AiModelEntry model, String url, String prompt, {List<int> expectedIds = const []}) async {
-    if (model.provider == AiProvider.google) {
-      try {
-        final jsonString = await _geminiHTTPService.sendRequest(url, prompt);
-        final Map<String, dynamic> jsonResponse = jsonDecode(jsonString);
-        return await _geminiHTTPService.phraseResponseHandler.saveTranslationsResponse(jsonResponse, expectedIds: expectedIds);
-      } catch (e) {
-        if (e is GeminiException) return AiRequestResult.failure(e.type);
-        rethrow;
-      }
+  Future<({AiRequestResult result, String? rawJson})> _fetchTranslations(AiModelEntry model, String url, String prompt, {List<int> expectedIds = const []}) async {
+    _checkProvider(model);
+    try {
+      final jsonString = await _geminiHTTPService.sendRequest(url, prompt);
+      final Map<String, dynamic> jsonResponse = jsonDecode(jsonString);
+      final result = await _geminiHTTPService.phraseResponseHandler.saveTranslationsResponse(jsonResponse, expectedIds: expectedIds);
+      return (result: result, rawJson: jsonString);
+    } catch (e) {
+      if (e is GeminiException) return (result: AiRequestResult.failure(e.type), rawJson: null);
+      rethrow;
     }
-    throw Exception("Provider ${model.provider} is not supported yet");
   }
 
   Future<AiRequestResult> processTotalTranslationPipeline({
@@ -286,7 +287,9 @@ $jsonData
       final translationUrl = await ApiRequestBuilder.buildUrl(translationModel, forceStreamingOverride: false);
       final fullTranslationPrompt = _formPrompt(translationPrompt, phraseObjectsList, originalLanguage, translationLanguage, extraMetadata: extraMetadata);
 
-      final translationResult = await _fetchTranslations(translationModel, translationUrl, fullTranslationPrompt, expectedIds: expectedIds);
+      final translationFetch = await _fetchTranslations(translationModel, translationUrl, fullTranslationPrompt, expectedIds: expectedIds);
+      final translationResult = translationFetch.result;
+      final translationData = translationFetch.rawJson;
 
       ref.read(aiTrackerProvider.notifier).completeRequest(
         requestId: requestIdTranslation,
@@ -295,9 +298,7 @@ $jsonData
         videoId: video.id,
       );
 
-      if (translationResult.phase != AiRequestPhase.success) return translationResult;
-
-      final translationData = await _geminiHTTPService.sendRequest(translationUrl, fullTranslationPrompt);
+      if (translationResult.phase != AiRequestPhase.success || translationData == null) return translationResult;
 
       // 3. MORPHOLOGIZATION
       final parserPrompt = pipeline.promptFor(PipelineStepType.parser, video);
