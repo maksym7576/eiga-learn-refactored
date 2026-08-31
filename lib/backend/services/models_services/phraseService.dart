@@ -131,4 +131,18 @@ class PhraseService {
     });
   }
 
+  Future<void> resetPhrasesTranslationStatusByIds(List<int> phraseIds) async {
+    await db.writeTxn(() async {
+      for (var id in phraseIds) {
+        final phrase = await db.phraseObjects.get(id);
+        if (phrase != null) {
+          phrase.isTranslating = false;
+          phrase.translatedPhrase = null;
+          phrase.isTranslated = false;
+          await db.phraseObjects.put(phrase);
+        }
+      }
+    });
+  }
+
 }

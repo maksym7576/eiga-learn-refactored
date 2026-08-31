@@ -131,13 +131,17 @@ class TranslationProvider {
       // Маршрутизація по video.pepelineIndetificator відбувається всередині
       // runTranslationForVideo — TranslationProvider більше не знає і не має
       // знати, який саме пайплайн (total_v1 / context_translation_v1) буде викликано.
-      await aiService.runTranslationForVideo(
+      final result = await aiService.runTranslationForVideo(
         ref: ref,
         video: video,
         phraseObjectsList: phrases,
         originalLanguage: video.originalLanguage!,
         translationLanguage: video.translatedLanguage!,
       );
+
+      if (!result.isOk) {
+        ref.read(aiRequestResultProvider.notifier).state = result;
+      }
     } catch (e, st) {
       if (e is GeminiException) {
         ref.read(aiRequestResultProvider.notifier).state = AiRequestResult.failure(e.type);
@@ -153,6 +157,20 @@ class TranslationProvider {
       print('Translation API Error: $e\n$st');
     } finally {
       _isProcessing = false;
+    }
+  }
+
+  Future<void> retryPhrases(List<int> phraseIds) async {
+    if (phraseIds.isEmpty || _isProcessing) return;
+    
+    final phrases = <PhraseObject>[];
+    for (final id in phraseIds) {
+      final p = await ref.read(phraseServiceProvider).getPhraseById(id);
+      if (p != null) phrases.add(p);
+    }
+    
+    if (phrases.isNotEmpty) {
+      await _sendToApi(phrases);
     }
   }
 

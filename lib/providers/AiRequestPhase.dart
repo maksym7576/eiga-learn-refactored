@@ -6,7 +6,7 @@ enum AiRequestPhase { success, partialSuccess, error }
 class AiRequestResult {
   final AiRequestPhase phase;
   final AiUserFacingError? error;
-  final List<String> failedPhraseIds;
+  final List<int> failedPhraseIds;
 
   const AiRequestResult({
     required this.phase,
@@ -19,10 +19,10 @@ class AiRequestResult {
   factory AiRequestResult.success() =>
       const AiRequestResult(phase: AiRequestPhase.success);
 
-  factory AiRequestResult.partialSuccess(List<String> failedIds) => AiRequestResult(
+  factory AiRequestResult.partialSuccess(List<int> failedIds) => AiRequestResult(
     phase: AiRequestPhase.partialSuccess,
     failedPhraseIds: failedIds,
-    error: PartialFailureInfo(failedIds).toUserFacing(),
+    error: PartialFailureInfo(failedIds.map((e) => e.toString()).toList()).toUserFacing(),
   );
 
   factory AiRequestResult.failure(AiErrorType type) =>

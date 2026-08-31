@@ -1,7 +1,7 @@
 // GeminiStreamingService.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:eiga/backend/exeption/geminiException.dart';
 import '../../../../providers/AiRequestPhase.dart';
 import '../../../exeption/AiUserFacingError.dart';
@@ -10,15 +10,12 @@ import '../parsers/PhraseResponseHandler.dart';
 class GeminiStreamingService {
   final PhraseResponseHandler phraseResponseHandler;
 
-  /// Викликається одразу після старту запиту — щоб UI міг показати
-  /// "триває запит", не чекаючи фінального результату.
   final void Function()? onStart;
-
-  /// Опціональний лог для дебагу — підключиш, якщо треба, звідки завгодно.
   final void Function(String message)? onLog;
 
   final Set<String> _processedBlockSignatures = {};
-  final Set<String> _failedPhraseIds = {};
+  final Set<int> _processedPhraseIds = {};
+  final Set<int> _failedPhraseIds = {};
 
   GeminiStreamingService({
     required this.phraseResponseHandler,
@@ -26,9 +23,19 @@ class GeminiStreamingService {
     this.onLog,
   });
 
-  Future<AiRequestResult> fetchParseAndSaveData(String url, String prompt) async {
+  void _internalLog(String message) {
+    onLog?.call(message);
+    debugPrint('[GeminiStreamingService] $message');
+  }
+
+  Future<AiRequestResult> fetchParseAndSaveData(String url, String prompt, {List<int> expectedIds = const []}) async {
     _processedBlockSignatures.clear();
+    _processedPhraseIds.clear();
     _failedPhraseIds.clear();
+
+    _internalLog('--- START STREAMING RESPONSE ---');
+    _internalLog('Expected IDs: $expectedIds');
+
     final streamUrl = url.contains('?') ? '$url&alt=sse' : '$url?alt=sse';
 
     final requestBody = {
@@ -59,18 +66,18 @@ class GeminiStreamingService {
 
       if (streamedResponse.statusCode != 200) {
         final errorString = await streamedResponse.stream.bytesToString();
+        // Reset all because the request failed
+        await phraseResponseHandler.phraseService.resetPhrasesTranslationStatusByIds(expectedIds);
         _handleHttpError(streamedResponse.statusCode, errorString);
       }
 
       final StringBuffer fullTextBuffer = StringBuffer();
-
       final stream = streamedResponse.stream
           .transform(utf8.decoder)
           .transform(const LineSplitter());
 
       await for (var line in stream) {
         if (!line.startsWith('data: ')) continue;
-
         final dataStr = line.substring(6).trim();
         if (dataStr.isEmpty) continue;
 
@@ -82,105 +89,54 @@ class GeminiStreamingService {
             await _extractAndSaveReadyObjects(fullTextBuffer);
           }
         } catch (e) {
-          onLog?.call('[PartialParseErr] ${e.toString()}');
+          _internalLog('[PartialParseErr] ${e.toString()}');
         }
       }
 
       await _extractAndSaveReadyObjects(fullTextBuffer);
 
-      return _failedPhraseIds.isEmpty
+      // Detection of missing IDs
+      final missingIds = <int>[];
+      for (final expectedId in expectedIds) {
+        if (!_processedPhraseIds.contains(expectedId)) {
+          _internalLog('[MISSING] Phrase $expectedId not found in stream.');
+          missingIds.add(expectedId);
+        }
+      }
+
+      if (missingIds.isNotEmpty) {
+        _internalLog('Resetting status for ${missingIds.length} missing phrases in stream.');
+        await phraseResponseHandler.phraseService.resetPhrasesTranslationStatusByIds(missingIds);
+      }
+
+      final finalFailedIds = {..._failedPhraseIds, ...missingIds}.toList();
+
+      _internalLog('Processed IDs: ${_processedPhraseIds.toList()}');
+      _internalLog('Failed/Missing IDs: $finalFailedIds');
+      _internalLog('--- END STREAMING RESPONSE ---');
+
+      return finalFailedIds.isEmpty
           ? AiRequestResult.success()
-          : AiRequestResult.partialSuccess(_failedPhraseIds.toList());
+          : AiRequestResult.partialSuccess(finalFailedIds);
     } catch (error) {
-      onLog?.call('[StreamFatalErr] ${error.toString()}');
+      _internalLog('[StreamFatalErr] ${error.toString()}');
+      // On fatal error, ensure all remaining expected IDs are reset
+      final List<int> idsToReset = expectedIds.where((id) => !_processedPhraseIds.contains(id)).toList();
+      if (idsToReset.isNotEmpty) {
+        await phraseResponseHandler.phraseService.resetPhrasesTranslationStatusByIds(idsToReset);
+      }
       return AiRequestResult.failure(_resolveErrorType(error));
     } finally {
       client?.close();
     }
   }
 
-  /// Аналог http-версії sendRequest, повертає очищений текст або кидає
-  /// GeminiException — виклик сам вирішує, як це показати в UI.
-  Future<String> sendRequest(String url, String prompt) async {
-    final streamUrl = url.contains('?') ? '$url&alt=sse' : '$url?alt=sse';
-
-    final requestBody = {
-      "contents": [
-        {
-          "parts": [
-            {"text": prompt},
-          ],
-        },
-      ],
-    };
-
-    final request = http.Request('POST', Uri.parse(streamUrl))
-      ..headers['Content-Type'] = 'application/json'
-      ..body = jsonEncode(requestBody);
-
-    http.Client? client;
-    try {
-      onStart?.call();
-
-      client = http.Client();
-      final streamedResponse = await client.send(request).timeout(
-        const Duration(seconds: 160),
-        onTimeout: () {
-          throw Exception("Gemini stream request time out");
-        },
-      );
-
-      if (streamedResponse.statusCode != 200) {
-        final errorString = await streamedResponse.stream.bytesToString();
-        _handleHttpError(streamedResponse.statusCode, errorString);
-      }
-
-      final StringBuffer fullTextBuffer = StringBuffer();
-
-      final stream = streamedResponse.stream
-          .transform(utf8.decoder)
-          .transform(const LineSplitter());
-
-      await for (var line in stream) {
-        if (!line.startsWith('data: ')) continue;
-
-        final dataStr = line.substring(6).trim();
-        if (dataStr.isEmpty) continue;
-
-        try {
-          final jsonData = jsonDecode(dataStr);
-          final String? newTextChunk = _extractTextChunk(jsonData);
-          if (newTextChunk != null) {
-            fullTextBuffer.write(newTextChunk);
-          }
-        } catch (e) {
-          onLog?.call('[PartialParseErr] ${e.toString()}');
-        }
-      }
-
-      if (fullTextBuffer.isEmpty) {
-        throw GeminiGeneralException("Empty response body from Gemini (stream)");
-      }
-
-      final rawText = fullTextBuffer.toString();
-      return rawText.replaceAll('```json', '').replaceAll('```', '').trim();
-    } finally {
-      client?.close();
-    }
-  }
-
-  // ---------------------------------------------------------------------
-  // Внутрішня логіка стріму
-  // ---------------------------------------------------------------------
-
   String? _extractTextChunk(dynamic jsonData) {
     if (jsonData is! Map) return null;
     final candidates = jsonData['candidates'];
     if (candidates == null || candidates.isEmpty) return null;
-
     final content = candidates[0]['content'];
     if (content == null || content['parts'] == null || content['parts'].isEmpty) return null;
-
     return content['parts'][0]['text']?.toString();
   }
 
@@ -188,15 +144,12 @@ class GeminiStreamingService {
     final raw = buffer.toString();
     int depth = 0;
     int startIndex = -1;
-
     bool insideString = false;
     bool isEscape = false;
-
     final List<_ExtractedPiece> readyPieces = [];
 
     for (int i = 0; i < raw.length; i++) {
       final ch = raw[i];
-
       if (insideString) {
         if (isEscape) {
           isEscape = false;
@@ -207,7 +160,6 @@ class GeminiStreamingService {
         }
         continue;
       }
-
       if (ch == '"') {
         insideString = true;
       } else if (ch == '{') {
@@ -238,7 +190,6 @@ class GeminiStreamingService {
           parsedList = decoded;
         }
       } catch (e) {
-        onLog?.call('[StreamParseIgnored] ${e.toString()}');
         removedUntil = p.end;
         continue;
       }
@@ -254,7 +205,6 @@ class GeminiStreamingService {
           }
         }
       }
-
       removedUntil = p.end;
     }
 
@@ -264,15 +214,22 @@ class GeminiStreamingService {
   }
 
   Future<void> _processOnePhrase(Map<String, dynamic> entry) async {
-    final id = entry['phraseId']?.toString() ?? 'unknown';
+    final idStr = entry['phraseId']?.toString() ?? '0';
+    final id = int.tryParse(idStr) ?? 0;
+    
+    if (id > 0) _processedPhraseIds.add(id);
+
     try {
-      await phraseResponseHandler.processPhraseEntryData(
+      final outcome = await phraseResponseHandler.processPhraseEntryData(
         entry,
         dedupSignatures: _processedBlockSignatures,
       );
+      if (outcome != null && !outcome.ok) {
+        _failedPhraseIds.add(id);
+      }
     } catch (e) {
-      _failedPhraseIds.add(id);
-      onLog?.call('[PhraseProcessErr:$id] ${e.toString()}');
+      if (id > 0) _failedPhraseIds.add(id);
+      _internalLog('[PhraseProcessErr:$id] ${e.toString()}');
     }
   }
 

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:eiga/providers/AiRequestPhase.dart';
 import 'package:eiga/providers/servicesProviders.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:http/http.dart' as http;
@@ -14,10 +15,9 @@ class GeminiHTTPService {
     required this.phraseResponseHandler,
   });
 
-  Future<void> fetchEpisodeContext(Ref ref, String url, String prompt) async {
+  Future<AiRequestResult> fetchEpisodeContext(Ref ref, String url, String prompt) async {
     try {
       final String jsonString = await sendRequest(url, prompt);
-
       final jsonResponse = jsonDecode(jsonString);
 
       final VideoObject? video = await ref.read(currentVideoProvider.future);
@@ -27,33 +27,37 @@ class GeminiHTTPService {
         video.researchInformation = jsonResponse.toString();
         ref.read(videoServiceProvider.notifier).updateVideo(video);
       }
-
-    } catch (error, stackTrace) {
+      return AiRequestResult.success();
+    } catch (error) {
+      if (error is GeminiException) {
+        return AiRequestResult.failure(error.type);
+      }
       rethrow;
     }
   }
 
-  Future<Map<String, dynamic>> fetchTranslations(String url, String prompt) async {
+  Future<AiRequestResult> fetchTranslations(String url, String prompt, {List<int> expectedIds = const []}) async {
     try {
       final String jsonString = await sendRequest(url, prompt);
-
       final Map<String, dynamic> jsonResponse = jsonDecode(jsonString);
 
-      await phraseResponseHandler.saveTranslationsResponse(jsonResponse);
-
-      return jsonResponse;
-    } catch (error, stackTrace) {
+      return await phraseResponseHandler.saveTranslationsResponse(jsonResponse, expectedIds: expectedIds);
+    } catch (error) {
+      if (error is GeminiException) {
+        return AiRequestResult.failure(error.type);
+      }
       rethrow;
     }
   }
 
-  Future<void> fetchParseAndSaveData(String url, String prompt) async {
+  Future<AiRequestResult> fetchParseAndSaveData(String url, String prompt, {List<int> expectedIds = const []}) async {
     try {
       final String jsonResponse = await sendRequest(url, prompt);
-
-      await phraseResponseHandler.processResponse(jsonResponse);
-
-    } catch (error, stackTrace) {
+      return await phraseResponseHandler.processResponse(jsonResponse, expectedIds: expectedIds);
+    } catch (error) {
+      if (error is GeminiException) {
+        return AiRequestResult.failure(error.type);
+      }
       rethrow;
     }
   }
@@ -96,19 +100,16 @@ class GeminiHTTPService {
               candidate['content']['parts'] != null &&
               candidate['content']['parts'].isNotEmpty) {
             String rawText = candidate['content']['parts'][0]['text'].toString();
-
             String cleanedResponse = rawText.replaceAll('```json', '').replaceAll('```', '').trim();
-
             return cleanedResponse;
           }
         }
-
         throw GeminiGeneralException("Unexpected response shape from Gemini: ${response.body}");
       } else {
         _handleHttpError(response);
         throw Exception("Unreachable code");
       }
-    } catch (error, stackTrace) {
+    } catch (error) {
       rethrow;
     }
   }

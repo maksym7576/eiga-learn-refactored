@@ -135,7 +135,6 @@ class VideoSettingsNotFullScreenWidget extends ConsumerWidget {
             if (value == 2) _showReadingTypeDialog(context);
             if (value == 3) _showAiStatusDialog(context);
             if (value == 4) _showSubtitleSettingsDialog(context);
-            if (value == 5) _showAiStatusDialog(context);
           },
         ),
       ],
@@ -187,12 +186,6 @@ class _MoreSettingsButton extends StatelessWidget {
           icon: Icons.psychology_alt_rounded,
           color: theme.iconAiInsights,
           label: 'AI insights',
-        ),
-        _menuItem(
-          value: 5,
-          icon: Icons.error_outline_rounded,
-          color: theme.iconErrors,
-          label: 'Gemini Errors',
         ),
         const PopupMenuDivider(height: 12),
         _menuItem(

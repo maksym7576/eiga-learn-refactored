@@ -7,6 +7,8 @@ part 'videoObject.g.dart';
 class VideoObject {
   Id id = Isar.autoIncrement;
 
+  List<AiRequestEntry>? aiHistory;
+
   String? originalLanguage;
   String? translatedLanguage;
   String? textFormat;
@@ -84,6 +86,7 @@ class VideoObject {
     String? pepelineIndetificator,
     bool? isResearchDone,
     String? researchInformation,
+    List<AiRequestEntry>? aiHistory,
   }) {
     return VideoObject()
       ..id = id ?? this.id
@@ -113,6 +116,30 @@ class VideoObject {
       ..colorThemeValue = colorThemeValue ?? this.colorThemeValue
       ..pepelineIndetificator = pepelineIndetificator ?? this.pepelineIndetificator
       ..isResearchDone = isResearchDone ?? this.isResearchDone
-      ..researchInformation = researchInformation ?? this.researchInformation;
+      ..researchInformation = researchInformation ?? this.researchInformation
+      ..aiHistory = aiHistory ?? this.aiHistory;
   }
+}
+
+@embedded
+class AiRequestEntry {
+  String? id; // Unique ID for tracking active requests
+  String? modelName;
+  String? phase; // mapping to AiRequestPhase
+  DateTime? startTime;
+  DateTime? endTime;
+  String? requestType;
+  String? errorMessage;
+  List<int>? failedIds;
+
+  AiRequestEntry({
+    this.id,
+    this.modelName,
+    this.phase,
+    this.startTime,
+    this.endTime,
+    this.requestType,
+    this.errorMessage,
+    this.failedIds,
+  });
 }

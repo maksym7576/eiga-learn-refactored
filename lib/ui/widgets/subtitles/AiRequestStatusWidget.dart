@@ -1,174 +1,289 @@
+import 'package:eiga/backend/data/models/videoObject.dart';
 import 'package:eiga/ui/styles/AdditionalWindowTheme.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import '../../../backend/exeption/AiUserFacingError.dart';
 import '../../../providers/AiRequestPhase.dart';
+import '../../../providers/aiTrackerProvider.dart';
+import '../../../providers/servicesProviders.dart';
 
 class AiRequestStatusWidget extends ConsumerWidget {
   const AiRequestStatusWidget({
     super.key,
-    this.onAction,
   });
-
-  final void Function(AiRequestResult result)? onAction;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final result = ref.watch(aiRequestResultProvider);
+    final tracker = ref.watch(aiTrackerProvider);
     final theme = AdditionalWindowTheme.of(context);
+    final scheme = Theme.of(context).colorScheme;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 16),
-        Text(
-          'AI Insights',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
-            color: theme.titleColor,
-            letterSpacing: 0.5,
-          ),
-        ),
-        const SizedBox(height: 16),
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 250),
-          transitionBuilder: (child, anim) => FadeTransition(
-            opacity: anim,
-            child: SizeTransition(
-              sizeFactor: anim,
-              axisAlignment: -1.0,
-              child: RepaintBoundary(child: child),
+        Center(
+          child: Text(
+            'AI Insights',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              color: theme.titleColor,
+              letterSpacing: 0.5,
             ),
           ),
-          child: (result == null || result.isOk)
-              ? Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: Column(
-                    children: [
-                      const Icon(Icons.check_circle_outline_rounded, color: Colors.green, size: 40),
-                      const SizedBox(height: 8),
-                      Text(
-                        'No active errors',
-                        style: TextStyle(color: theme.mutedText, fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
-                )
-              : _StatusBanner(
-            key: ValueKey('ai-status-${result.phase}'),
-            result: result,
-            onDismiss: () => ref.read(aiRequestResultProvider.notifier).state = null,
-            onAction: onAction == null ? null : () => onAction!(result),
+        ),
+        const SizedBox(height: 24),
+        
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'REQUEST HISTORY',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: theme.mutedText.withValues(alpha: 0.6),
+              letterSpacing: 1.2,
+            ),
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 8),
+
+        if (tracker.history.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            child: Center(
+              child: Column(
+                children: [
+                  Icon(Icons.history_rounded, size: 48, color: theme.mutedText.withValues(alpha: 0.15)),
+                  const SizedBox(height: 12),
+                  Text(
+                    'No requests made yet',
+                    style: TextStyle(color: theme.mutedText.withValues(alpha: 0.5), fontWeight: FontWeight.w500),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: tracker.history.length,
+            separatorBuilder: (context, index) => Divider(height: 1, color: scheme.outlineVariant.withValues(alpha: 0.5), indent: 16, endIndent: 16),
+            itemBuilder: (context, index) {
+              final entry = tracker.history[index];
+              return _HistoryItem(entry: entry);
+            },
+          ),
+        
+        const SizedBox(height: 32),
       ],
     );
   }
 }
 
-class _StatusBanner extends StatelessWidget {
-  const _StatusBanner({
-    super.key,
-    required this.result,
-    required this.onDismiss,
-    this.onAction,
-  });
+class _HistoryItem extends StatefulWidget {
+  final AiRequestEntry entry;
 
-  final AiRequestResult result;
-  final VoidCallback onDismiss;
-  final VoidCallback? onAction;
+  const _HistoryItem({required this.entry});
 
-  bool get _isWarning => result.phase == AiRequestPhase.partialSuccess;
+  @override
+  State<_HistoryItem> createState() => _HistoryItemState();
+}
+
+class _HistoryItemState extends State<_HistoryItem> {
+  bool _expanded = false;
+  late DateTime _now;
+
+  @override
+  void initState() {
+    super.initState();
+    _now = DateTime.now();
+    if (widget.entry.phase == 'processing') {
+      _startTimer();
+    }
+  }
+
+  void _startTimer() {
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted || widget.entry.phase != 'processing') return false;
+      setState(() {
+        _now = DateTime.now();
+      });
+      return true;
+    });
+  }
+
+  String _formatTime(DateTime dt) {
+    return "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+  }
+
+  String _getElapsed(DateTime start) {
+    final diff = _now.difference(start);
+    final seconds = diff.inSeconds;
+    return "${seconds}s";
+  }
 
   @override
   Widget build(BuildContext context) {
-    final AiUserFacingError? error = result.error;
-    if (error == null) return const SizedBox.shrink();
-
+    final entry = widget.entry;
+    final isProcessing = entry.phase == 'processing';
+    final isError = entry.phase == 'error';
+    final isPartial = entry.phase == 'partialSuccess';
     final scheme = Theme.of(context).colorScheme;
-    final Color accent = _isWarning ? Colors.orange.shade700 : scheme.error;
-    final IconData icon = _isWarning ? Icons.warning_amber_rounded : Icons.error_outline_rounded;
+    
+    final Color statusColor = isProcessing
+        ? scheme.primary
+        : (isError 
+            ? scheme.error 
+            : (isPartial ? Colors.orange.shade700 : Colors.green));
+    
+    final duration = entry.endTime != null 
+        ? entry.endTime!.difference(entry.startTime!)
+        : (isProcessing ? _now.difference(entry.startTime!) : null);
 
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: accent.withValues(alpha: 0.10),
-        border: Border.all(color: accent.withValues(alpha: 0.35)),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: accent),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return InkWell(
+      onTap: (isError || isPartial) ? () => setState(() => _expanded = !_expanded) : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Text(
-                  error.title,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: accent,
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  error.message,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurface.withValues(alpha: 0.9),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  error.instruction,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontStyle: FontStyle.italic,
-                    color: scheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-                if (result.failedPhraseIds.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    'IDs: ${result.failedPhraseIds.join(", ")}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurface.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ],
-                if (onAction != null) ...[
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: onAction,
-                      style: TextButton.styleFrom(
-                        foregroundColor: accent,
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(0, 30),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  child: isProcessing 
+                    ? SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: statusColor),
+                      )
+                    : Icon(
+                        isError ? Icons.error_outline_rounded : (isPartial ? Icons.warning_amber_rounded : Icons.check_circle_outline_rounded),
+                        color: statusColor, 
+                        size: 16
                       ),
-                      child: const Text('Виправити'),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        entry.requestType ?? 'AI Request',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700, 
+                          fontSize: 14,
+                          color: isPartial ? Colors.orange.shade900 : (isProcessing ? scheme.primary : null),
+                        ),
+                      ),
+                      Text(
+                        entry.modelName ?? 'Unknown',
+                        style: TextStyle(
+                          fontSize: 11, 
+                          color: scheme.onSurface.withValues(alpha: 0.4),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      isProcessing ? 'PROCESSING' : _formatTime(entry.startTime!),
+                      style: TextStyle(
+                        fontSize: 10, 
+                        fontWeight: FontWeight.w900, 
+                        color: isProcessing ? scheme.primary : scheme.onSurface.withValues(alpha: 0.7),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    if (duration != null)
+                      Text(
+                        isProcessing 
+                          ? _getElapsed(entry.startTime!)
+                          : '${duration.inSeconds}.${(duration.inMilliseconds % 1000) ~/ 100}s',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isProcessing ? scheme.primary.withValues(alpha: 0.7) : scheme.onSurface.withValues(alpha: 0.3),
+                          fontWeight: isProcessing ? FontWeight.w700 : FontWeight.w400,
+                        ),
+                      ),
+                  ],
+                ),
+                if (isError || isPartial)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Icon(
+                      _expanded ? Icons.expand_less : Icons.expand_more,
+                      size: 18,
+                      color: scheme.onSurface.withValues(alpha: 0.2),
                     ),
                   ),
-                ],
               ],
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.close, size: 18),
-            onPressed: onDismiss,
-            tooltip: 'Закрити',
-            visualDensity: VisualDensity.compact,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-          ),
-        ],
+            if (_expanded && (isError || isPartial)) ...[
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: statusColor.withValues(alpha: 0.1)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (entry.errorMessage != null)
+                      Text(
+                        entry.errorMessage!,
+                        style: TextStyle(fontSize: 12, color: statusColor.withValues(alpha: 0.9), height: 1.4),
+                      ),
+                    if (entry.failedIds != null && entry.failedIds!.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        'Failed IDs: ${entry.failedIds!.join(', ')}',
+                        style: TextStyle(fontSize: 11, color: scheme.onSurface.withValues(alpha: 0.5), fontStyle: FontStyle.italic),
+                      ),
+                      const SizedBox(height: 8),
+                      Consumer(
+                        builder: (context, ref, child) {
+                          return TextButton.icon(
+                            onPressed: () {
+                              ref.read(translationProvider).retryPhrases(entry.failedIds!);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Retrying failed phrases...')),
+                              );
+                            },
+                            icon: const Icon(Icons.refresh_rounded, size: 16),
+                            label: const Text('Retry Failed'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: statusColor,
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              backgroundColor: statusColor.withValues(alpha: 0.1),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
